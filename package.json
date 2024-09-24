@@ -1,0 +1,40 @@
+{
+  "name": "revisi_sangat",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server_iot.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.18.3",
+    "child_process": "^1.0.2",
+    "cors": "^2.8.5",
+    "date-and-time": "^3.1.0",
+    "download": "^8.0.0",
+    "electron": "^17.0.1",
+    "electron-pos-printer": "^1.2.4",
+    "excel": "^1.0.1",
+    "exceljs": "^4.2.0",
+    "express": "^4.16.4",
+    "jsonwebtoken": "^8.5.1",
+    "md5": "^2.3.0",
+    "mongodb": "^2.2.33",
+    "mongoose-morgan": "^1.0.8",
+    "multer": "^1.4.2",
+    "node-cron": "^3.0.3",
+    "node-routeros": "^1.6.9",
+    "node-thermal-printer": "^4.1.2",
+    "nodejs-bca-scraper": "^1.0.1",
+    "pg": "^8.11.3",
+    "routeros-client": "^1.1.0",
+    "telegraf": "^4.15.3",
+    "vuejs-countdown-timer": "^2.1.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}
