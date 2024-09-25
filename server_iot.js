@@ -2916,6 +2916,7 @@ app.post('/lhpl5', async (req, res) => {
         shift,
         sku,
         reguler,
+        planning,
         hold,
         output,
         rmd,
@@ -2963,19 +2964,19 @@ app.post('/lhpl5', async (req, res) => {
               rmall, rpacktable, rmtotal, roven, soven, mcbks, ptable, serbuk, tampungan, total, 
               brtpack, batch, wiinner, wipackinner, wikulit, witotal, viawal, viambil, viakhir, vireturn,
               viinner, virainner, viall, variance, krkawal, krawal, krakhir, krpakai, kreturn, kreject,
-              kendalaall, rpackinner, roll, rsampleqc
+              kendalaall, rpackinner, roll, rsampleqc,planning
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 
                 $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, 
                 $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, 
                 $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, 
-                $41, $42,$43,$44
+                $41, $42,$43,$44,$45
             ) RETURNING id`, [
                 users_input,realdatetime,grup,shift,sku,reguler,hold,output,rmd,rfeeding,
                 rmall,rpackTable,rmtotal, roven,soven,mcbks,ptable,serbuk,tampungan,total,
                 brtpack,batch,wiinner,wipackinner,wikulit,witotal,viawal,viambil,viakhir,vireturn,
                 viinner,viRainner,viall,variance,krkawal,krAwal,krakhir,krpakai,kreturn,kreject,
-                kendalaall,rpackinner,roll,rsampleqc
+                kendalaall,rpackinner,roll,rsampleqc,planning
         ]);
         // Mengirim respons berhasil
         res.status(201).json({ id: results.rows[0].id });
@@ -3001,7 +3002,7 @@ app.get('/lhpl5/detail/:id', async (req, res) => {
 app.get('/lhpl5_daily/:line', async (req, res) => {
     var line = req.params.line
     var thisdaytime = format(new Date());
-    const result = await db.query(`SELECT id,shift,sku,plan,real,ach,packing_reject,sheet,book,banded,sapuanpack,buble FROM automation.lhp_l5 where realdatetime = '${thisdaytime}' AND grup = '${line}' 
+    const result = await db.query(`SELECT id,shift,sku,reguler,hold,output,rmd,rfeeding,roven,rmall FROM automation.lhp_l5 where realdatetime = '${thisdaytime}' AND grup = '${line}' 
     AND shift in ('Shift 1') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
@@ -3011,14 +3012,14 @@ app.get('/lhpl5_daily/date/:date/:line', async (req, res) => {
     var line = req.params.line
     var datethis = req.params.date
     console.log(datethis)
-    const result = await db.query(`SELECT id,shift,sku,plan,real,ach,packing_reject,sheet,book,banded,sapuanpack,buble FROM automation.lhp_l5 where realdatetime = '${datethis}' AND grup = '${line}'
+    const result = await db.query(`SELECT id,shift,sku,reguler,hold,output,rmd,rfeeding,roven,rmall FROM automation.lhp_l5 where realdatetime = '${datethis}' AND grup = '${line}'
     AND shift in ('Shift 1','Shift 2') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     var thisdate = new Date(datethis);
     thisdate.setDate(thisdate.getDate() + 1)
     var thisyestertime = format(thisdate)
-    const resulttwo = await db.query(`SELECT id,shift,sku,plan,real,ach,packing_reject,sheet,book,banded,sapuanpack,buble FROM automation.lhp_l5 where realdatetime = '${thisyestertime}' AND grup = '${line}'
+    const resulttwo = await db.query(`SELECT id,shift,sku,reguler,hold,output,rmd,rfeeding,roven,rmall FROM automation.lhp_l5 where realdatetime = '${thisyestertime}' AND grup = '${line}'
     AND shift in ('Shift 3') ORDER BY id ASC`);
     var datalasttwo = resulttwo.rows;
     var twoarray = datalast.concat(datalasttwo)
