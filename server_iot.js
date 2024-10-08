@@ -33,7 +33,9 @@ const corsPerRoute = cors();
 // mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
 app.use(logger('dev'));
 var corsOptions = {
-    origin: "*"
+    origin: "*", // Jika Anda ingin mengizinkan semua origin
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Izinkan semua metode yang dibutuhkan
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'], // Header yang diizinkan
 };
 
 app.use(cors(corsOptions));
