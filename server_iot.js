@@ -1038,12 +1038,12 @@ app.get('/packing_l1_weekly/date/:date', async (req, res) => {
 });
 
 //line7
-// app.get('/packing_l7', async (req, res) => {
-//     const result = await db.query('SELECT * FROM automation.packing_l7 ORDER BY id DESC LIMIT 1');
-//     // console.log("DATA" ,result)
-//     var datalast = result.rows;
-//     res.send(datalast);
-// });
+app.get('/packing_l7', async (req, res) => {
+    const result = await db.query('SELECT * FROM automation.packing_l7 ORDER BY id DESC LIMIT 1');
+    // console.log("DATA" ,result)
+    var datalast = result.rows;
+    res.send(datalast);
+});
 // app.get('/shift_l7', async (req, res) => {
 //     var thisdaytime = format(new Date());
 //     const result = await db.query(`SELECT shift1, shift2, shift3 FROM automation.counter_shift_l7 where tanggal = '${thisdaytime}' ORDER BY id DESC LIMIT 1`);
@@ -1051,198 +1051,199 @@ app.get('/packing_l1_weekly/date/:date', async (req, res) => {
 //     var datalast = result.rows;
 //     res.send(datalast);
 // });
-// app.get('/shift1_l7', async (req, res) => {
-//         var thisdaytime = format(new Date());
-//         const result = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-//         AND jam in ('7.0','7.31','8.0','8.31','9.0','9.31','10.0','10.31','11.0','11.31','12.0','12.31','13.0','13.31','14.0','14.31','14.58') ORDER BY id ASC`);
-//         //console.log("DATA" ,result)
-//         var datalast = result.rows;
-//         res.send(datalast);
-// });
-// app.get('/shift2_l7', async (req, res) => {
-//     var thisdaytime = format(new Date());
-//         const result = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-//         AND jam in ('15.0','15.31','16.0','16.31','17.0','17.31','18.0','18.31','19.0','19.31','20.0','20.31','21.0','21.31','22.0','22.31','22.58') ORDER BY id ASC`);
-//         //console.log("DATA" ,result)
-//         var datalast = result.rows;
-//         res.send(datalast);
-//     // }
-// });
-// app.get('/shift3_l7', async (req, res) => {
-//         var thisdaytime = format(new Date());
-//         console.log(thisdaytime)
-//         var thisdate = new Date();
-//         thisdate.setDate(thisdate.getDate() + 1)
-//         var thisyestertime = format(thisdate)
-//         const resultone = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-//         AND jam = '23.0' ORDER BY id ASC`);
-//         var datalastone = resultone.rows;
-//         let element = {};
-//         var cart = [];
-//         for (let index = 0; index < datalastone.length; index++) {
-//             element.jam = "0." + 23
-//             element.counter = datalastone[index].counter
-//             cart.push(element)
-//         }
-//         const resulttwo = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisyestertime}' 
-//         AND jam in ('0.30', '1.0','1.31','2.0','2.31','3.0','3.31','4.0','4.31','5.0','5.31','6.0','6.31','6.59') ORDER BY id ASC`);
-//         var datalasttwo = resulttwo.rows;
-//         var twoarray = cart.concat(datalasttwo)
-//         res.send(twoarray);
+app.get('/shift1_l7', async (req, res) => {
+        var thisdaytime = format(new Date());
+        const result = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+        AND jam in ('7.0','7.31','8.0','8.31','9.0','9.31','10.0','10.31','11.0','11.31','12.0','12.31','13.0','13.31','14.0','14.31','14.58') ORDER BY id ASC`);
+        //console.log("DATA" ,result)
+        var datalast = result.rows;
+        res.send(datalast);
+});
+app.get('/shift2_l7', async (req, res) => {
+    var thisdaytime = format(new Date());
+        const result = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+        AND jam in ('15.0','15.31','16.0','16.31','17.0','17.31','18.0','18.31','19.0','19.31','20.0','20.31','21.0','21.31','22.0','22.31','22.58') ORDER BY id ASC`);
+        //console.log("DATA" ,result)
+        var datalast = result.rows;
+        res.send(datalast);
+    // }
+});
+app.get('/shift3_l7', async (req, res) => {
+        var thisdaytime = format(new Date());
+        console.log(thisdaytime)
+        var thisdate = new Date();
+        thisdate.setDate(thisdate.getDate() + 1)
+        var thisyestertime = format(thisdate)
+        const resultone = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+        AND jam = '23.0' ORDER BY id ASC`);
+        var datalastone = resultone.rows;
+        let element = {};
+        var cart = [];
+        for (let index = 0; index < datalastone.length; index++) {
+            element.jam = "0." + 23
+            element.counter = datalastone[index].counter
+            cart.push(element)
+        }
+        const resulttwo = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisyestertime}' 
+        AND jam in ('0.30', '1.0','1.31','2.0','2.31','3.0','3.31','4.0','4.31','5.0','5.31','6.0','6.31','6.59') ORDER BY id ASC`);
+        var datalasttwo = resulttwo.rows;
+        var twoarray = cart.concat(datalasttwo)
+        res.send(twoarray);
 
-//     // }
-// });
-// app.get('/shift1_l7_hourly', async (req, res) => {
-//     var thisdaytime = format(new Date());
-//     const result = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-//     AND jam in ('8.0','9.0','10.0','11.0','12.0','13.0','14.0','14.45') ORDER BY id ASC`);
-//     //console.log("DATA" ,result)
-//     var datalast = result.rows;
-//     res.send(datalast);
-// });
-// app.get('/shift2_l7_hourly', async (req, res) => {
-// var thisdaytime = format(new Date());
-//     const result = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-//     AND jam in ('16.0','17.0','18.0','19.0','20.0','21.0','22.0','22.45') ORDER BY id ASC`);
-//     //console.log("DATA" ,result)
-//     var datalast = result.rows;
-//     res.send(datalast);
-// // }
-// });
-// app.get('/shift3_l7_hourly', async (req, res) => {
-//     var thisdaytime = format(new Date());
-//     console.log(thisdaytime)
-//     var thisdate = new Date();
-//     thisdate.setDate(thisdate.getDate() + 1)
-//     var thisyestertime = format(thisdate)
-//     const resultone = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-//     AND jam = '23.59' ORDER BY id ASC`);
-//     var datalastone = resultone.rows;
-//     let element = {};
-//     var cart = [];
-//     for (let index = 0; index < datalastone.length; index++) {
-//         element.jam = "0." + 23
-//         element.counter = datalastone[index].counter
-//         cart.push(element)
-//     }
-//     const resulttwo = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisyestertime}' 
-//     AND jam in ('1.0','2.0','3.0','4.0','5.0','6.0','6.45') ORDER BY id ASC`);
-//     var datalasttwo = resulttwo.rows;
-//     var twoarray = cart.concat(datalasttwo)
-//     res.send(twoarray);
-// // }
-// });
-// app.get('/packing_l7_all', async (req, res) => {
-//     const result = await db.query(`SELECT * FROM automation.packing_l7 where graph = 'Y' ORDER BY id DESC`);
-//     // console.log("DATA" ,result)
-//     var datalast = result.rows;
-//     res.send(datalast);
-// });
-// app.get('/packing_l7_hourly', async (req, res) => {
-//     var thisdaytime = format(new Date());
-//     const result = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-//     AND jam in ('8.0','9.0','10.0','11.0','12.0','13.0','14.0','14.58','16.0','17.0','18.0','19.0','20.0','21.0','22.0','22.58','23.58') ORDER BY id ASC`);
-//     //console.log("DATA" ,result)
-//     var datalast = result.rows;
-//     // var thisdate = new Date(datethis);
-//     // thisdate.setDate(thisdate.getDate() + 1)
-//     // var thisyestertime = format(thisdate)
-//     // const resulttwo = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisyestertime}' 
-//     // AND jam in ('1.0','2.0','3.0','4.0','5.0','6.0','6.59') ORDER BY id ASC`);
-//     // var datalasttwo = resulttwo.rows;
-//     // var twoarray = datalast.concat(datalasttwo)
-//     res.send(datalast);
-// });
-// app.get('/packing_l7_hourly/date/:date', async (req, res) => {
-//     var datethis = req.params.date
-//     console.log(datethis)
-//     const result = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${datethis}' 
-//     AND jam in ('8.0','9.0','10.0','11.0','12.0','13.0','14.0','14.58','16.0','17.0','18.0','19.0','20.0','21.0','22.0','22.58','23.58') ORDER BY id ASC`);
-//     //console.log("DATA" ,result)
-//     var datalast = result.rows;
-//     var thisdate = new Date(datethis);
-//     thisdate.setDate(thisdate.getDate() + 1)
-//     var thisyestertime = format(thisdate)
-//     const resulttwo = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisyestertime}' 
-//     AND jam in ('1.0','2.0','3.0','4.0','5.0','6.0','6.59') ORDER BY id ASC`);
-//     var datalasttwo = resulttwo.rows;
-//     var twoarray = datalast.concat(datalasttwo)
-//     res.send(twoarray);
-// });
-// app.get('/packing_l7_daily', async (req, res) => {
-//     var thisdaytime = format(new Date());
-//     const result = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-//     AND jam in ('14.58','22.58') ORDER BY id ASC`);
-//     //console.log("DATA" ,result)
-//     var datalast = result.rows;
-//     // var thisdate = new Date(datethis);
-//     // thisdate.setDate(thisdate.getDate() + 1)
-//     // var thisyestertime = format(thisdate)
-//     // const resulttwo = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisyestertime}' 
-//     // AND jam in ('1.0','2.0','3.0','4.0','5.0','6.0','6.59') ORDER BY id ASC`);
-//     // var datalasttwo = resulttwo.rows;
-//     // var twoarray = datalast.concat(datalasttwo)
-//     res.send(datalast);
-// });
-// app.get('/packing_l7_daily/date/:date', async (req, res) => {
-//     var datethis = req.params.date
-//     console.log(datethis)
-//     const result = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${datethis}' 
-//     AND jam in ('14.45','22.45') ORDER BY id ASC`);
-//     //console.log("DATA" ,result)
-//     var datalast = result.rows;
-//     var thisdate = new Date(datethis);
-//     thisdate.setDate(thisdate.getDate() + 1)
-//     var thisyestertime = format(thisdate)
-//     const resulttwo = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisyestertime}' 
-//     AND jam in ('6.45') ORDER BY id ASC`);
-//     var datalasttwo = resulttwo.rows;
-//     var twoarray = datalast.concat(datalasttwo)
-//     res.send(twoarray);
-// });
-// app.get('/packing_l7_weekly', async (req, res) => {
-//     let dates = [];
-//     var date = new Date();
-//     var year = date.getFullYear()
-//     var month = String(date.getMonth() + 1).padStart(2)
-//     var weeklofmonth = getWeek(date);
-//     dates = getWeekDates(year,month,weeklofmonth)
+    // }
+});
+app.get('/shift1_l7_hourly', async (req, res) => {
+    var thisdaytime = format(new Date());
+    const result = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+    AND jam in ('8.0','9.0','10.0','11.0','12.0','13.0','14.0','14.45') ORDER BY id ASC`);
+    //console.log("DATA" ,result)
+    var datalast = result.rows;
+    res.send(datalast);
+});
+app.get('/shift2_l7_hourly', async (req, res) => {
+var thisdaytime = format(new Date());
+    const result = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+    AND jam in ('16.0','17.0','18.0','19.0','20.0','21.0','22.0','22.45') ORDER BY id ASC`);
+    //console.log("DATA" ,result)
+    var datalast = result.rows;
+    res.send(datalast);
+// }
+});
+app.get('/shift3_l7_hourly', async (req, res) => {
+    var thisdaytime = format(new Date());
+    console.log(thisdaytime)
+    var thisdate = new Date();
+    thisdate.setDate(thisdate.getDate() + 1)
+    var thisyestertime = format(thisdate)
+    const resultone = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+    AND jam = '23.59' ORDER BY id ASC`);
+    var datalastone = resultone.rows;
+    let element = {};
+    var cart = [];
+    for (let index = 0; index < datalastone.length; index++) {
+        element.jam = "0." + 23
+        element.counter = datalastone[index].counter
+        cart.push(element)
+    }
+    const resulttwo = await db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisyestertime}' 
+    AND jam in ('1.0','2.0','3.0','4.0','5.0','6.0','6.45') ORDER BY id ASC`);
+    var datalasttwo = resulttwo.rows;
+    var twoarray = cart.concat(datalasttwo)
+    res.send(twoarray);
+// }
+});
+app.get('/packing_l7_all', async (req, res) => {
+    const result = await db.query(`SELECT * FROM automation.packing_l7 where graph = 'Y' ORDER BY id DESC`);
+    // console.log("DATA" ,result)
+    var datalast = result.rows;
+    res.send(datalast);
+});
+app.get('/packing_l7_hourly', async (req, res) => {
+    var thisdaytime = format(new Date());
+    const result = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+    AND jam in ('8.0','9.0','10.0','11.0','12.0','13.0','14.0','14.58','16.0','17.0','18.0','19.0','20.0','21.0','22.0','22.58','23.58') ORDER BY id ASC`);
+    //console.log("DATA" ,result)
+    var datalast = result.rows;
+    // var thisdate = new Date(datethis);
+    // thisdate.setDate(thisdate.getDate() + 1)
+    // var thisyestertime = format(thisdate)
+    // const resulttwo = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisyestertime}' 
+    // AND jam in ('1.0','2.0','3.0','4.0','5.0','6.0','6.59') ORDER BY id ASC`);
+    // var datalasttwo = resulttwo.rows;
+    // var twoarray = datalast.concat(datalasttwo)
+    res.send(datalast);
+});
+app.get('/packing_l7_hourly/date/:date', async (req, res) => {
+    var datethis = req.params.date
+    console.log(datethis)
+    const result = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${datethis}' 
+    AND jam in ('8.0','9.0','10.0','11.0','12.0','13.0','14.0','14.58','16.0','17.0','18.0','19.0','20.0','21.0','22.0','22.58','23.58') ORDER BY id ASC`);
+    //console.log("DATA" ,result)
+    var datalast = result.rows;
+    var thisdate = new Date(datethis);
+    thisdate.setDate(thisdate.getDate() + 1)
+    var thisyestertime = format(thisdate)
+    const resulttwo = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisyestertime}' 
+    AND jam in ('1.0','2.0','3.0','4.0','5.0','6.0','6.59') ORDER BY id ASC`);
+    var datalasttwo = resulttwo.rows;
+    var twoarray = datalast.concat(datalasttwo)
+    res.send(twoarray);
+});
+app.get('/packing_l7_daily', async (req, res) => {
+    var thisdaytime = format(new Date());
+    const result = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+    AND jam in ('14.58','22.58') ORDER BY id ASC`);
+    //console.log("DATA" ,result)
+    var datalast = result.rows;
+    // var thisdate = new Date(datethis);
+    // thisdate.setDate(thisdate.getDate() + 1)
+    // var thisyestertime = format(thisdate)
+    // const resulttwo = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisyestertime}' 
+    // AND jam in ('1.0','2.0','3.0','4.0','5.0','6.0','6.59') ORDER BY id ASC`);
+    // var datalasttwo = resulttwo.rows;
+    // var twoarray = datalast.concat(datalasttwo)
+    res.send(datalast);
+});
+app.get('/packing_l7_daily/date/:date', async (req, res) => {
+    var datethis = req.params.date
+    console.log(datethis)
+    const result = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${datethis}' 
+    AND jam in ('14.45','22.45') ORDER BY id ASC`);
+    //console.log("DATA" ,result)
+    var datalast = result.rows;
+    var thisdate = new Date(datethis);
+    thisdate.setDate(thisdate.getDate() + 1)
+    var thisyestertime = format(thisdate)
+    const resulttwo = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l7 where graph = 'Y' AND tanggal = '${thisyestertime}' 
+    AND jam in ('6.45') ORDER BY id ASC`);
+    var datalasttwo = resulttwo.rows;
+    var twoarray = datalast.concat(datalasttwo)
+    res.send(twoarray);
+});
+app.get('/packing_l7_weekly', async (req, res) => {
+    let dates = [];
+    var date = new Date();
+    var year = date.getFullYear()
+    var month = String(date.getMonth() + 1).padStart(2)
+    var weeklofmonth = getWeek(date);
+    dates = getWeekDates(year,month,weeklofmonth)
 
-//     var startweekdate = new Date(dates[0]);
-//     var startdate = format(startweekdate)
-//     console.log("Real Star Date" ,startdate)
-//     var endweekdate = new Date(dates[6]);
-//     var enddate = format(endweekdate)
-//     console.log("Real End Date" ,enddate)
-//     // console.log(datethis)
-//     const result = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam , realdatetime  FROM automation.packing_l7 where graph = 'Y' AND tanggal BETWEEN '${startdate}' AND '${enddate}'
-//     AND jam in ('14.58','22.58','6.59') ORDER BY id ASC`);
-//     var datalast = result.rows;
-//     res.send(datalast);
-// });
-// app.get('/packing_l7_weekly/date/:date', async (req, res) => {
-//     var datethis = req.params.date
-//     let dates = [];
-//     var date = new Date();
-//     var year = date.getFullYear()
-//     var month = String(date.getMonth() + 1).padStart(2)
-//     // var weeklofmonth = getWeek(date);
-//     dates = getWeekDates(year,month,datethis)
+    var startweekdate = new Date(dates[0]);
+    var startdate = format(startweekdate)
+    console.log("Real Star Date" ,startdate)
+    var endweekdate = new Date(dates[6]);
+    var enddate = format(endweekdate)
+    console.log("Real End Date" ,enddate)
+    // console.log(datethis)
+    const result = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam , realdatetime  FROM automation.packing_l7 where graph = 'Y' AND tanggal BETWEEN '${startdate}' AND '${enddate}'
+    AND jam in ('14.58','22.58','6.59') ORDER BY id ASC`);
+    var datalast = result.rows;
+    res.send(datalast);
+});
+app.get('/packing_l7_weekly/date/:date', async (req, res) => {
+    var datethis = req.params.date
+    let dates = [];
+    var date = new Date();
+    var year = date.getFullYear()
+    var month = String(date.getMonth() + 1).padStart(2)
+    // var weeklofmonth = getWeek(date);
+    dates = getWeekDates(year,month,datethis)
 
-//     var startweekdate = new Date(dates[0]);
-//     var startdate = format(startweekdate)
-//     console.log("Real Star Date" ,startdate)
-//     var endweekdate = new Date(dates[6]);
-//     var enddate = format(endweekdate)
-//     console.log("Real End Date" ,enddate)
-//     // console.log(datethis)
-//     const result = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam , realdatetime  FROM automation.packing_l7 where graph = 'Y' AND tanggal BETWEEN '${startdate}' AND '${enddate}'
-//     AND jam in ('14.58','22.58','6.59') ORDER BY id ASC`);
-//     var datalast = result.rows;
-//     res.send(datalast);
-// });
+    var startweekdate = new Date(dates[0]);
+    var startdate = format(startweekdate)
+    console.log("Real Star Date" ,startdate)
+    var endweekdate = new Date(dates[6]);
+    var enddate = format(endweekdate)
+    console.log("Real End Date" ,enddate)
+    // console.log(datethis)
+    const result = await db.query(`SELECT id ,cntr_bandet, cntr_carton , jam , realdatetime  FROM automation.packing_l7 where graph = 'Y' AND tanggal BETWEEN '${startdate}' AND '${enddate}'
+    AND jam in ('14.58','22.58','6.59') ORDER BY id ASC`);
+    var datalast = result.rows;
+    res.send(datalast);
+});
 
 //PACKING B3
+
 app.get('/shift1_b3', async (req, res) => {
     var thisdaytime = format(new Date());
     // var thisjam = jamnya(new Date());
@@ -1252,7 +1253,7 @@ app.get('/shift1_b3', async (req, res) => {
     // var verif2 = 14;
     // if (verif2 >= 7 && verif2 <= 14 ) {
     const result = await db_iot.query(`SELECT counter , jam FROM purwosari.packing_b3 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-        AND jam in ('7.0','7.31','8.0','8.31','9.0','9.31','10.0','10.31','11.0','11.31','12.0','12.31','13.0','13.31','14.0','14.31','14.58') ORDER BY id ASC`);
+        AND jam in ('6.46','7.30','8.0','8.30','9.0','9.30','10.0','10.30','11.0','11.30','12.0','12.30','13.0','13.30','14.0','14.30','14.45') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
@@ -1424,7 +1425,7 @@ app.get('/packing_b3_weekly/date/:date', async (req, res) => {
 app.get('/shift1_b1', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await db_iot.query(`SELECT counter , jam FROM purwosari.packing_b1 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-        AND jam in ('7.0','7.31','8.0','8.31','9.0','9.31','10.0','10.31','11.0','11.31','12.0','12.31','13.0','13.31','14.0','14.31','14.58') ORDER BY id ASC`);
+        AND jam in ('6.46','7.30','8.0','8.30','9.0','9.30','10.0','10.30','11.0','11.30','12.0','12.30','13.0','13.30','14.0','14.30','14.45') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
@@ -1582,7 +1583,7 @@ app.get('/packing_b1_weekly/date/:date', async (req, res) => {
 app.get('/shift1_b2', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await db_iot.query(`SELECT counter , jam FROM purwosari.packing_b2 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-        AND jam in ('7.0','7.31','8.0','8.31','9.0','9.31','10.0','10.31','11.0','11.31','12.0','12.31','13.0','13.31','14.0','14.31','14.58') ORDER BY id ASC`);
+        AND jam in ('6.46','7.30','8.0','8.30','9.0','9.30','10.0','10.30','11.0','11.30','12.0','12.30','13.0','13.30','14.0','14.30','14.45') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
@@ -1740,7 +1741,7 @@ app.get('/packing_b2_weekly/date/:date', async (req, res) => {
 app.get('/shift1_b4', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await db_iot.query(`SELECT counter , jam FROM purwosari.packing_b4 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-        AND jam in ('7.0','7.31','8.0','8.31','9.0','9.31','10.0','10.31','11.0','11.31','12.0','12.31','13.0','13.31','14.0','14.31','14.58') ORDER BY id ASC`);
+        AND jam in ('6.46','7.30','8.0','8.30','9.0','9.30','10.0','10.30','11.0','11.30','12.0','12.30','13.0','13.30','14.0','14.30','14.45') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
@@ -2256,15 +2257,15 @@ app.get('/packing_a1_counter', async (req, res) => {
 app.get('/shift1_a1', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await db_iot.query(`SELECT counter , jam FROM purwosari.packing_a1 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-        AND jam in ('7.0','7.31','8.0','8.31','9.0','9.31','10.0','10.31','11.0','11.31','12.0','12.31','13.0','13.31','14.0','14.31','14.58') ORDER BY id ASC`);
-    //console.log("DATA" ,result)
+        AND jam in ('6.46','7.30','8.0','8.30','9.0','9.30','10.0','10.30','11.0','11.30','12.0','12.30','13.0','13.30','14.0','14.30','14.45') ORDER BY id ASC`);
+    console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
 });
 app.get('/shift2_a1', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await db_iot.query(`SELECT counter , jam FROM purwosari.packing_a1 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-        AND jam in ('15.0','15.31','16.0','16.31','17.0','17.31','18.0','18.31','19.0','19.31','20.0','20.31','21.0','21.31','22.0','22.31','22.58') ORDER BY id ASC`);
+        AND jam in ('14.46','15.31','16.0','16.31','17.0','17.31','18.0','18.31','19.0','19.31','20.0','20.31','21.0','21.31','22.0','22.31','22.45') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
@@ -2277,7 +2278,7 @@ app.get('/shift3_a1', async (req, res) => {
     thisdate.setDate(thisdate.getDate() + 1)
     var thisyestertime = format(thisdate)
     const resultone = await db_iot.query(`SELECT counter , jam FROM purwosari.packing_a1 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-    AND jam = '23.0' ORDER BY id ASC`);
+    AND jam = '22.46' ORDER BY id ASC`);
     var datalastone = resultone.rows;
     let element = {};
     var cart = [];
@@ -2287,7 +2288,7 @@ app.get('/shift3_a1', async (req, res) => {
         cart.push(element)
     }
     const resulttwo = await db_iot.query(`SELECT counter , jam FROM purwosari.packing_a1 where graph = 'Y' AND tanggal = '${thisyestertime}' 
-    AND jam in ('0.30', '1.0','1.31','2.0','2.31','3.0','3.31','4.0','4.31','5.0','5.31','6.0','6.31','6.59') ORDER BY id ASC`);
+    AND jam in ('0.30', '1.0','1.31','2.0','2.31','3.0','3.31','4.0','4.31','5.0','5.31','6.0','6.31','6.45') ORDER BY id ASC`);
     var datalasttwo = resulttwo.rows;
     var twoarray = cart.concat(datalasttwo)
     res.send(twoarray);
@@ -2414,7 +2415,7 @@ app.get('/packing_a2_counter', async (req, res) => {
 app.get('/shift1_a2', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await db_iot.query(`SELECT counter , jam FROM purwosari.packing_a2 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-        AND jam in ('7.0','7.31','8.0','8.31','9.0','9.31','10.0','10.31','11.0','11.31','12.0','12.31','13.0','13.31','14.0','14.31','14.58') ORDER BY id ASC`);
+        AND jam in ('6.46','7.30','8.0','8.30','9.0','9.30','10.0','10.30','11.0','11.30','12.0','12.30','13.0','13.30','14.0','14.30','14.45') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
@@ -2422,7 +2423,7 @@ app.get('/shift1_a2', async (req, res) => {
 app.get('/shift2_a2', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await db_iot.query(`SELECT counter , jam FROM purwosari.packing_a2 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-        AND jam in ('15.0','15.31','16.0','16.31','17.0','17.31','18.0','18.31','19.0','19.31','20.0','20.31','21.0','21.31','22.0','22.31','22.58') ORDER BY id ASC`);
+        AND jam in ('14.46','15.31','16.0','16.31','17.0','17.31','18.0','18.31','19.0','19.31','20.0','20.31','21.0','21.31','22.0','22.31','22.45') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
@@ -2435,7 +2436,7 @@ app.get('/shift3_a2', async (req, res) => {
     thisdate.setDate(thisdate.getDate() + 1)
     var thisyestertime = format(thisdate)
     const resultone = await db_iot.query(`SELECT counter , jam FROM purwosari.packing_a2 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-    AND jam = '23.0' ORDER BY id ASC`);
+    AND jam = '22.45' ORDER BY id ASC`);
     var datalastone = resultone.rows;
     let element = {};
     var cart = [];
@@ -2445,7 +2446,7 @@ app.get('/shift3_a2', async (req, res) => {
         cart.push(element)
     }
     const resulttwo = await db_iot.query(`SELECT counter , jam FROM purwosari.packing_a2 where graph = 'Y' AND tanggal = '${thisyestertime}' 
-    AND jam in ('0.30', '1.0','1.31','2.0','2.31','3.0','3.31','4.0','4.31','5.0','5.31','6.0','6.31','6.59') ORDER BY id ASC`);
+    AND jam in ('0.30', '1.0','1.31','2.0','2.31','3.0','3.31','4.0','4.31','5.0','5.31','6.0','6.31','6.45') ORDER BY id ASC`);
     var datalasttwo = resulttwo.rows;
     var twoarray = cart.concat(datalasttwo)
     res.send(twoarray);
@@ -2572,7 +2573,7 @@ app.get('/packing_a3_counter', async (req, res) => {
 app.get('/shift1_a3', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await db.query(`SELECT counter , jam FROM automation.packing_a3 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-        AND jam in ('7.0','7.31','8.0','8.31','9.0','9.31','10.0','10.31','11.0','11.31','12.0','12.31','13.0','13.31','14.0','14.31','14.58') ORDER BY id ASC`);
+        AND jam in ('6.46','7.31','8.0','8.31','9.0','9.31','10.0','10.31','11.0','11.31','12.0','12.31','13.0','13.31','14.0','14.31','14.45') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
@@ -2864,15 +2865,120 @@ app.get('/packing_b5_weekly/date/:date', async (req, res) => {
     res.send(datalast);
 });
 app.post('/lhp', async (req, res) => {
-    var { realdatetime, grup, shift, sku, plan, real, ach, cello, cellocpp, ctn_type, cello_used, adonan_used, ccbcream_used, avgsheet, avgbook, sheet, book, cutkasar, bubukcuttig, sapuancut, qcpacking, qccello, packing_reject, banded, sapuanpack, buble, suppliercello, speed_mesin, kendala, sample_ctn_qc, banded_under, banded_over, cutoff_jam, ctn_luar, d_b, plastik_pof, coklat_used, sortir, pof_kue, users } = req.body;
-    db.query('INSERT INTO automation.lhp (realdatetime ,grup, shift, sku ,plan,real,ach,cello,cellocpp,ctn_type,cello_used,adonan_used,ccbcream_used,avgsheet,avgbook,sheet,book,cutkasar,bubukcutting,sapuancut,qcpacking,qccello,packing_reject,banded,sapuanpack,buble,suppliercello,speed_mesin,kendala,sample_ctn_qc,banded_under,banded_over,cutoff_jam,ctn_luar,d_b,plastik_pof,coklat_used,sortir,pof_kue,user_input ) VALUES ($1, $2, $3,$4, $5, $6, $7, $8, $9,$10, $11, $12,$13, $14, $15,$16, $17, $18,$19, $20, $21,$22, $23, $24,$25, $26,$27, $28, $29,$30, $31, $32,$33,$34,$35,$36,$37,$38,$39,$40) RETURNING id',
-        [realdatetime, grup, shift, sku, plan, real, ach, cello, cellocpp, ctn_type, cello_used, adonan_used, ccbcream_used, avgsheet, avgbook, sheet, book, cutkasar, bubukcuttig, sapuancut, qcpacking, qccello, packing_reject, banded, sapuanpack, buble, suppliercello, speed_mesin, kendala, sample_ctn_qc, banded_under, banded_over, cutoff_jam, ctn_luar, d_b, plastik_pof, coklat_used, sortir, pof_kue, users], (error, results) => {
-            res.status(204).send(" added");
-        })
+    const {
+        realdatetime,
+        grup,
+        shift,
+        sku,
+        plan,
+        real,
+        ach,
+        cello,
+        cellocpp,
+        ctn_type,
+        cello_used,
+        adonan_used,
+        ccbcream_used,
+        avgsheet,
+        avgbook,
+        sheet,
+        book,
+        cutkasar,
+        bubukcutting,
+        sapuancut,
+        qcpacking,
+        qccello,
+        packing_reject,
+        banded,
+        sapuanpack,
+        buble,
+        suppliercello,
+        speed_mesin,
+        kendala,
+        sample_ctn_qc,
+        banded_under,
+        banded_over,
+        cutoff_jam,
+        ctn_luar,
+        d_b,
+        plastik_pof,
+        coklat_used,
+        sortir,
+        pof_kue,
+        users_input
+    } = req.body;
+
+    try {
+        const result = await db.query(
+            `INSERT INTO automation.lhp (
+                realdatetime,
+                grup,
+                shift,
+                sku,
+                plan,
+                real,
+                ach,
+                cello,
+                cellocpp,
+                ctn_type,
+                cello_used,
+                adonan_used,
+                ccbcream_used,
+                avgsheet,
+                avgbook,
+                sheet,
+                book,
+                cutkasar,
+                bubukcutting,
+                sapuancut,
+                qcpacking,
+                qccello,
+                packing_reject,
+                banded,
+                sapuanpack,
+                buble,
+                suppliercello,
+                speed_mesin,
+                kendala,
+                sample_ctn_qc,
+                banded_under,
+                banded_over,
+                cutoff_jam,
+                ctn_luar,
+                d_b,
+                plastik_pof,
+                coklat_used,
+                sortir,
+                pof_kue,
+                users_input
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9,
+                $10, $11, $12, $13, $14, $15, $16, $17,
+                $18, $19, $20, $21, $22, $23, $24, $25,
+                $26, $27, $28, $29, $30, $31, $32, $33,
+                $34, $35, $36, $37, $38, $39, $40
+            ) RETURNING id`,
+            [
+                realdatetime, grup, shift, sku, plan, real, ach, cello, cellocpp, ctn_type,
+                cello_used, adonan_used, ccbcream_used, avgsheet, avgbook, sheet, book,
+                cutkasar, bubukcutting, sapuancut, qcpacking, qccello, packing_reject,
+                banded, sapuanpack, buble, suppliercello, speed_mesin, kendala,
+                sample_ctn_qc, banded_under, banded_over, cutoff_jam, ctn_luar,
+                d_b, plastik_pof, coklat_used, sortir, pof_kue, users_input
+            ]
+        );
+
+        console.log("DATA", result); // Log the result for debugging
+        res.status(201).json({ id: result.rows[0].id });
+    } catch (error) {
+        console.error("Error inserting data:", error);
+        res.status(500).json({ error: 'An error occurred while saving data.' });
+    }
 });
+
 app.get('/lhp', async (req, res) => {
     const result = await db.query('SELECT * FROM automation.lhp ORDER BY id DESC LIMIT 1');
-    // console.log("DATA", result)
+    console.log("DATA", result)
     var datalast = result.rows;
     res.send(datalast);
 });
@@ -2886,7 +2992,7 @@ app.get('/lhp/detail/:id', async (req, res) => {
 app.get('/lhp_daily/:line', async (req, res) => {
     var line = req.params.line
     var thisdaytime = format(new Date());
-    const result = await db.query(`SELECT id,shift,sku,plan,real,ach,packing_reject,sheet,book,banded,sapuanpack,buble FROM automation.lhp where realdatetime = '${thisdaytime}' AND grup = '${line}' 
+    const result = await db.query(`SELECT * FROM automation.lhp where realdatetime = '${thisdaytime}' AND grup = '${line}' 
     AND shift in ('Shift 1') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
@@ -2896,18 +3002,18 @@ app.get('/lhp_daily/date/:date/:line', async (req, res) => {
     var line = req.params.line
     var datethis = req.params.date
     console.log(datethis)
-    const result = await db.query(`SELECT id,shift,sku,plan,real,ach,packing_reject,sheet,book,banded,sapuanpack,buble FROM automation.lhp where realdatetime = '${datethis}' AND grup = '${line}'
-    AND shift in ('Shift 1','Shift 2') ORDER BY id ASC`);
+    const result = await db.query(`SELECT * FROM automation.lhp where realdatetime = '${datethis}' AND grup = '${line}'
+    AND shift in ('Shift 1','Shift 2', 'Shift 3') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
-    var thisdate = new Date(datethis);
-    thisdate.setDate(thisdate.getDate() + 1)
-    var thisyestertime = format(thisdate)
-    const resulttwo = await db.query(`SELECT id,shift,sku,plan,real,ach,packing_reject,sheet,book,banded,sapuanpack,buble FROM automation.lhp where realdatetime = '${thisyestertime}' AND grup = '${line}'
-    AND shift in ('Shift 3') ORDER BY id ASC`);
-    var datalasttwo = resulttwo.rows;
-    var twoarray = datalast.concat(datalasttwo)
-    res.send(twoarray);
+    // var thisdate = new Date(datethis);
+    // thisdate.setDate(thisdate.getDate() + 1)
+    // var thisyestertime = format(thisdate)
+    // const resulttwo = await db.query(`SELECT id,shift,sku,plan,real,ach,packing_reject,sheet,book,banded,sapuanpack,buble FROM automation.lhp where realdatetime = '${thisyestertime}' AND grup = '${line}'
+    // AND shift in ('Shift 3') ORDER BY id ASC`);
+    // var datalasttwo = resulttwo.rows;
+    // var twoarray = datalast.concat(datalasttwo)
+    res.send(datalast);
 });
 
 app.post('/lhpl5', async (req, res) => {
@@ -3004,7 +3110,7 @@ app.get('/lhpl5/detail/:id', async (req, res) => {
 app.get('/lhpl5_daily/:line', async (req, res) => {
     var line = req.params.line
     var thisdaytime = format(new Date());
-    const result = await db.query(`SELECT id,shift,sku,reguler,hold,output,rmd,rfeeding,roven,rmall FROM automation.lhp_l5 where realdatetime = '${thisdaytime}' AND grup = '${line}' 
+    const result = await db.query(`SELECT * FROM automation.lhp_l5 where realdatetime = '${thisdaytime}' AND grup = '${line}' 
     AND shift in ('Shift 1') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
@@ -3014,27 +3120,166 @@ app.get('/lhpl5_daily/date/:date/:line', async (req, res) => {
     var line = req.params.line
     var datethis = req.params.date
     console.log(datethis)
-    const result = await db.query(`SELECT id,shift,sku,reguler,hold,output,rmd,rfeeding,roven,rmall FROM automation.lhp_l5 where realdatetime = '${datethis}' AND grup = '${line}'
-    AND shift in ('Shift 1','Shift 2') ORDER BY id ASC`);
+    const result = await db.query(`SELECT * FROM automation.lhp_l5 where realdatetime = '${datethis}' AND grup = '${line}'
+    AND shift in ('Shift 1','Shift 2','Shift 3') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
-    var thisdate = new Date(datethis);
-    thisdate.setDate(thisdate.getDate() + 1)
-    var thisyestertime = format(thisdate)
-    const resulttwo = await db.query(`SELECT id,shift,sku,reguler,hold,output,rmd,rfeeding,roven,rmall FROM automation.lhp_l5 where realdatetime = '${thisyestertime}' AND grup = '${line}'
-    AND shift in ('Shift 3') ORDER BY id ASC`);
-    var datalasttwo = resulttwo.rows;
-    var twoarray = datalast.concat(datalasttwo)
-    res.send(twoarray);
+    // var thisdate = new Date(datethis);
+    // thisdate.setDate(thisdate.getDate() + 1)
+    // var thisyestertime = format(thisdate)
+    // const resulttwo = await db.query(`SELECT * FROM automation.lhp_l5 where realdatetime = '${thisyestertime}' AND grup = '${line}'
+    // AND shift in ('Shift 3') ORDER BY id ASC`);
+    // var datalasttwo = resulttwo.rows;
+    // var twoarray = datalast.concat(datalasttwo)
+    res.send(datalast);
 });
 
 app.post('/lhpl7', async (req, res) => {
-    var { realdatetime, grup, shift, sku, plan, real, ach, cello, cellocpp, ctn_type, cello_used, adonan_used, ccbcream_used, avgsheet, avgbook, sheet, book, cutkasar, bubukcuttig, sapuancut, qcpacking, qccello, packing_reject, pof_kue, sapuanpack, buble, suppliercello, speed_mesin, kendala, sample_ctn_qc, banded_under, banded_over, cutoff_jam, ctn_luar, d_b, plastik_pof, coklat_used, sortir, pof } = req.body;
-    db.query('INSERT INTO automation.lhp (realdatetime ,grup, shift, sku ,plan,real,ach,cello,cellocpp,ctn_type,cello_used,adonan_used,ccbcream_used,avgsheet,avgbook,sheet,book,cutkasar,bubukcutting,sapuancut,qcpacking,qccello,packing_reject,pof_kue,sapuanpack,buble,suppliercello,speed_mesin,kendala,sample_ctn_qc,banded_under,banded_over,cutoff_jam,ctn_luar,d_b,plastik_pof,coklat_used,sortir,pof ) VALUES ($1, $2, $3,$4, $5, $6, $7, $8, $9,$10, $11, $12,$13, $14, $15,$16, $17, $18,$19, $20, $21,$22, $23, $24,$25, $26,$27, $28, $29,$30, $31, $32,$33,$34,$35,$36,$37,$38,$39) RETURNING id',
-        [realdatetime, grup, shift, sku, plan, real, ach, cello, cellocpp, ctn_type, cello_used, adonan_used, ccbcream_used, avgsheet, avgbook, sheet, book, cutkasar, bubukcuttig, sapuancut, qcpacking, qccello, packing_reject, pof_kue, sapuanpack, buble, suppliercello, speed_mesin, kendala, sample_ctn_qc, banded_under, banded_over, cutoff_jam, ctn_luar, d_b, plastik_pof, coklat_used, sortir, pof], (error, results) => {
-            res.status(204).send(" added");
-        })
+    const {
+        realdatetime,
+        grup,
+        shift,
+        sku,
+        plan,
+        real,
+        ach,
+        cello,
+        cellocpp,
+        ctn_type,
+        cello_used,
+        adonan_used,
+        ccbcream_used,
+        avgsheet,
+        avgbook,
+        sheet,
+        book,
+        cutkasar,
+        bubukcutting,
+        sapuancut,
+        qcpacking,
+        qccello,
+        packing_reject,
+        pof_kue,
+        sapuanpack,
+        buble,
+        suppliercello,
+        speed_mesin,
+        kendala,
+        sample_ctn_qc,
+        banded_under,
+        banded_over,
+        cutoff_jam,
+        ctn_luar,
+        d_b,
+        plastik_pof,
+        coklat_used,
+        sortir,
+        pof,
+        users_input
+    } = req.body;
+
+    try {
+        const result = await db.query(
+            `INSERT INTO automation.lhp (
+                realdatetime,
+                grup,
+                shift,
+                sku,
+                plan,
+                real,
+                ach,
+                cello,
+                cellocpp,
+                ctn_type,
+                cello_used,
+                adonan_used,
+                ccbcream_used,
+                avgsheet,
+                avgbook,
+                sheet,
+                book,
+                cutkasar,
+                bubukcutting,
+                sapuancut,
+                qcpacking,
+                qccello,
+                packing_reject,
+                pof_kue,
+                sapuanpack,
+                buble,
+                suppliercello,
+                speed_mesin,
+                kendala,
+                sample_ctn_qc,
+                banded_under,
+                banded_over,
+                cutoff_jam,
+                ctn_luar,
+                d_b,
+                plastik_pof,
+                coklat_used,
+                sortir,
+                pof,
+                users_input
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9,
+                $10, $11, $12, $13, $14, $15, $16, $17,
+                $18, $19, $20, $21, $22, $23, $24, $25,
+                $26, $27, $28, $29, $30, $31, $32, $33,
+                $34, $35, $36, $37, $38, $39, $40
+            ) RETURNING id`,
+            [
+                realdatetime,
+                grup,
+                shift,
+                sku,
+                plan,
+                real,
+                ach,
+                cello,
+                cellocpp,
+                ctn_type,
+                cello_used,
+                adonan_used,
+                ccbcream_used,
+                avgsheet,
+                avgbook,
+                sheet,
+                book,
+                cutkasar,
+                bubukcutting,
+                sapuancut,
+                qcpacking,
+                qccello,
+                packing_reject,
+                pof_kue,
+                sapuanpack,
+                buble,
+                suppliercello,
+                speed_mesin,
+                kendala,
+                sample_ctn_qc,
+                banded_under,
+                banded_over,
+                cutoff_jam,
+                ctn_luar,
+                d_b,
+                plastik_pof,
+                coklat_used,
+                sortir,
+                pof,
+                users_input
+            ]
+        );
+
+        console.log("DATA", result); // Log the result for debugging
+        res.status(201).json({ id: result.rows[0].id });
+    } catch (error) {
+        console.error("Error inserting data:", error);
+        res.status(500).json({ error: 'An error occurred while saving data.' });
+    }
 });
+
 
 
 

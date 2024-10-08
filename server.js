@@ -1,35 +1,17 @@
 const express = require('express');
 var fs = require('fs');
 const logger = require('morgan');
-const MongoClient = require('mongodb').MongoClient;
 const bodyParser = require('body-parser');
-var ObjectID = require('mongodb').ObjectID;
-const mongoose = require('./config/database');
 const cors = require('cors');
-const { Telegraf } = require('telegraf')
-const { message } = require('telegraf/filters')
-const date = require('date-and-time')
-const cron = require('node-cron');
-const bot = new Telegraf('6615502786:AAEF5x-f7uB0fUhnuifF3YkWsclzI37k1VM')
 var jwt = require('jsonwebtoken');
 var https = require('https');
 const db = require('./config/util');
-const { Console } = require('console');
 
-//var url = 'postgres://yhmlscgh:fq_tRuzqEAjjMm66fzZj3TN1J5vnWxJe@rain.db.elephantsql.com/yhmlscgh';
+
 const app = express();
-// app.set('secretKey', 'nodeRestApi'); // jwt secret token
-// var port = 5004;
 const corsPerRoute = cors();
-//SSL HTTPS 
-// var privateKey = fs.readFileSync('/etc/ssl/ssl-bitniaga.key', 'utf8');
-// var certificate = fs.readFileSync('/etc/ssl/ssl-bundle.crt', 'utf8');
-// var credentials = { key: privateKey, cert: certificate };
-// var httpsServer = https.createServer(credentials, app);
 
 
-// connection to mongodb
-// mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
 app.use(logger('dev'));
 var corsOptions = {
     origin: "*"
@@ -63,51 +45,13 @@ function validateUser(req, res, next) {
     });
 
 }
-// mongoose.connect(url, { useNewUrlParser: true }, function(err) {
-//     if (err) throw err;
-//     console.log('Berhasil Terkoneksi Database');
 
-// });
-
-//ur1 = 'https://localhost:2017/Smart_Factory';
-mongoose.Promise = global.Promise;
-
-// app.use(express.static('public'));
 app.use(express.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/login', require('./routes/auth/register'));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-// app.post('/status_on', async function(request, response) {
-//     var datanih = request.body;
-//     const result = await db.query('SELECT * FROM test110124 ORDER BY id DESC LIMIT 1');
-//             //console.log("DATA" ,result)
-//     var datalast = result.rows;
-//     const dt = new Date(datanih.srvtime);
-//     // const dt = new Date();
-//     const padL = (nr, len = 2, chr = `0`) => `${nr}`.padStart(2, chr);  
-//     if ( datanih.value==1 && datalast[0].status_mixer==0  ) {
-//         bot.telegram.sendMessage(-1002109960007,`Status Mixer:  "ON" , Tanggal : ${
-//             padL(dt.getDate())}/${ 
-//             padL(dt.getMonth()+1)}/${
-//             dt.getFullYear()} ${
-//             padL(dt.getHours())}:${
-//             padL(dt.getMinutes())}:${
-//             padL(dt.getSeconds())}`)
-//         console.log("Status On")
-//     }else if ( datanih.value==0 && datalast[0].status_mixer==1){
-//         bot.telegram.sendMessage(-1002109960007,`Status Mixer:  "OFF" , Tanggal : ${
-//             padL(dt.getDate())}/${ 
-//             padL(dt.getMonth()+1)}/${
-//             dt.getFullYear()} ${
-//             padL(dt.getHours())}:${
-//             padL(dt.getMinutes())}:${
-//             padL(dt.getSeconds())}`)
-//         console.log("Status Off")
-//     }else{
-//         console.log("Status masih sama")
-//     }
-// });
+
 function format(date) {
     if (!(date instanceof Date)) {
         throw new Error('Invalid "date" argument. You must pass a date instance')
@@ -3031,146 +2975,6 @@ app.post('/lhpl7', async (req, res) => {
 
 
 
-
-//Telegram
-// bot.start((ctx) => ctx.reply('Automation Aktif'));
-// bot.hears('Selamat Pagi', (ctx) => ctx.reply('Sukses Selalu'))
-// bot.hears('Layanan', async (ctx) => {
-//     await ctx.reply('Automation Mayora Indah Tbk')
-//     await ctx.reply('Apa yang ingin anda ketahui?')
-//     await ctx.reply('1.Report Packing Mesin A')
-//     await ctx.reply('2.Report Packing Mesin B')
-//     await ctx.reply('3.Report Lainya')
-//     await ctx.reply('4.Report Lainya')
-//     await ctx.reply('5.Report Lainya')
-//  })
-// bot.command('reportCk', async ctx => {
-//     const result = await db.query('SELECT * FROM test110124 ORDER BY id DESC LIMIT 1');
-//     //console.log("DATA" ,result)
-//     var datanih = result.rows;
-//     // for (let index = 0; index < datanih.length; index++) {
-//     //     //const element = data[index];
-//     const dt = new Date(data[0].datetime);
-//     // const dt = new Date();
-//      const padL = (nr, len = 2, chr = `0`) => `${nr}`.padStart(2, chr);  
-//         let statusnih ;
-
-//         if (datanih[0].status_mixer==1) {
-//             statusnih = "ON"
-//         }else{
-//             statusnih = "OF"
-//         }
-//         ctx.reply(`Report CK Tanggal : ${
-//             padL(dt.getDate())}/${ 
-//             padL(dt.getMonth()+1)}/${
-//             dt.getFullYear()} ${
-//             padL(dt.getHours())}:${
-//             padL(dt.getMinutes())}:${
-//             padL(dt.getSeconds())}`)
-//         ctx.reply(`Counter :  ${datanih[0].counter_1} , Status mixer :  ${statusnih} , Temperatur :  ${datanih[0].temperatur}`)
-//     // }
-
-// })
-// cron.schedule('*/2 * * * *', async () => {
-//     const result = await db.query('SELECT * FROM test110124 ORDER BY id DESC LIMIT 1');
-//     console.log("DATA" ,result)
-//     var datanih = result.rows;
-//     // for (let index = 0; index < datanih.length; index++) {
-//     //     //const element = data[index];
-//         let statusnih ;
-
-//         if (datanih[0].status_mixer==1) {
-//             statusnih = "ON"
-//         }else{
-//             statusnih = "OF"
-//         }
-//         bot.telegram.sendMessage(-1002109960007,`Report CK Tanggal :  ${datanih[0].datetime}`)
-//         bot.telegram.sendMessage(-1002109960007, `Counter :  ${datanih[0].counter_1} , Status mixer :  ${statusnih} , Temperatur :  ${datanih[0].temperatur}`)
-//         //bot.launch();
-//     }
-//     // var token = "6615502786:AAEF5x-f7uB0fUhnuifF3YkWsclzI37k1VM"; // Fill this in with your token
-//     // var telegramUrl = "https://api.telegram.org/bot" + token;
-//     //     var res = UrlFetchApp.fetch(telegramUrl+"/getUpdates").getContentText();
-//     //     var res = JSON.parse(res);
-//     //     console.log(res.result[0].message.chat.id.toString());
-// );
-// bot.command('reportPackingB', ctx => {
-//     db.collection('packing').find({code : "B"}).toArray(function(err, data) {
-//        if (err) {
-//            ctx.reply("Tidak ada data atau error")
-//        } else {
-//            console.log("Data respon",data)
-//            // let input = ctx.message.text.split(" ")
-//            //const curentdet = date.format(data[0].datetime ,'YYYY/MM/DD HH:mm:ss')
-//            const dt = new Date(data[0].datetime);
-//           // const dt = new Date();
-//            const padL = (nr, len = 2, chr = `0`) => `${nr}`.padStart(2, chr);  
-
-//            ctx.reply(`Report All Packing Tanggal ${
-//                padL(dt.getDate())}/${ 
-//                padL(dt.getMonth()+1)}/${
-//                dt.getFullYear()} ${
-//                padL(dt.getHours())}:${
-//                padL(dt.getMinutes())}:${
-//                padL(dt.getSeconds())}`)
-//            for (let index = 0; index < data.length; index++) {
-//                //const element = data[index];
-//                ctx.reply(`Mesin :  ${data[index].mesin} , Speed :  ${data[index].speed} , Problem & Issue :  ${data[index].problem_issue} , Solusi / Perbaikan : ${data[index].perbaikan}`)
-//            }
-//        }
-//    });
-// })
-// bot.command('addPacking', ctx => {
-//     let input = ctx.message.text.split(" ");
-//     if (input.length==0) {
-//         ctx.reply("Tidak ada data untuk diisi")
-//         return
-//     }
-//     var date = new Date();
-//     var curentdate = date.toISOString();
-//     var mesin = input[1]
-//     var speed = input[2]
-//     var problem = input[3]
-//     var perbaikan = input[4]
-//     var object  = {
-//         "datetime" : curentdate,
-//         "mesin" : mesin,
-//         "speed" : speed,
-//         "problem_issue" : problem,
-//         "perbaikan" : perbaikan
-//     }
-
-//     db.collection('packing').insert(object);
-//     ctx.reply("Data berhasil Ditambahkan")
-// })
-// bot.launch();
 app.listen(3000, () => {
     console.log('Server is running on port 3000');
 });
-// mongoose.connect(url, cors(), {
-//     useNewUrlParser: true,
-//     useUnifiedTopology: true
-// },).then((res) => {
-//     require('./app/routes')(app, res);
-
-//     require('./app/routes')(app, {});
-//      //httpsServer.listen(443, () => {
-//         app.listen(5004,() => {
-//         console.log('We are live on');
-//     });
-//    // console.log("Database connected");
-// }).catch(error => {
-//      console.log(error);
-// });
-// MongoClient.connect(url, cors(), function(err, database) {
-//     if (err) return console.log(err)
-//     // Make sure you add the database name and not the collection name
-//     require('./app/routes')(app, database);
-
-//     require('./app/routes')(app, {});
-//      //httpsServer.listen(443, () => {
-//         app.listen(5004,() => {
-//         console.log('We are live on');
-//     });
-// });
-//
