@@ -1,12 +1,13 @@
 {
-  "name": "revisi_sangat",
-  "version": "1.0.0",
-  "description": "",
+  "name": "automation_back_end",
+  "version": "2.0.0",
+  "description": "Server Mayora",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "dev": "nodemon server_iot.js"
   },
-  "author": "",
+  "author": "Mayora.Indah.Tbk PSR",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -16,23 +17,18 @@
     "date-and-time": "^3.1.0",
     "download": "^8.0.0",
     "electron": "^17.0.1",
-    "electron-pos-printer": "^1.2.4",
-    "excel": "^1.0.1",
-    "exceljs": "^4.2.0",
     "express": "^4.16.4",
+    "grammy": "^1.30.0",
     "jsonwebtoken": "^8.5.1",
     "md5": "^2.3.0",
-    "mongodb": "^2.2.33",
-    "mongoose-morgan": "^1.0.8",
+    "morgan": "^1.10.0",
     "multer": "^1.4.2",
     "node-cron": "^3.0.3",
     "node-routeros": "^1.6.9",
-    "node-thermal-printer": "^4.1.2",
-    "nodejs-bca-scraper": "^1.0.1",
     "pg": "^8.11.3",
     "routeros-client": "^1.1.0",
-    "telegraf": "^4.15.3",
-    "vuejs-countdown-timer": "^2.1.1"
+    "socket.io": "^4.8.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
