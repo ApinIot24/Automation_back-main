@@ -20,11 +20,13 @@ import line1 from './routes/wafer/line1/line1.js';
 import line2 from './routes/wafer/line2/line2.js';
 import line7 from './routes/wafer/line7/line7.js';
 // Routes Definisi Biscuit
-// import line5 from './routes/biscuit/line5/line5.js';
+import line5 from './routes/biscuit/line5/line5.js';
 import downtime_biscuit from './routes/biscuit/downtime/downtime.js';
 import lhp_biscuit from './routes/biscuit/lhp/lhp.js';
-
 import central_kitchen from './routes/central_kitchen.js';
+import importRoutesWafer from './routes/wafer/import/import.js';
+import pushNotificationRoutes from './routes/pushNotification.js';
+// import emailRoutes from './routes/email/email.js';
 
 const app = express();
 const bot = new Bot('7619267734:AAEQ5PznHdgJRuLDWCm_VWv8mp-k4SzjSbI');
@@ -64,7 +66,6 @@ function validateUser(req, res, next) {
 app.use(express.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/login', register);
-app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Definisikan fungsi `format` yang ingin ditambahkan ke `req`
@@ -83,9 +84,11 @@ app.use((req, res, next) => {
     req.db_iot = db_iot;  // Menambahkan koneksi `db_iot` ke request
     next();               // Melanjutkan ke middleware atau rute berikutnya
 });
-
+app.use('/api/push', pushNotificationRoutes);
+cron.schedule('* * * * *', () => {
+    console.log('Cron job berjalan setiap menit');
+});
 app.use('/', central_kitchen);
-
 //line1
 app.use('/', line1);
 //line2
@@ -98,12 +101,13 @@ app.use('/', downtime_wafer);
 app.use('/', lhp_wafer);
 app.use('/', control_wafer);
 // line5
-// app.use('/',line5);
+app.use('/',line5);
 // downtime_biscuit
 app.use('/', downtime_biscuit);
 // lhp_biscuit
 app.use('/', lhp_biscuit);
-
+app.use('/api', importRoutesWafer);
+// app.use('/api/email', emailRoutes);
 app.listen(3000, () => {
     console.log('Server is running on port 3000');
 });

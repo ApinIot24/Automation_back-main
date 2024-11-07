@@ -27,7 +27,16 @@ app.post('/lhpl5', async (req, res) => {
         if (!users_input || !realdatetime || !grup || !shift || !sku) {
             return res.status(400).json({ message: "Missing required fields" });
         }
-
+        const existingEntry = await req.db.query(
+            `SELECT * FROM automation.lhp_l5 WHERE realdatetime = $1 AND shift = $2`,
+            [realdatetime, shift]
+        );
+        const dateformat = realdatetime.slice(0, 10);
+        // console.log("Hasil query existingEntry:", existingEntry.rows);
+        // console.log(dateformat);
+        if (existingEntry.rows.length > 0) {
+            return res.status(400).json({ message: `Data already exists for this date and shift. your date ${dateformat} and your ${shift}` });
+        }
         // Step 1: Insert data LHP L5 ke dalam database
         const result = await req.db.query(
             `INSERT INTO automation.lhp_l5 (
@@ -67,49 +76,53 @@ app.post('/lhpl5', async (req, res) => {
 
         const idLhpL5 = result.rows[0].id;
 
-      // Step 2: Prepare kendala as JSONB from downtime
-      const kendalaDowntime = {};
-      downtime.forEach((entry, index) => {
-          kendalaDowntime[`kendala${index + 1}`] = `Time Start: ${entry.time_start}, Time Stop: ${entry.time_stop}, Total DT: ${entry.total_dt}, Kendala: ${entry.kendala}, Unit Mesin: ${entry.unit_mesin} , Part Mesin: ${entry.part_mesin}`;
-      });
+        // Step 2: Prepare kendala as JSONB from downtime
+        const kendalaDowntime = {};
+        downtime.forEach((entry, index) => {
+            kendalaDowntime[`kendala${index + 1}`] = `Time Start: ${entry.time_start}, Time Stop: ${entry.time_stop}, Total DT: ${entry.total_dt}, Kendala: ${entry.kendala}, Unit Mesin: ${entry.unit_mesin} , Part Mesin: ${entry.part_mesin}`;
+        });
 
-      // Step 3: Update kendala di tabel LHP dengan JSONB
-      await req.db.query(
-          `UPDATE automation.lhp_l5
+        // Step 3: Update kendala di tabel LHP dengan JSONB
+        await req.db.query(
+            `UPDATE automation.lhp_l5
                SET kendalaall = $1
                WHERE id = $2`,
-          [JSON.stringify(kendalaDowntime), idLhpL5] 
-          // Konversi ke JSON string sebelum menyimpan
-      );
+            [JSON.stringify(kendalaDowntime), idLhpL5]
+            // Konversi ke JSON string sebelum menyimpan
+        );
 
-      // Step 4: Insert data downtime ke dalam tabel downtime, kaitkan dengan id_lhp
-      const downtimeInsertPromises = downtime.map(entry => {
-          return req.db.query(
-              `INSERT INTO automation.downtime_l5 (
+        // Step 4: Insert data downtime ke dalam tabel downtime, kaitkan dengan id_lhp
+        const downtimeInsertPromises = downtime.map(entry => {
+            return req.db.query(
+                `INSERT INTO automation.downtime_l5 (
                   id_lhp,
                   time_start,
                   time_stop,
                   total_dt,
                   kendala,
                   unit_mesin,
-                  part_mesin
-              ) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-              [
-                     idLhpL5, // ID LHP yang terhubung dengan downtime
-                  entry.time_start,
-                  entry.time_stop,
-                  entry.total_dt,
-                  entry.kendala,
-                  entry.unit_mesin,
-                  entry.part_mesin
-              ]
-          );
-      });
+                  part_mesin,
+                  perbaikan,
+                  penyebab
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                [
+                    idLhpL5, // ID LHP yang terhubung dengan downtime
+                    entry.time_start,
+                    entry.time_stop,
+                    entry.total_dt,
+                    entry.kendala,
+                    entry.unit_mesin,
+                    entry.part_mesin,
+                    entry.perbaikan,
+                    entry.penyebab
+                ]
+            );
+        });
 
-      // Tunggu semua downtime di-insert
-      await Promise.all(downtimeInsertPromises);
+        // Tunggu semua downtime di-insert
+        await Promise.all(downtimeInsertPromises);
 
-      res.status(201).json({ id: idLhpL5 });
+        res.status(201).json({ id: idLhpL5 });
     } catch (error) {
         console.error("Error inserting data:", error);
         res.status(500).json({ message: 'Internal Server Error', error: error.message });

@@ -75,6 +75,15 @@ app.post('/lhp', async (req, res) => {
     } = req.body;
 
     try {
+        const existingEntry = await req.db.query(
+            `SELECT * FROM automation.lhp WHERE realdatetime = $1 AND shift = $2`,
+            [realdatetime, shift]
+        );
+        // console.log("Hasil query existingEntry:", existingEntry.rows);
+        // Memeriksa apakah ada data yang sudah ada
+        if (existingEntry.rows.length > 0) {
+            return res.status(400).json({ message: "Data already exists for this date and shift." });
+        }
         // Step 1: Insert data LHP ke dalam database
         const result = await req.db.query(
             `INSERT INTO automation.lhp (
@@ -154,9 +163,9 @@ app.post('/lhp', async (req, res) => {
                 banded, sapuanpack, buble, suppliercello, speed_mesin,
                 sample_ctn_qc, banded_under, banded_over, cutoff_jam, ctn_luar,
                 d_b, plastik_pof, coklat_used, sortir, pof_kue, users_input,
-                uh,hadir,jam_kerja,jenis_adonan,give_ado,give_cream,give_cello,rej_ado,
-                rej_cream,wip_kg,book_kotor,bs_cello,pakai_ctn,bs_cpp_roll,mc_quality,
-                sbl_ls_es,  sbl_tbd,  sbl_sua,  sbl_ims,  sbl_rs
+                uh, hadir, jam_kerja, jenis_adonan, give_ado, give_cream, give_cello, rej_ado,
+                rej_cream, wip_kg, book_kotor, bs_cello, pakai_ctn, bs_cpp_roll, mc_quality,
+                sbl_ls_es, sbl_tbd, sbl_sua, sbl_ims, sbl_rs
             ]
         );
 
@@ -189,8 +198,10 @@ app.post('/lhp', async (req, res) => {
                     kendala,
                     speed_oven_plan,
                     speed_oven_reduce,
-                    total_sbl
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                    total_sbl,
+                    perbaikan,
+                    penyebab
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
                 [
                     idLhp, // ID LHP yang terhubung dengan downtime
                     entry.time_start,
@@ -202,7 +213,9 @@ app.post('/lhp', async (req, res) => {
                     entry.kendala,
                     entry.speed_oven_plan,
                     entry.speed_oven_reduce,
-                    entry.total_sbl
+                    entry.total_sbl,
+                    entry.perbaikan,
+                    entry.penyebab
                 ]
             );
         });
@@ -233,7 +246,7 @@ app.get('/lhp_daily/:line', async (req, res) => {
     var line = req.params.line
     var thisdaytime = format(new Date());
     const result = await req.db.query(`SELECT * FROM automation.lhp where realdatetime = '${thisdaytime}' AND grup = '${line}' 
-    AND shift in ('Shift 1') ORDER BY id ASC`);
+    AND shift in ('1') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
@@ -243,8 +256,8 @@ app.get('/lhp_daily/date/:date/:line', async (req, res) => {
     var datethis = req.params.date
     // console.log(datethis)
     const result = await req.db.query(`SELECT * FROM automation.lhp where realdatetime = '${datethis}' AND grup = '${line}'
-    AND shift in ('Shift 1','Shift 2', 'Shift 3') ORDER BY shift ASC`);
-    //console.log("DATA" ,result)
+    AND shift in ('1','2','3') ORDER BY shift ASC`);
+    // console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
 });
@@ -293,6 +306,15 @@ app.post('/lhpl7', async (req, res) => {
     } = req.body;
 
     try {
+        const existingEntry = await req.db.query(
+            `SELECT * FROM automation.lhp WHERE realdatetime = $1 AND shift = $2`,
+            [realdatetime, shift]
+        );
+        // console.log("Hasil query existingEntry:", existingEntry.rows);
+        // Memeriksa apakah ada data yang sudah ada
+        if (existingEntry.rows.length > 0) {
+            return res.status(400).json({ message: "Data already exists for this date and shift." });
+        }
         // Step 1: Insert data LHP ke dalam database
         const result = await req.db.query(
             `INSERT INTO automation.lhp (
@@ -364,7 +386,7 @@ app.post('/lhpl7', async (req, res) => {
             `UPDATE automation.lhp
                  SET kendala = $1
                  WHERE id = $2`,
-            [JSON.stringify(kendalaDowntime), idLhp] 
+            [JSON.stringify(kendalaDowntime), idLhp]
             // Konversi ke JSON string sebelum menyimpan
         );
 
@@ -382,8 +404,10 @@ app.post('/lhpl7', async (req, res) => {
                     kendala,
                     speed_oven_plan,
                     speed_oven_reduce,
-                    total_sbl
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                    total_sbl,
+                    perbaikan,
+                    penyebab
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
                 [
                     idLhp, // ID LHP yang terhubung dengan downtime
                     entry.time_start,
@@ -395,11 +419,13 @@ app.post('/lhpl7', async (req, res) => {
                     entry.kendala,
                     entry.speed_oven_plan,
                     entry.speed_oven_reduce,
-                    entry.total_sbl
+                    entry.total_sbl,
+                    entry.perbaikan,
+                    entry.penyebab
                 ]
             );
         });
-         console.log(downtimeInsertPromises);
+        console.log(downtimeInsertPromises);
         // Tunggu semua downtime di-insert
         await Promise.all(downtimeInsertPromises);
 
