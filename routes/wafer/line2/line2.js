@@ -49,7 +49,15 @@ function getWeekDates(year, month, week) {
 app.get('/packing_l2', async (req, res) => {
     const result = await req.db.query('SELECT * FROM automation.packing_l2 ORDER BY id DESC LIMIT 1');
     // console.log("DATA" ,result)
+                                // data tampilan 0%
     var datalast = result.rows;
+    // var datalast = [{ id: 0,
+    //     cntr_bandet :	24,
+    //     cntr_carton	:0,
+    //     realdatetime:	"2024-11-09T03:30:12.155Z",
+    //     tanggal:	"2024-11-08T17:00:00.000Z",
+    //     jam	:    "0.0",
+    //     graph	:null}];
     res.send(datalast);
 });
 app.get('/shift_l2', async (req, res) => {
@@ -112,8 +120,15 @@ app.get('/shift1_l2_hourly', async (req, res) => {
         ) AS distinct_data
         ORDER BY id ASC
     `);
-
-    var datalast = result.rows;
+                        // data tampilan 0%
+    // var datalast = [{ id: 0,
+    //     cntr_bandet :	24,
+    //     cntr_carton	:0,
+    //     realdatetime:	"2024-11-09T03:30:12.155Z",
+    //     tanggal:	"2024-11-08T17:00:00.000Z",
+    //     jam	:    "0.0",
+    //     graph	:null}];
+     var datalast = result.rows;
     res.send(datalast);
 });
 
@@ -129,7 +144,14 @@ app.get('/shift2_l2_hourly', async (req, res) => {
         ) AS distinct_data
         ORDER BY id ASC
     `);
-
+                        //tampilan data 0%
+    // var datalast = [{ id: 0,
+    //     cntr_bandet :	24,
+    //     cntr_carton	:0,
+    //     realdatetime:	"2024-11-09T03:30:12.155Z",
+    //     tanggal:	"2024-11-08T17:00:00.000Z",
+    //     jam	:    "0.0",
+    //     graph	:null}];
     var datalast = result.rows;
     res.send(datalast);
 });
@@ -179,6 +201,14 @@ app.get('/shift3_l2_hourly', async (req, res) => {
     const twoarray = cart.concat(datalasttwo);
 
     // Kirim data sebagai respons
+                        // tampilan data 0%
+    // var twoarray = [{ id: 0,
+    //     cntr_bandet :	24,
+    //     cntr_carton	:0,
+    //     realdatetime:	"2024-11-09T03:30:12.155Z",
+    //     tanggal:	"2024-11-08T17:00:00.000Z",
+    //     jam	:    "0.0",
+    //     graph	:null}];
     res.send(twoarray);
 });
 

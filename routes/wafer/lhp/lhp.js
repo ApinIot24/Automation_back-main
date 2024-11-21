@@ -76,8 +76,8 @@ app.post('/lhp', async (req, res) => {
 
     try {
         const existingEntry = await req.db.query(
-            `SELECT * FROM automation.lhp WHERE realdatetime = $1 AND shift = $2`,
-            [realdatetime, shift]
+            `SELECT * FROM automation.lhp WHERE realdatetime = $1 AND shift = $2 AND grup = $3`,
+            [realdatetime, shift, grup]
         );
         // console.log("Hasil query existingEntry:", existingEntry.rows);
         // Memeriksa apakah ada data yang sudah ada
@@ -252,15 +252,28 @@ app.get('/lhp_daily/:line', async (req, res) => {
     res.send(datalast);
 });
 app.get('/lhp_daily/date/:date/:line', async (req, res) => {
-    var line = req.params.line
-    var datethis = req.params.date
-    // console.log(datethis)
-    const result = await req.db.query(`SELECT * FROM automation.lhp where realdatetime = '${datethis}' AND grup = '${line}'
-    AND shift in ('1','2','3') ORDER BY shift ASC`);
-    // console.log("DATA" ,result)
-    var datalast = result.rows;
-    res.send(datalast);
+    try {
+        const line = req.params.line;
+        const datethis = req.params.date;
+        
+        const result = await req.db.query(`
+            SELECT * FROM automation.lhp 
+            WHERE realdatetime = $1 AND grup = $2 
+            AND shift in ('1','2','3') 
+            ORDER BY shift ASC
+        `, [datethis, line]);
+        
+        const datalast = result.rows;
+        res.status(200).send(datalast);
+    } catch (error) {
+        console.error("Error executing query", error);
+        res.status(500).send({
+            message: "Internal Server Error",
+            error: error.message
+        });
+    }
 });
+
 app.post('/lhpl7', async (req, res) => {
     const {
         realdatetime,
@@ -307,8 +320,8 @@ app.post('/lhpl7', async (req, res) => {
 
     try {
         const existingEntry = await req.db.query(
-            `SELECT * FROM automation.lhp WHERE realdatetime = $1 AND shift = $2`,
-            [realdatetime, shift]
+            `SELECT * FROM automation.lhp WHERE realdatetime = $1 AND shift = $2 AND grup = $3`,
+            [realdatetime, shift, grup]
         );
         // console.log("Hasil query existingEntry:", existingEntry.rows);
         // Memeriksa apakah ada data yang sudah ada

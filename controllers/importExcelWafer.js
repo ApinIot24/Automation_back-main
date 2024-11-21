@@ -3,42 +3,60 @@ import db from '../config/util.js';
 import fs from 'fs';
 
 // Fungsi untuk membaca file Excel dan memasukkan data ke PostgreSQL
-export default async function importExcelWafer(filePath) {
+export default async function importExcelWafer(filePath, specifiedGrup = null) {
     try {
-        // Membaca file Excel dan menggunakan sheet pertama
         const workbook = xlsx.readFile(filePath);
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+        const sheetNames = workbook.SheetNames;
 
-        console.log("Memulai proses impor data ke PostgreSQL...");
+        console.log("Memulai proses impor data dari semua sheet ke PostgreSQL...");
+        // Definisikan array grup sesuai kebutuhan
+        const grupArray = [1, 2, 6, 7];
 
-        let currentMachineName = null; // Menyimpan machine_name saat ini sebagai induk
-
-        for (let i = 10; i < data.length; i++) {
-            const row = data[i];
-            // Cek apakah seluruh baris ini kosong
-            const isRowEmpty = row.every(cell => cell === null || cell === undefined || cell === '');
-            if (isRowEmpty) {
-                console.log("Batas tabel ditemukan pada baris kosong. Menghentikan proses di sini.");
-                break;
+        // Iterasi melalui setiap sheet dalam workbook
+        for (let sheetIndex = 0; sheetIndex < grupArray.length; sheetIndex++) {
+            // Ambil nilai `grup` dari grupArray berdasarkan sheetIndex
+            const grup = grupArray[sheetIndex];
+            // Jika `specifiedGrup` ada dan tidak cocok dengan `grup` saat ini, lewati iterasi ini
+            if (specifiedGrup !== null && specifiedGrup != grup) {
+                continue;
             }
-            // Perbarui machine_name jika kolom ke-2 (machine_name) tidak kosong
-            if (!row[2]) {
-                if (row[1]) {
-                    currentMachineName = row[1]; // Menyimpan sebagai machine_name (induk) baru
+
+            const sheetName = sheetNames[sheetIndex];
+            const sheet = workbook.Sheets[sheetName];
+            const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+            console.log(`Memproses sheet: ${sheetName} untuk grup ${grup}...`);
+            let currentMachineName = null; // Menyimpan machine_name saat ini sebagai induk
+
+            for (let i = 10; i < data.length; i++) {
+                const row = data[i];
+                const isRowEmpty = row.every(cell => cell === null || cell === undefined || cell === '');
+
+                if (isRowEmpty) break; // Keluar dari loop jika menemukan baris kosong
+
+                // Perbarui machine_name jika kolom ke-2 (machine_name) tidak kosong
+                if (!row[2]) {
+                    if (row[1]) {
+                        currentMachineName = row[1];
+                    }
+                }
+                try {
+                    // Menjalankan query untuk memasukkan data ke tabel pm_wafer dengan grup yang sesuai
+                    await db.query(
+                        `INSERT INTO automation.pm_wafer (no, machine_name, equipment, part_kebutuhan_alat, kode_barang, qty, periode, grup) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                        [row[0], currentMachineName, row[1], row[2], row[3], row[4], row[5], grup]
+                    );
+                    console.log(`Data berhasil diimpor dari ${sheetName}`);
+                } catch (insertError) {
+                    console.error(`Error inserting row ${i}:`, insertError);
                 }
             }
-            // Menjalankan query untuk memasukkan data ke tabel pm_wafer
-            const machineRes = await db.query(
-                `INSERT INTO pm_wafer (no, machine_name, equipment, part_kebutuhan_alat, qty, periode, grup) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-                [row[0], currentMachineName, row[1], row[2], row[3], row[4], 1]
-            );
         }
-        console.log("Data berhasil diimpor ke PostgreSQL.");
+
     } catch (error) {
         console.error("Error mengimpor data:", error);
         throw error;
     } finally {
-        fs.unlinkSync(filePath); // Menghapus file setelah diimpor
+        // Menghapus file setelah diimpor
+        fs.unlinkSync(filePath);
     }
-};
+}

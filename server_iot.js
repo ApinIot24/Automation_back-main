@@ -1,17 +1,17 @@
 import express from 'express';
-import fs from 'fs';
 import logger from 'morgan';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import date from 'date-and-time';
-import cron from 'node-cron';
 import jwt from 'jsonwebtoken';
-import https from 'https';
+import http from 'http';  // Gunakan http untuk server
+import https from 'https'; 
+import cron from 'node-cron';
+import { Server } from 'socket.io';
 import db from './config/util.js';
 import db_iot from './config/users.js';
 import register from './routes/auth/register.js';
 import { Bot } from 'grammy';
-
+import fs from 'fs';
 // Routes Definisi Wafer
 import downtime_wafer from './routes/wafer/downtime/downtime.js';
 import lhp_wafer from './routes/wafer/lhp/lhp.js';
@@ -25,12 +25,21 @@ import downtime_biscuit from './routes/biscuit/downtime/downtime.js';
 import lhp_biscuit from './routes/biscuit/lhp/lhp.js';
 import central_kitchen from './routes/central_kitchen.js';
 import importRoutesWafer from './routes/wafer/import/import.js';
-import pushNotificationRoutes from './routes/pushNotification.js';
-// import emailRoutes from './routes/email/email.js';
 
 const app = express();
-const bot = new Bot('7619267734:AAEQ5PznHdgJRuLDWCm_VWv8mp-k4SzjSbI');
 
+// Membuat server HTTP
+const httpServer = http.createServer(app);
+
+// Inisialisasi Socket.IO pada server HTTP
+const io = new Server(httpServer, {
+    cors: {
+        origin: "*", // Sesuaikan jika Anda ingin membatasi domain yang dapat mengakses
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    },
+});
+
+// Middleware
 const corsOptions = {
     origin: "*",
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -52,6 +61,7 @@ app.get('/', (req, res) => {
     res.json({ "Welcome": "Selamat Datang di API RESMI KAMI" });
 });
 
+// Middleware untuk autentikasi
 function validateUser(req, res, next) {
     jwt.verify(req.headers['x-access-token'], req.app.get('secretKey'), (err, decoded) => {
         if (err) {
@@ -68,46 +78,62 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/login', register);
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Definisikan fungsi `format` yang ingin ditambahkan ke `req`
-function format(date) {
-    if (!(date instanceof Date)) {
-        throw new Error('Invalid "date" argument. You must pass a date instance');
-    }
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-// Middleware untuk menambahkan `db`, `db_iot`, dan `format` ke setiap `req`
+// Middleware untuk menambahkan `db` ke `req`
 app.use((req, res, next) => {
-    req.db = db;          // Menambahkan koneksi `db` ke request
-    req.db_iot = db_iot;  // Menambahkan koneksi `db_iot` ke request
-    next();               // Melanjutkan ke middleware atau rute berikutnya
+    req.db = db;
+    req.db_iot = db_iot;
+    next();
 });
-app.use('/api/push', pushNotificationRoutes);
+
+// Inisialisasi Socket.IO
+io.on('connection', (socket) => {
+    console.log(`Client connected: ${socket.id}`);
+
+    // Event saat klien terputus
+    socket.on('disconnect', () => {
+        console.log(`Client disconnected: ${socket.id}`);
+    });
+});
+
+// Cron job untuk mengirim notifikasi setiap menit
 cron.schedule('* * * * *', () => {
-    console.log('Cron job berjalan setiap menit');
+    const payload = {
+        title: 'Notifikasi Terjadwal',
+        body: 'Ini adalah notifikasi yang dikirim setiap menit.',
+    };
+    io.emit('notification', payload); // Kirim notifikasi ke semua klien
+    console.log('Notifikasi dikirim:', payload);
 });
+
+// API Routes
 app.use('/', central_kitchen);
-//line1
 app.use('/', line1);
-//line2
 app.use('/', line2);
-//line7
 app.use('/', line7);
-// downtime_wafer
 app.use('/', downtime_wafer);
-// lhp_wafer
 app.use('/', lhp_wafer);
 app.use('/', control_wafer);
-// line5
-app.use('/',line5);
-// downtime_biscuit
+app.use('/', line5);
 app.use('/', downtime_biscuit);
-// lhp_biscuit
 app.use('/', lhp_biscuit);
 app.use('/api', importRoutesWafer);
-// app.use('/api/email', emailRoutes);
-app.listen(3000, () => {
-    console.log('Server is running on port 3000');
+
+
+
+// Jalankan server HTTP
+httpServer.listen(3000, '10.37.12.17', () => {
+    console.log('Server HTTP berjalan di http://10.37.12.17:3000');
+});
+
+// Membaca file sertifikat SSL
+const privateKey = fs.readFileSync('./server.key', 'utf8');
+const certificate = fs.readFileSync('./server.cert', 'utf8');
+const credentials = { key: privateKey, cert: certificate };
+
+// Membuat server HTTPS
+const httpsServer = https.createServer(credentials, app);
+
+// Jalankan server HTTPS
+httpsServer.listen(3443, '10.37.12.17', () => {
+    console.log('Server HTTPS berjalan di https://10.37.12.17:3443');
 });

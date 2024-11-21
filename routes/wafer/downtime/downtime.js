@@ -15,6 +15,8 @@ app.get('/downtime_daily/range/:startDate/:endDate/:line', async (req, res) => {
                 downtime.kendala,
                 downtime.unit_mesin,
                 downtime.part_mesin,
+                downtime.penyebab,
+                downtime.perbaikan,
                 lhp.grup, 
                 lhp.users_input, 
                 TO_CHAR(lhp.realdatetime, 'YYYY-MM-DD') AS realdatetime
@@ -55,6 +57,8 @@ app.get('/downtime_daily_l5/range/:startDate/:endDate/:line', async (req, res) =
                 downtime_l5.kendala,
                 downtime_l5.unit_mesin,
                 downtime_l5.part_mesin,
+                downtime_l5.penyebab,
+                downtime_l5.perbaikan,
                 lhp_l5.grup, 
                 lhp_l5.users_input, 
                 TO_CHAR(lhp_l5.realdatetime, 'YYYY-MM-DD') AS realdatetime

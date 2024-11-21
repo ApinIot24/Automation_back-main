@@ -27,17 +27,17 @@ app.post('/lhpl5', async (req, res) => {
         if (!users_input || !realdatetime || !grup || !shift || !sku) {
             return res.status(400).json({ message: "Missing required fields" });
         }
-        const existingEntry = await req.db.query(
-            `SELECT * FROM automation.lhp_l5 WHERE realdatetime = $1 AND shift = $2`,
-            [realdatetime, shift]
-        );
         const dateformat = realdatetime.slice(0, 10);
-        // console.log("Hasil query existingEntry:", existingEntry.rows);
-        // console.log(dateformat);
+        const existingEntry = await req.db.query(
+            `SELECT * FROM automation.lhp_l5 WHERE realdatetime = $1 AND shift = $2  AND grup = $3`,
+            [dateformat, shift, grup]
+        );
+        console.log("Hasil query existingEntry:", existingEntry.rows);
+        console.log(dateformat);
         if (existingEntry.rows.length > 0) {
             return res.status(400).json({ message: `Data already exists for this date and shift. your date ${dateformat} and your ${shift}` });
         }
-        // Step 1: Insert data LHP L5 ke dalam database
+        // Step 1: Insert data LHP L5 ke dalam database 
         const result = await req.db.query(
             `INSERT INTO automation.lhp_l5 (
                 users_input, realdatetime, grup, shift, sku, reguler, hold, output, bubuk,
@@ -69,7 +69,6 @@ app.post('/lhpl5', async (req, res) => {
                 wip_adonan_kulit, adonan_gagal_kg, adonan_gagal_kulit, weight_bsc_pcs, weight_bsc_pack
             ]
         );
-
         if (result.rows.length === 0) {
             throw new Error("Failed to insert data into LHP L5");
         }
