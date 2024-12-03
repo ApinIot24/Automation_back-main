@@ -149,21 +149,129 @@ app.get('/lhpl5_daily/:line', async (req, res) => {
     var datalast = result.rows;
     res.send(datalast);
 });
+
+
 app.get('/lhpl5_daily/date/:date/:line', async (req, res) => {
-    var line = req.params.line
-    var datethis = req.params.date
-    // console.log(datethis)
-    const result = await req.db.query(`SELECT * FROM automation.lhp_l5 where realdatetime = '${datethis}' AND grup = '${line}'
-    AND shift in ('Shift 1','Shift 2','Shift 3') ORDER BY shift ASC`);
-    //console.log("DATA" ,result)
-    var datalast = result.rows;
-    // var thisdate = new Date(datethis);
-    // thisdate.setDate(thisdate.getDate() + 1)
-    // var thisyestertime = format(thisdate)
-    // const resulttwo = await req.db.query(`SELECT * FROM automation.lhp_l5 where realdatetime = '${thisyestertime}' AND grup = '${line}'
-    // AND shift in ('Shift 3') ORDER BY id ASC`);
-    // var datalasttwo = resulttwo.rows;
-    // var twoarray = datalast.concat(datalasttwo)
-    res.send(datalast);
+    const { date, line } = req.params;
+
+    try {
+        // Parse the date parameter to ensure it's in a valid format (YYYY-MM-DD)
+        const formattedDate = new Date(date);
+        if (isNaN(formattedDate.getTime())) {
+            return res.status(400).json({ error: 'Invalid date format. Please use YYYY-MM-DD.' });
+        }
+        // Format date to YYYY-MM-DD for SQL query
+        const formattedDateString = formattedDate.toISOString().split('T')[0];
+
+        // Query SQL untuk mendapatkan data yang diinginkan
+        const query = `
+WITH shifts AS (
+    SELECT 'Shift 1' AS shift
+    UNION ALL
+    SELECT 'Shift 2'
+    UNION ALL
+    SELECT 'Shift 3'
+),
+dates AS (
+    SELECT DISTINCT realdatetime
+    FROM automation.lhp_l5
+    WHERE realdatetime::date = $1  -- Filter by date
+),
+all_combinations AS (
+    SELECT d.realdatetime, s.shift
+    FROM dates d
+    CROSS JOIN shifts s
+)
+SELECT
+    ROW_NUMBER() OVER (ORDER BY ac.realdatetime, ac.shift) AS id,  -- Add unique ID
+    ac.realdatetime,
+    ac.shift,
+    COALESCE(sd.users_input, '0') AS users_input, 
+    COALESCE(sd.grup, 'l5') AS grup, 
+    COALESCE(sd.sku, 'NONE') AS sku, 
+    COALESCE(sd.reguler, '0') AS reguler, 
+    COALESCE(sd.hold, '0') AS hold, 
+    COALESCE(sd.output, '0') AS output, 
+    COALESCE(sd.bubuk, '0') AS bubuk, 
+    COALESCE(sd.berat_kering, '0') AS berat_kering, 
+    COALESCE(sd.berat_basah, '0') AS berat_basah, 
+    COALESCE(sd.rmd, '0') AS rmd, 
+    COALESCE(sd.rfeeding, '0') AS rfeeding, 
+    COALESCE(sd.rmall, '0') AS rmall, 
+    COALESCE(sd.rpacktable, '0') AS rpacktable, 
+    COALESCE(sd.rejectpacking, '0') AS rejectpacking, 
+    COALESCE(sd.rejectstacking, '0') AS rejectstacking, 
+    COALESCE(sd.rejectcoolingconveyor, '0') AS rejectcoolingconveyor, 
+    COALESCE(sd.rmtotal, '0') AS rmtotal, 
+    COALESCE(sd.roven, '0') AS roven, 
+    COALESCE(sd.soven, '0') AS soven, 
+    COALESCE(sd.mcbks, '0') AS mcbks, 
+    COALESCE(sd.ptable, '0') AS ptable, 
+    COALESCE(sd.serbuk, '0') AS serbuk, 
+    COALESCE(sd.tampungan, '0') AS tampungan,
+    COALESCE(sd.total, '0') AS total, 
+    COALESCE(sd.brtpack, '0') AS brtpack, 
+    COALESCE(sd.brtpcs, '0') AS brtpcs, 
+    COALESCE(sd.wiinner, '0') AS wiinner, 
+    COALESCE(sd.wipkulitawal, '0') AS wipkulitawal, 
+    COALESCE(sd.wipkulitakhir, '0') AS wipkulitakhir, 
+    COALESCE(sd.wipselisih, '0') AS wipselisih, 
+    COALESCE(sd.wipkulit, '0') AS wipkulit, 
+    COALESCE(sd.viawal, '0') AS viawal, 
+    COALESCE(sd.viambil, '0') AS viambil, 
+    COALESCE(sd.viakhir, '0') AS viakhir,
+    COALESCE(sd.vireturn, '0') AS vireturn, 
+    COALESCE(sd.viinner, '0') AS viinner, 
+    COALESCE(sd.virainner, '0') AS virainner, 
+    COALESCE(sd.viall, '0') AS viall, 
+    COALESCE(sd.variance, '0') AS variance, 
+    COALESCE(sd.krkawal, '0') AS krkawal, 
+    COALESCE(sd.krawal, '0') AS krawal, 
+    COALESCE(sd.krakhir, '0') AS krakhir, 
+    COALESCE(sd.krpakai, '0') AS krpakai, 
+    COALESCE(sd.kreturn, '0') AS kreturn,
+    COALESCE(sd.kreject, '0') AS kreject, 
+    COALESCE(sd.kendalaall, '0') AS kendalaall, 
+    COALESCE(sd.rpackinner, '0') AS rpackinner, 
+    COALESCE(sd.roll, '0') AS roll, 
+    COALESCE(sd.sampahpacking, '0') AS sampahpacking, 
+    COALESCE(sd.planning, '0') AS planning, 
+    COALESCE(sd.output_kg, '0') AS output_kg, 
+    COALESCE(sd.batch_buat, '0') AS batch_buat, 
+    COALESCE(sd.variance_batch, '0') AS variance_batch, 
+    COALESCE(sd.variance_fg, '0') AS variance_fg,
+    COALESCE(sd.batch_tuang, '0') AS batch_tuang, 
+    COALESCE(sd.batch_cetak, '0') AS batch_cetak, 
+    COALESCE(sd.wip_adonan_awal, '0') AS wip_adonan_awal, 
+    COALESCE(sd.wip_adonan_akhir, '0') AS wip_adonan_akhir, 
+    COALESCE(sd.wip_adonan_selisih, '0') AS wip_adonan_selisih, 
+    COALESCE(sd.wip_adonan_kulit, '0') AS wip_adonan_kulit, 
+    COALESCE(sd.adonan_gagal_kg, '0') AS adonan_gagal_kg,
+    COALESCE(sd.adonan_gagal_kulit, '0') AS adonan_gagal_kulit, 
+    COALESCE(sd.weight_bsc_pcs, '0') AS weight_bsc_pcs, 
+    COALESCE(sd.weight_bsc_pack, '0') AS weight_bsc_pack
+FROM all_combinations ac
+LEFT JOIN automation.lhp_l5 sd 
+    ON ac.realdatetime = sd.realdatetime AND ac.shift = sd.shift
+WHERE (sd.grup = $2 OR sd.grup IS NULL)  -- Filter by group, allow null for missing data
+ORDER BY ac.realdatetime, ac.shift;
+        `;
+
+        // Menjalankan query
+        const result = await req.db.query(query, [formattedDateString, line]);
+
+        // Menangani hasil query dan mengirimkan response
+        const datalast = result.rows;  // Hasil query dari PostgreSQL
+
+        res.json(datalast);  // Kirimkan data sebagai JSON ke client
+    } catch (err) {
+        console.error('Error executing query', err.stack);
+        res.status(500).send('Error fetching data');
+    }
 });
+
+
+
+
+
 export default app;

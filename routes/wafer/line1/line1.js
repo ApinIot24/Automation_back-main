@@ -69,7 +69,7 @@ app.get('/shift_l1', async (req, res) => {
 app.get('/shift1_l1', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await req.db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l1 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-        AND jam in ('6.46', '7.0', '7.30', '8.0', '8.30', '9.0', '9.30', '10.0', '10.30', '11.0', '11.30', '12.0', '12.30', '13.0', '13.30', '14.0', '14.30', '14.45') ORDER BY id ASC`);
+        AND jam in ('6.46', '7.0', '7.30', '8.0', '8.30', '9.0', '9.30', '10.0', '10.30', '11.0', '11.30', '12.0', '12.30', '13.0', '13.30', '14.0', '14.45') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
@@ -77,7 +77,7 @@ app.get('/shift1_l1', async (req, res) => {
 app.get('/shift2_l1', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await req.db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l1 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-        AND jam in ('15.0','15.31','16.0','16.31','17.0','17.31','18.0','18.31','19.0','19.31','20.0','20.31','21.0','21.31','22.0','22.31','22.58') ORDER BY id ASC`);
+        AND jam in ('15.0','15.31','16.0','16.31','17.0','17.31','18.0','18.31','19.0','19.31','20.0','20.31','21.0','21.31','22.0','22.58') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
@@ -99,7 +99,7 @@ app.get('/shift3_l1', async (req, res) => {
         cart.push(element)
     }
     const resulttwo = await req.db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l1 where graph = 'Y' AND tanggal = '${thisyestertime}' 
-        AND jam in ('0.30', '1.0','1.31','2.0','2.31','3.0','3.31','4.0','4.31','5.0','5.31','6.0','6.31','6.59') ORDER BY id ASC`);
+        AND jam in ('0.30', '1.0','1.31','2.0','2.31','3.0','3.31','4.0','4.31','5.0','5.31','6.0','6.59') ORDER BY id ASC`);
     var datalasttwo = resulttwo.rows;
     var twoarray = cart.concat(datalasttwo)
     res.send(twoarray);
@@ -107,13 +107,21 @@ app.get('/shift3_l1', async (req, res) => {
 
 // Shift l1 Hourly
 app.get('/shift1_l1_hourly', async (req, res) => {
-    var thisdaytime = format(new Date());
+    const today = new Date();
+    const isSaturday = today.getDay() === 6; // 6 = Sabtu
+    var thisdaytime = format(today);
+
+    // Jam shift 1 untuk Sabtu (5 jam saja)
+    const hours = isSaturday
+        ? ['7.45', '8.45', '9.45', '10.45', '11.45'] // 5 jam Sabtu
+        : ['7.45', '8.45', '9.45', '10.45', '11.45', '12.45', '13.45', '14.44']; // Hari biasa
+
     const result = await req.db.query(`
         SELECT * FROM (
             SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
             FROM automation.packing_l1
             WHERE graph = 'Y' AND tanggal = '${thisdaytime}' 
-            AND jam IN ('7.45','8.45','9.45','10.45','11.45','12.45','13.45','14.44')
+            AND jam IN (${hours.map(h => `'${h}'`).join(',')})
             ORDER BY jam, id ASC
         ) AS distinct_data
         ORDER BY id ASC
@@ -122,15 +130,24 @@ app.get('/shift1_l1_hourly', async (req, res) => {
     var datalast = result.rows;
     res.send(datalast);
 });
+
 
 app.get('/shift2_l1_hourly', async (req, res) => {
-    var thisdaytime = format(new Date());
+    const today = new Date();
+    const isSaturday = today.getDay() === 6;
+    var thisdaytime = format(today);
+
+    // Jam shift 2 untuk Sabtu (5 jam saja)
+    const hours = isSaturday
+        ? ['12.45', '13.45', '14.45', '15.45', '16.45'] // 5 jam Sabtu
+        : ['15.45', '16.45', '17.45', '18.45', '19.45', '20.45', '21.45', '22.45']; // Hari biasa
+
     const result = await req.db.query(`
         SELECT * FROM (
             SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
             FROM automation.packing_l1
             WHERE graph = 'Y' AND tanggal = '${thisdaytime}' 
-            AND jam IN ('15.45','16.45','17.45','18.45','19.45','20.45','21.45','22.45')
+            AND jam IN (${hours.map(h => `'${h}'`).join(',')})
             ORDER BY jam, id ASC
         ) AS distinct_data
         ORDER BY id ASC
@@ -140,49 +157,76 @@ app.get('/shift2_l1_hourly', async (req, res) => {
     res.send(datalast);
 });
 
+
 app.get('/shift3_l1_hourly', async (req, res) => {
-    // Ambil tanggal hari ini dalam format 'YYYY-MM-DD'
-    const thisdaytime = moment().format('YYYY-MM-DD'); // Tanggal monitoring, misal: '2024-11-07'
+    const today = moment();
+    const isSaturday = today.day() === 6; // 6 = Sabtu
+    const thisdaytime = today.format('YYYY-MM-DD'); // Tanggal hari ini
+    const nextDate = today.add(1, 'days').format('YYYY-MM-DD'); // Tanggal berikutnya
 
-    // Tentukan tanggal berikutnya
-    const nextDate = moment(thisdaytime).add(1, 'days').format('YYYY-MM-DD');
+    let resultone, datalastone, cart = [];
 
-    // Ambil data untuk jam '23.45' pada tanggal hari ini
-    const resultone = await req.db.query(`
-         SELECT * FROM (
-             SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
-             FROM automation.packing_l1
-             WHERE graph = 'Y' AND tanggal = '${thisdaytime}' 
-             AND jam = '23.45'
-             ORDER BY jam, id ASC
-         ) AS distinct_data_one
-         ORDER BY id ASC
-     `);
-    const datalastone = resultone.rows;
+    // Jika hari Sabtu, gunakan jam shift 3 khusus Sabtu
+    if (isSaturday) {
+        resultone = await req.db.query(`
+            SELECT * FROM (
+                SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
+                FROM automation.packing_l1
+                WHERE graph = 'Y' AND tanggal = '${thisdaytime}' 
+                AND jam IN ('17.45', '18.45', '19.45', '20.45', '21.45')
+                ORDER BY jam, id ASC
+            ) AS distinct_data_one
+            ORDER BY id ASC
+        `);
 
-    // Sesuaikan data untuk jam '0.45' dari jam '23.45' pada tanggal hari ini
-    let cart = datalastone.map(row => ({
-        jam: "23.45",
-        cntr_bandet: row.cntr_bandet,
-        cntr_carton: row.cntr_carton
-    }));
+        datalastone = resultone.rows;
+        cart = datalastone.map(row => ({
+            jam: row.jam,
+            cntr_bandet: row.cntr_bandet,
+            cntr_carton: row.cntr_carton
+        }));
 
-    // Ambil data untuk jam '0.45' hingga '6.45' pada tanggal berikutnya
-    const resulttwo = await req.db.query(`
-         SELECT * FROM (
-             SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
-             FROM automation.packing_l1
-             WHERE graph = 'Y' AND tanggal = '${nextDate}' 
-             AND jam IN ('0.45','1.45','2.45','3.45','4.45','5.45','6.45')
-             ORDER BY jam, id ASC
-         ) AS distinct_data_two
-         ORDER BY id ASC
-     `);
-    const datalasttwo = resulttwo.rows;
-    // Gabungkan data jam '23.45' hari ini dengan data jam '0.45' hingga '6.45' hari berikutnya
-    const twoarray = cart.concat(datalasttwo);
-    // Kirim data sebagai respons
-    res.send(twoarray);
+        // Kirim respons untuk Sabtu (tidak perlu data hari berikutnya)
+        res.send(cart);
+    } else {
+        // Hari biasa: Ambil data '23.45' pada tanggal hari ini
+        resultone = await req.db.query(`
+            SELECT * FROM (
+                SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
+                FROM automation.packing_l1
+                WHERE graph = 'Y' AND tanggal = '${thisdaytime}' 
+                AND jam = '23.45'
+                ORDER BY jam, id ASC
+            ) AS distinct_data_one
+            ORDER BY id ASC
+        `);
+        datalastone = resultone.rows;
+
+        // Sesuaikan data untuk jam '0.45' dari '23.45'
+        cart = datalastone.map(row => ({
+            jam: "23.45",
+            cntr_bandet: row.cntr_bandet,
+            cntr_carton: row.cntr_carton
+        }));
+
+        // Ambil data untuk jam '0.45' hingga '6.45' pada tanggal berikutnya
+        const resulttwo = await req.db.query(`
+            SELECT * FROM (
+                SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
+                FROM automation.packing_l1
+                WHERE graph = 'Y' AND tanggal = '${nextDate}' 
+                AND jam IN ('0.45','1.45','2.45','3.45','4.45','5.45','6.45')
+                ORDER BY jam, id ASC
+            ) AS distinct_data_two
+            ORDER BY id ASC
+        `);
+
+        const datalasttwo = resulttwo.rows;
+
+        // Gabungkan data '23.45' hari ini dengan data jam hari berikutnya
+        const twoarray = cart.concat(datalasttwo);
+        res.send(twoarray);
+    }
 });
 
 app.get('/shift3_l1_hourly/:date', async (req, res) => {

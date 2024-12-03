@@ -18,6 +18,7 @@ import lhp_wafer from './routes/wafer/lhp/lhp.js';
 import control_wafer from './routes/wafer/lhp/control.js';
 import line1 from './routes/wafer/line1/line1.js';
 import line2 from './routes/wafer/line2/line2.js';
+import line6 from './routes/wafer/line6/line6.js';
 import line7 from './routes/wafer/line7/line7.js';
 // Routes Definisi Biscuit
 import line5 from './routes/biscuit/line5/line5.js';
@@ -27,6 +28,8 @@ import central_kitchen from './routes/central_kitchen.js';
 import importRoutesWafer from './routes/wafer/import/import.js';
 
 const app = express();
+
+
 
 // Membuat server HTTP
 const httpServer = http.createServer(app);
@@ -109,6 +112,7 @@ cron.schedule('* * * * *', () => {
 app.use('/', central_kitchen);
 app.use('/', line1);
 app.use('/', line2);
+app.use('/', line6);
 app.use('/', line7);
 app.use('/', downtime_wafer);
 app.use('/', lhp_wafer);
@@ -119,19 +123,24 @@ app.use('/', lhp_biscuit);
 app.use('/api', importRoutesWafer);
 
 
-
-// Jalankan server HTTP
-httpServer.listen(3000, '10.37.12.17', () => {
-    console.log('Server HTTP berjalan di http://10.37.12.17:3000');
-});
-
 // Membaca file sertifikat SSL
 const privateKey = fs.readFileSync('./server.key', 'utf8');
 const certificate = fs.readFileSync('./server.cert', 'utf8');
 const credentials = { key: privateKey, cert: certificate };
 
+// app.use((req, res, next) => {
+//     if (req.secure) {
+//         return next();
+//     }
+//     res.redirect(`https://${req.headers.host}${req.url}`);
+// });
+
 // Membuat server HTTPS
 const httpsServer = https.createServer(credentials, app);
+// Jalankan server HTTP
+httpServer.listen(3000, '10.37.12.17', () => {
+    console.log('Server HTTP berjalan di https://10.37.12.17:3000');
+});
 
 // Jalankan server HTTPS
 httpsServer.listen(3443, '10.37.12.17', () => {

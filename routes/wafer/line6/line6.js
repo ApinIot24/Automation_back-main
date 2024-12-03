@@ -91,119 +91,130 @@ app.get('/shift3_l6', async (req, res) => {
 
     // }
 });
+// Shift l6 Hourly
 app.get('/shift1_l6_hourly', async (req, res) => {
-    const thisdaytime = format(new Date());
-    const dayOfWeek = new Date().getDay();
+    const today = new Date();
+    const isSaturday = today.getDay() === 6; // 6 = Sabtu
+    var thisdaytime = format(today);
 
-    // Jam khusus untuk shift 1
-    const shift1Hours = dayOfWeek === 6 ? ['7.45', '8.45', '9.45', '10.45', '11.45', '12.44']
-        : ['7.45', '8.45', '9.45', '10.45', '11.45', '12.45', '13.45', '14.44'];
-    try {
-        const result = await req.db.query(`
-            SELECT * FROM (
-             SELECT DISTINCT ON (jam) id,  cntr_bandet, cntr_carton, jam 
-            FROM automation.packing_l6 
-            WHERE graph = 'Y' AND tanggal = $1 
-            AND jam = ANY($2::text[])
-              ORDER BY jam, id ASC
-        ) AS distinct_data_one
+    // Jam shift 1 untuk Sabtu (5 jam saja)
+    const hours = isSaturday
+        ? ['7.45', '8.45', '9.45', '10.45', '11.45'] // 5 jam Sabtu
+        : ['7.45', '8.45', '9.45', '10.45', '11.45', '12.45', '13.45', '14.44']; // Hari biasa
+
+    const result = await req.db.query(`
+        SELECT * FROM (
+            SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
+            FROM automation.packing_l6
+            WHERE graph = 'Y' AND tanggal = '${thisdaytime}' 
+            AND jam IN (${hours.map(h => `'${h}'`).join(',')})
+            ORDER BY jam, id ASC
+        ) AS distinct_data
         ORDER BY id ASC
-        `, [thisdaytime, shift1Hours]);
+    `);
 
-        res.send(result.rows);
-    } catch (error) {
-        console.error('Error fetching data for shift 1:', error);
-        res.status(500).json({ error: 'Error fetching data' });
-    }
+    var datalast = result.rows;
+    res.send(datalast);
 });
 
+
 app.get('/shift2_l6_hourly', async (req, res) => {
-    const thisdaytime = format(new Date());
-    const dayOfWeek = new Date().getDay();
+    const today = new Date();
+    const isSaturday = today.getDay() === 6;
+    var thisdaytime = format(today);
 
-    // Jam khusus untuk shift 2
-    const shift2Hours = dayOfWeek === 6 ? ['12.45', '13.45', '14.45', '15.45', '16.45', '17.44']
-        : ['15.45', '16.45', '17.45', '18.45', '19.45', '20.45', '21.45', '22.45'];
+    // Jam shift 2 untuk Sabtu (5 jam saja)
+    const hours = isSaturday
+        ? ['12.45', '13.45', '14.45', '15.45', '16.45'] // 5 jam Sabtu
+        : ['15.45', '16.45', '17.45', '18.45', '19.45', '20.45', '21.45', '22.45']; // Hari biasa
 
-    try {
-        const result = await req.db.query(`
-            SELECT * FROM (
-             SELECT DISTINCT ON (jam) id,  cntr_bandet, cntr_carton, jam 
-            FROM automation.packing_l6 
-            WHERE graph = 'Y' AND tanggal = $1 
-            AND jam = ANY($2::text[])
-             ORDER BY jam, id ASC
-        ) AS distinct_data_one
+    const result = await req.db.query(`
+        SELECT * FROM (
+            SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
+            FROM automation.packing_l6
+            WHERE graph = 'Y' AND tanggal = '${thisdaytime}' 
+            AND jam IN (${hours.map(h => `'${h}'`).join(',')})
+            ORDER BY jam, id ASC
+        ) AS distinct_data
         ORDER BY id ASC
-        `, [thisdaytime, shift2Hours]);
+    `);
 
-        res.send(result.rows);
-    } catch (error) {
-        console.error('Error fetching data for shift 2:', error);
-        res.status(500).json({ error: 'Error fetching data' });
-    }
+    var datalast = result.rows;
+    res.send(datalast);
 });
 
 
 app.get('/shift3_l6_hourly', async (req, res) => {
-    const thisdaytime = moment().format('YYYY-MM-DD');
-    const nextDate = moment(thisdaytime).add(1, 'days').format('YYYY-MM-DD');
-    const dayOfWeek = new Date().getDay();
+    const today = moment();
+    const isSaturday = today.day() === 6; // 6 = Sabtu
+    const thisdaytime = today.format('YYYY-MM-DD'); // Tanggal hari ini
+    const nextDate = today.add(1, 'days').format('YYYY-MM-DD'); // Tanggal berikutnya
 
-    try {
-        if (dayOfWeek === 6) {
-            // Jam khusus untuk shift 3 pada hari Sabtu
-            const result = await req.db.query(`
-               SELECT * FROM (
-             SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam 
-                FROM automation.packing_l6 
-                WHERE graph = 'Y' AND tanggal = $1 
-                 AND jam = ANY($2::text[])
-                 ORDER BY jam, id ASC
-                ) AS distinct_data_one
-                ORDER BY id ASC
-            `, [thisdaytime, ['17.45', '18.45', '19.45', '20.45', '21.45', '22.45']]);
+    let resultone, datalastone, cart = [];
 
-            res.send(result.rows);
-        } else {
-            // Shift 3 lintas hari
-            const resultone = await req.db.query(`
-                SELECT * FROM (
-                    SELECT DISTINCT ON (jam) id,  cntr_bandet, cntr_carton, jam
-                    FROM automation.packing_l6
-                    WHERE graph = 'Y' AND tanggal = $1 
-                    AND jam = '23.45'
-                     ORDER BY jam, id ASC
-                    ) AS distinct_data_one
-                    ORDER BY id ASC
-            `, [thisdaytime]);
-
-            const datalastone = resultone.rows.map(row => ({
-                jam: "23.45",
-                cntr_bandet: row.cntr_bandet,
-                cntr_carton: row.cntr_carton
-            }));
-
-            const resulttwo = await req.db.query(`
-             SELECT * FROM (
-             SELECT DISTINCT ON (jam) id,  cntr_bandet, cntr_carton, jam
+    // Jika hari Sabtu, gunakan jam shift 3 khusus Sabtu
+    if (isSaturday) {
+        resultone = await req.db.query(`
+            SELECT * FROM (
+                SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
                 FROM automation.packing_l6
-                WHERE graph = 'Y' AND tanggal = $1 
-                AND jam = ANY($2::text[])
-                 ORDER BY jam, id ASC
-               ) AS distinct_data_one
+                WHERE graph = 'Y' AND tanggal = '${thisdaytime}' 
+                AND jam IN ('17.45', '18.45', '19.45', '20.45', '21.45')
+                ORDER BY jam, id ASC
+            ) AS distinct_data_one
             ORDER BY id ASC
-            `, [nextDate, ['0.45', '1.45', '2.45', '3.45', '4.45', '5.45', '6.45']]);
+        `);
 
-            const datalasttwo = resulttwo.rows;
-            const twoarray = datalastone.concat(datalasttwo);
-            res.send(twoarray);
-        }
-    } catch (error) {
-        console.error('Error fetching data for shift 3:', error);
-        res.status(500).json({ error: 'Error fetching data' });
+        datalastone = resultone.rows;
+        cart = datalastone.map(row => ({
+            jam: row.jam,
+            cntr_bandet: row.cntr_bandet,
+            cntr_carton: row.cntr_carton
+        }));
+
+        // Kirim respons untuk Sabtu (tidak perlu data hari berikutnya)
+        res.send(cart);
+    } else {
+        // Hari biasa: Ambil data '23.45' pada tanggal hari ini
+        resultone = await req.db.query(`
+            SELECT * FROM (
+                SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
+                FROM automation.packing_l6
+                WHERE graph = 'Y' AND tanggal = '${thisdaytime}' 
+                AND jam = '23.45'
+                ORDER BY jam, id ASC
+            ) AS distinct_data_one
+            ORDER BY id ASC
+        `);
+        datalastone = resultone.rows;
+
+        // Sesuaikan data untuk jam '0.45' dari '23.45'
+        cart = datalastone.map(row => ({
+            jam: "23.45",
+            cntr_bandet: row.cntr_bandet,
+            cntr_carton: row.cntr_carton
+        }));
+
+        // Ambil data untuk jam '0.45' hingga '6.45' pada tanggal berikutnya
+        const resulttwo = await req.db.query(`
+            SELECT * FROM (
+                SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
+                FROM automation.packing_l6
+                WHERE graph = 'Y' AND tanggal = '${nextDate}' 
+                AND jam IN ('0.45','1.45','2.45','3.45','4.45','5.45','6.45')
+                ORDER BY jam, id ASC
+            ) AS distinct_data_two
+            ORDER BY id ASC
+        `);
+
+        const datalasttwo = resulttwo.rows;
+
+        // Gabungkan data '23.45' hari ini dengan data jam hari berikutnya
+        const twoarray = cart.concat(datalasttwo);
+        res.send(twoarray);
     }
 });
+
 
 
 app.get('/packing_l6_all', async (req, res) => {
@@ -212,6 +223,8 @@ app.get('/packing_l6_all', async (req, res) => {
     var datalast = result.rows;
     res.send(datalast);
 });
+
+
 app.get('/packing_l6_hourly', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await req.db.query(`SELECT id ,cntr_bandet, cntr_carton , jam FROM automation.packing_l6 where graph = 'Y' AND tanggal = '${thisdaytime}' 
