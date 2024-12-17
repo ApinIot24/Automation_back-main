@@ -165,7 +165,7 @@ app.get('/lhpl5_daily/date/:date/:line', async (req, res) => {
 
         // Query SQL untuk mendapatkan data yang diinginkan
         const query = `
-WITH shifts AS (
+    WITH shifts AS (
     SELECT 'Shift 1' AS shift
     UNION ALL
     SELECT 'Shift 2'
@@ -250,11 +250,11 @@ SELECT
     COALESCE(sd.adonan_gagal_kulit, '0') AS adonan_gagal_kulit, 
     COALESCE(sd.weight_bsc_pcs, '0') AS weight_bsc_pcs, 
     COALESCE(sd.weight_bsc_pack, '0') AS weight_bsc_pack
-FROM all_combinations ac
-LEFT JOIN automation.lhp_l5 sd 
+    FROM all_combinations ac
+    LEFT JOIN automation.lhp_l5 sd 
     ON ac.realdatetime = sd.realdatetime AND ac.shift = sd.shift
-WHERE (sd.grup = $2 OR sd.grup IS NULL)  -- Filter by group, allow null for missing data
-ORDER BY ac.realdatetime, ac.shift;
+    WHERE (sd.grup = $2 OR sd.grup IS NULL)  -- Filter by group, allow null for missing data
+    ORDER BY ac.realdatetime, ac.shift;
         `;
 
         // Menjalankan query

@@ -251,6 +251,7 @@ app.get('/lhp_daily/:line', async (req, res) => {
     var datalast = result.rows;
     res.send(datalast);
 });
+
 app.get('/lhp_daily/date/:date/:line', async (req, res) => {
     try {
         const line = req.params.line;
@@ -273,6 +274,92 @@ app.get('/lhp_daily/date/:date/:line', async (req, res) => {
         });
     }
 });
+
+// app.get('/lhp_daily/date/:date/:line', async (req, res) => {
+//     const { date, line } = req.params;
+
+//     try {
+//         // Parse the date parameter to ensure it's in a valid format (YYYY-MM-DD)
+//         const formattedDate = new Date(date);
+//         if (isNaN(formattedDate.getTime())) {
+//             return res.status(400).json({ error: 'Invalid date format. Please use YYYY-MM-DD.' });
+//         }
+
+//         // Format date to YYYY-MM-DD for SQL query
+//         const formattedDateString = formattedDate.toISOString().split('T')[0];
+
+//         // Query SQL to get column names and their data types from the 'lhp' table
+//         const columnsQuery = `
+//             SELECT column_name, data_type 
+//             FROM information_schema.columns 
+//             WHERE table_name = 'lhp' AND table_schema = 'automation';
+//         `;
+//         // Fetch columns data
+//         const columnResult = await req.db.query(columnsQuery);
+//         const columns = columnResult.rows;
+
+
+//         // Build COALESCE for each column dynamically
+//         const coalesceColumns = columns.map(col => {
+//             if (col.data_type === 'jsonb') {
+//                 // For jsonb columns, use '{}' as default for NULL
+//                 return `COALESCE(sd.${col.column_name}, '{}') AS ${col.column_name}`;
+//             } else if (col.column_name === 'realdatetime') {
+//                 // For 'realdatetime', do not use COALESCE
+//                 return `COALESCE(sd.${col.column_name}, '${formattedDateString}') AS ${col.column_name}`;
+//             } else if (col.column_name === 'created_at') {
+//                 // For 'created_at', set default to the formattedDateString
+//                 return `COALESCE(sd.${col.column_name}, '${formattedDateString}') AS ${col.column_name}`;
+//             } else {
+//                 // For other columns, replace NULL with '0'
+//                 return `COALESCE(sd.${col.column_name}, '0') AS ${col.column_name}`;
+//             }
+//         }).join(', ');
+//         // Query to get all combinations of date and shift, including dynamic column handling
+//         const query = `
+//             WITH shifts AS (
+//                 SELECT 'Shift 1' AS shift
+//                 UNION ALL
+//                 SELECT 'Shift 2'
+//                 UNION ALL
+//                 SELECT 'Shift 3'
+//             ),
+//             dates AS (
+//                 SELECT DISTINCT realdatetime
+//                 FROM automation.lhp
+//                 WHERE realdatetime::date = $1 
+//             ),
+//             all_combinations AS (
+//                 SELECT d.realdatetime, s.shift
+//                 FROM dates d
+//                 CROSS JOIN shifts s
+//             )
+//             SELECT
+//                 ROW_NUMBER() OVER (ORDER BY ac.realdatetime, ac.shift) AS id,
+//                 ac.realdatetime,
+//                 ac.shift,
+//                 ${coalesceColumns}
+//             FROM all_combinations ac
+//     LEFT JOIN automation.lhp sd 
+//     ON ac.realdatetime = sd.realdatetime AND ac.shift = sd.shift
+//     WHERE (sd.grup = $2 OR sd.grup IS NULL)  -- Filter by group, allow null for missing data
+//     ORDER BY ac.realdatetime, ac.shift;
+//         `;
+
+//         // Run the query
+//         const result = await req.db.query(query, [formattedDateString, line]);
+
+//         // Handle query result and send response
+//         const datalast = result.rows;  // Result from the query
+
+//         res.json(datalast);  // Send data as JSON to the client
+//     } catch (err) {
+//         console.error('Error executing query', err.stack);
+//         res.status(500).send('Error fetching data');
+//     }
+// });
+
+
 
 app.post('/lhpl7', async (req, res) => {
     const {

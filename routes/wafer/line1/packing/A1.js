@@ -62,7 +62,7 @@ app.get('/packing_a1_counter', async (req, res) => {
 app.get('/shift1_a1', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await req.db_iot.query(`SELECT counter , jam FROM purwosari.packing_a1 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-    AND jam in ('6.46', '7.0', '7.30', '8.0', '8.30', '9.0', '9.30', '10.0', '10.30', '11.0', '11.30', '12.0', '12.30', '13.0', '13.30', '14.0', '14.30', '14.45') ORDER BY id ASC`);
+    AND jam in ('6.47', '7.0', '7.30', '8.0', '8.30', '9.0', '9.30', '10.0', '10.30', '11.0', '11.30', '12.0', '12.30', '13.0', '13.30', '14.0', '14.30', '14.45') ORDER BY id ASC`);
     // console.log("DATA", result)
     var datalast = result.rows;
     res.send(datalast);
@@ -70,7 +70,7 @@ app.get('/shift1_a1', async (req, res) => {
 app.get('/shift2_a1', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await req.db_iot.query(`SELECT counter , jam FROM purwosari.packing_a1 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-        AND jam in ('14.46', '15.30', '16.00', '16.30', '17.00', '17.30', '18.00', '18.30', '19.00', '19.30', '20.00', '20.30', '21.00', '21.30', '22.00', '22.30', '22.45') ORDER BY id ASC`);
+        AND jam in ('14.47', '15.30', '16.00', '16.30', '17.00', '17.30', '18.00', '18.30', '19.00', '19.30', '20.00', '20.30', '21.00', '21.30', '22.00', '22.30', '22.45') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
@@ -83,7 +83,7 @@ app.get('/shift3_a1', async (req, res) => {
     thisdate.setDate(thisdate.getDate() + 1)
     var thisyestertime = format(thisdate)
     const resultone = await req.db_iot.query(`SELECT counter , jam FROM purwosari.packing_a1 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-    AND jam = '22.46' ORDER BY id ASC`);
+    AND jam = '22.47' ORDER BY id ASC`);
     var datalastone = resultone.rows;
     let element = {};
     var cart = [];
