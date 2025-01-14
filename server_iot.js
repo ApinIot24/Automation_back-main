@@ -96,11 +96,11 @@ io.on('connection', (socket) => {
 });
 
 // Cron job
-cron.schedule('* * * * *', () => {
-    const payload = { title: 'Notifikasi Terjadwal', body: 'Ini adalah notifikasi setiap menit.' };
-    io.emit('notification', payload);
-    console.log('Notifikasi dikirim:', payload);
-});
+// cron.schedule('* * * * *', () => {
+//     const payload = { title: 'Notifikasi Terjadwal', body: 'Ini adalah notifikasi setiap menit.' };
+//     io.emit('notification', payload);
+//     console.log('Notifikasi dikirim:', payload);
+// });
 
 // Routes
 app.use('/', central_kitchen);
