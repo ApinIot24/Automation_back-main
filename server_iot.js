@@ -25,11 +25,11 @@ import line5 from './routes/biscuit/line5/line5.js';
 import downtime_biscuit from './routes/biscuit/downtime/downtime.js';
 import lhp_biscuit from './routes/biscuit/lhp/lhp.js';
 import central_kitchen from './routes/central_kitchen.js';
+// PM
 import importRoutesWafer from './routes/wafer/import/import.js';
+import importRoutesBiscuit from './routes/biscuit/import/import.js';
 
 const app = express();
-
-
 
 // Membuat server HTTP
 const httpServer = http.createServer(app);
@@ -121,13 +121,14 @@ app.use('/', line5);
 app.use('/', downtime_biscuit);
 app.use('/', lhp_biscuit);
 app.use('/api', importRoutesWafer);
+app.use('/api', importRoutesBiscuit);
 
 
 // Membaca file sertifikat SSL
 const privateKey = fs.readFileSync('./server.key', 'utf8');
 const certificate = fs.readFileSync('./server.cert', 'utf8');
 const credentials = { key: privateKey, cert: certificate };
-
+    
 // app.use((req, res, next) => {
 //     if (req.secure) {
 //         return next();
@@ -142,6 +143,10 @@ httpServer.listen(3000, '10.37.12.17', () => {
     console.log('Server HTTP berjalan di https://10.37.12.17:3000');
 });
 
+const httpServerLocal = http.createServer(app); // Membuat server HTTP baru untuk localhost
+httpServerLocal.listen(4000, 'localhost', () => {
+    console.log('Server HTTP berjalan di http://localhost:4000');
+});
 // Jalankan server HTTPS
 httpsServer.listen(3443, '10.37.12.17', () => {
     console.log('Server HTTPS berjalan di https://10.37.12.17:3443');

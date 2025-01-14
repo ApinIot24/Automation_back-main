@@ -92,13 +92,67 @@ router.get('/pm_wafer/:group/:year', async (req, res) => {
     }
 });
 
+
+router.get('/pm_wafer/filter/:group/:year/:week', async (req, res) => {
+    try {
+        const group = parseInt(req.params.group, 10);
+        const year = parseInt(req.params.year, 10);
+        const currentWeek = parseInt(req.params.week, 10);
+
+        const result = await req.db.query('SELECT * FROM automation.pm_wafer WHERE grup = $1 ORDER BY machine_name ASC', [group]);
+        const totalWeeks = getTotalWeeksInYear(year);
+
+        // Hitung range minggu (4 minggu ke depan)
+        const startWeek = currentWeek;
+        const endWeek = Math.min(currentWeek + 4, totalWeeks);
+
+        const modifiedData = result.rows
+            .map(row => {
+                // Generate data mingguan
+                const weeklyData = generateWeeklyDataForTargetYear(totalWeeks, row.periode, row.periode_start, year);
+
+                // Filter minggu yang diinginkan
+                const filteredWeeks = {};
+                let hasScheduledMaintenance = false; // Flag untuk cek apakah ada maintenance
+
+                for (let i = startWeek; i <= endWeek; i++) {
+                    const weekValue = weeklyData[`w${i}`];
+                    if (weekValue !== 'C/I') {
+                        filteredWeeks[`w${i}`] = weekValue;
+                        hasScheduledMaintenance = true;
+                    }
+                }
+
+                // Hanya return jika ada maintenance terjadwal
+                if (hasScheduledMaintenance) {
+                    return {
+                        id: row.id,
+                        machine_name: row.machine_name,
+                        part_kebutuhan_alat: row.part_kebutuhan_alat,
+                        equipment: row.equipment,
+                        periode: row.periode,
+                        grup: row.grup,
+                        week: filteredWeeks
+                    };
+                }
+                return null;
+            })
+            .filter(item => item !== null); // Hapus semua item null
+
+        res.json(modifiedData);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        res.status(500).json({ error: 'Error fetching data' });
+    }
+});
+
 router.put('/update_field/:id', async (req, res) => {
     const { id } = req.params;
     const { field, value } = req.body;
 
     // Daftar kolom yang diperbolehkan untuk diperbarui
     const allowedFields = ['machine_name', 'equipment', 'kode_barang', 'part_kebutuhan_alat', 'qty', 'periode', 'periode_start'];
-    
+
     // Validasi input untuk memastikan kolom yang akan diperbarui diizinkan
     if (!allowedFields.includes(field)) {
         return res.status(400).json({ error: 'Kolom yang diberikan tidak valid atau tidak dapat diperbarui' });

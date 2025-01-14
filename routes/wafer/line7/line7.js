@@ -112,8 +112,8 @@ app.get('/shift1_l7_hourly', async (req, res) => {
         ) AS distinct_data
         ORDER BY id ASC
     `);
-
     var datalast = result.rows;
+    // console.log(result.rows);
     res.send(datalast);
 });
 

@@ -64,7 +64,7 @@ app.get('/shift_l5', async (req, res) => {
 app.get('/shift1_l5', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await req.db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l5 where graph = 'Y' AND tanggal = '${thisdaytime}' 
-        AND jam in ('6.46', '7.0', '7.30', '8.0', '8.30', '9.0', '9.30', '10.0', '10.30', '11.0', '11.30', '12.0', '12.30', '13.0', '13.30', '14.0', '14.30', '14.45') ORDER BY id ASC`);
+        AND jam in ('6.48', '7.0', '7.30', '8.0', '8.30', '9.0', '9.30', '10.0', '10.30', '11.0', '11.30', '12.0', '12.30', '13.0', '13.30', '14.0', '14.30', '14.45') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
