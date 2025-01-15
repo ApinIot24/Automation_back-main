@@ -74,6 +74,7 @@ app.get('/shift1_l1', async (req, res) => {
     var datalast = result.rows;
     res.send(datalast);
 });
+
 app.get('/shift2_l1', async (req, res) => {
     var thisdaytime = format(new Date());
     const result = await req.db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l1 where graph = 'Y' AND tanggal = '${thisdaytime}' 
@@ -82,6 +83,7 @@ app.get('/shift2_l1', async (req, res) => {
     var datalast = result.rows;
     res.send(datalast);
 });
+
 app.get('/shift3_l1', async (req, res) => {
     var thisdaytime = format(new Date());
     console.log(thisdaytime)
