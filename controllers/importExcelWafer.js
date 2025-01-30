@@ -11,7 +11,6 @@ export default async function importExcelWafer(filePath, specifiedGrup = null) {
         console.log("Memulai proses impor data dari semua sheet ke PostgreSQL...");
         // Definisikan array grup sesuai kebutuhan
         const grupArray = [1, 2, 6, 7];
-
         // Iterasi melalui setiap sheet dalam workbook
         for (let sheetIndex = 0; sheetIndex < grupArray.length; sheetIndex++) {
             // Ambil nilai `grup` dari grupArray berdasarkan sheetIndex
@@ -27,7 +26,7 @@ export default async function importExcelWafer(filePath, specifiedGrup = null) {
             console.log(`Memproses sheet: ${sheetName} untuk grup ${grup}...`);
             let currentMachineName = null; // Menyimpan machine_name saat ini sebagai induk
 
-            for (let i = 10; i < data.length; i++) {
+            for (let i = 13; i < data.length; i++) {
                 const row = data[i];
                 const isRowEmpty = row.every(cell => cell === null || cell === undefined || cell === '');
 

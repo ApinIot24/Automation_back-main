@@ -78,7 +78,7 @@ router.get('/pm_biscuit/:group/:year', async (req, res) => {
         const group = parseInt(req.params.group, 10);
         const year = parseInt(req.params.year, 10); // Tahun target (misalnya, 2024)
 
-        const result = await req.db.query('SELECT * FROM automation.pm_biscuit WHERE grup = $1 ORDER BY machine_name ASC', [group]);
+        const result = await req.db.query('SELECT * FROM automation.pm_biscuit WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC', [group]);
         const totalWeeks = getTotalWeeksInYear(year);
 
         const modifiedData = result.rows.map(row => ({
@@ -98,7 +98,7 @@ router.get('/pm_biscuit/filter/:group/:year/:week', async (req, res) => {
         const year = parseInt(req.params.year, 10);
         const currentWeek = parseInt(req.params.week, 10);
 
-        const result = await req.db.query('SELECT * FROM automation.pm_biscuit WHERE grup = $1 ORDER BY machine_name ASC', [group]);
+        const result = await req.db.query('SELECT * FROM automation.pm_biscuit WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC', [group]);
         const totalWeeks = getTotalWeeksInYear(year);
 
         // Hitung range minggu (4 minggu ke depan)
@@ -145,7 +145,7 @@ router.get('/pm_biscuit/filter/:group/:year/:week', async (req, res) => {
     }
 });
 
-router.put('/update_field/:id', async (req, res) => {
+router.put('/biscuit/update_field/:id', async (req, res) => {
     const { id } = req.params;
     const { field, value } = req.body;
 

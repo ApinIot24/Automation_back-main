@@ -27,7 +27,7 @@ export default async function importExcelBiscuit(filePath, specifiedGrup = null)
             console.log(`Memproses sheet: ${sheetName} untuk grup ${grup}...`);
             let currentMachineName = null; // Menyimpan machine_name saat ini sebagai induk
 
-            for (let i = 10; i < data.length; i++) {
+            for (let i = 13; i < data.length; i++) {
                 const row = data[i];
                 const isRowEmpty = row.every(cell => cell === null || cell === undefined || cell === '');
 

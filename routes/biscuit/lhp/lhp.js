@@ -249,6 +249,7 @@ app.post("/lhpl5", async (req, res) => {
       .json({ message: "Internal Server Error", error: error.message });
   }
 });
+
 app.get("/lhpl5", async (req, res) => {
   const result = await req.db.query(
     "SELECT * FROM automation.lhp_l5 ORDER BY id DESC LIMIT 1"
