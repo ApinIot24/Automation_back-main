@@ -13,87 +13,80 @@ function generateWeeklyDataForTargetYear(
   targetYear
 ) {
   const weekData = {};
-  // Inisialisasi semua minggu di tahun target dengan default "-"
+  // Initialize all weeks in target year with default "-"
   for (let i = 1; i <= totalWeeks; i++) {
     weekData[`w${i}`] = "-";
   }
 
-  // Validasi `period` dan `startPeriod`
+  // Validate period and startPeriod
   if (
     !period ||
     typeof period !== "string" ||
     !startPeriod ||
     typeof startPeriod !== "string"
   ) {
-    // console.warn(
-    //   'Periode atau startPeriod tidak valid. Menggunakan default "-" untuk setiap minggu.'
-    // );
     return weekData;
   }
 
-  // Split `periode` dan `startPeriod` menjadi array
   const periods = period.split(",").map((p) => p.trim());
   const startPeriods = startPeriod.split(",").map((s) => s.trim());
 
-  // Validasi jumlah periode dan startPeriod harus sama
   if (periods.length !== startPeriods.length) {
-    // console.warn(
-    //   'Jumlah periode dan startPeriod tidak sama. Menggunakan default "-" untuk setiap minggu.'
-    // );
     return weekData;
   }
 
-  // Proses setiap periode
+  // Process each period
   for (let idx = 0; idx < periods.length; idx++) {
     const currentPeriod = periods[idx];
     const currentStartPeriod = startPeriods[idx];
 
-    // Ekstrak simbol dan interval dari `currentPeriod`
-    const symbolMatch = currentPeriod.match(/^[A-Za-z\/]+/); // Menangkap simbol yang terdiri dari huruf dan /
+    // Extract symbol and interval from currentPeriod
+    const symbolMatch = currentPeriod.match(/^[A-Za-z\/]+/);
     const symbol = symbolMatch ? symbolMatch[0] : "-";
-    const intervalMatch = currentPeriod.match(/\d+/); // Menangkap angka sebagai interval
+    const intervalMatch = currentPeriod.match(/\d+/);
     const interval = intervalMatch ? parseInt(intervalMatch[0], 10) : null;
-    if (!interval) {
-      continue; // Skip jika interval tidak valid
-    }
 
-    // Ekstrak tahun dan minggu awal dari `currentStartPeriod`
+    if (!interval) continue;
+
+    // Extract year and starting week from currentStartPeriod
     const [startYear, startWeekString] = currentStartPeriod.split("w");
     let startWeek = parseInt(startWeekString?.trim(), 10);
     let year = parseInt(startYear, 10);
 
-    if (isNaN(startWeek) || isNaN(year)) {
-      continue; // Skip jika parsing gagal
-    }
+    if (isNaN(startWeek) || isNaN(year)) continue;
+    if (targetYear < year) continue;
 
-    // Validasi jika tahun target lebih kecil dari startYear, skip periode ini
-    if (targetYear < year) {
-      continue;
-    }
+    // Track total weeks passed to maintain the exact pattern
+    let totalWeeksPassed = 0;
 
-    // Hitung jumlah total minggu untuk setiap tahun hingga targetYear
+    // Calculate total weeks passed until target year
     while (year < targetYear) {
       const weeksInYear = getTotalWeeksInYear(year);
-      const remainingWeeks = weeksInYear - startWeek + 1; // Minggu yang tersisa di tahun ini dari startWeek
-      const cycles = Math.floor(remainingWeeks / interval); // Hitung berapa kali siklus terjadi dalam tahun ini
-      startWeek =
-        ((remainingWeeks % interval) + interval) % interval || interval; // Tentukan minggu awal untuk tahun berikutnya
+      totalWeeksPassed += weeksInYear;
       year++;
     }
 
-    // Mulai dari minggu yang benar di tahun target
+    // Calculate the starting week in the target year based on the original pattern
+    if (year === targetYear && totalWeeksPassed > 0) {
+      // Calculate how many complete intervals have passed
+      const totalIntervalsPassed = Math.floor(totalWeeksPassed / interval);
+      // The new starting week should maintain the same position in the interval
+      const offsetInPattern = (startWeek - 1) % interval;
+      startWeek =
+        (totalIntervalsPassed * interval + offsetInPattern + 1) % interval;
+      if (startWeek === 0) startWeek = interval;
+    }
+
+    // Adjust if startWeek exceeds total weeks in target year
     if (year === targetYear) {
       const weeksInTargetYear = getTotalWeeksInYear(targetYear);
       if (startWeek > weeksInTargetYear) {
-        // Jika startWeek lebih besar dari jumlah minggu di tahun target, sesuaikan
         startWeek = weeksInTargetYear;
       }
     }
 
-    // Isi minggu pada tahun target berdasarkan startWeek dan interval yang dihitung
+    // Fill weeks in target year based on calculated startWeek and interval
     for (let i = startWeek; i <= totalWeeks; i += interval) {
-      // Jika minggu sudah diisi oleh periode sebelumnya, skip (prioritaskan periode pertama)
-      // Jika minggu masih kosong, isi dengan simbol. Jika sudah ada, tambahkan simbol baru dengan koma.
       weekData[`w${i}`] =
         weekData[`w${i}`] === "-" ? symbol : `${weekData[`w${i}`]},${symbol}`;
     }
@@ -111,8 +104,42 @@ function getTotalWeeksInYear(year) {
     0,
     1 + (dayOfWeek <= 4 ? -dayOfWeek : 7 - dayOfWeek)
   );
-  return Math.ceil((lastDay - firstMonday) / (7 * 24 * 60 * 60 * 1000));
+  return Math.floor((lastDay - firstMonday) / (7 * 24 * 60 * 60 * 1000));
 }
+router.get("/pm_wafer/:group/:year", async (req, res) => {
+  try {
+    const group = parseInt(req.params.group, 10);
+    const year = parseInt(req.params.year, 10); // Tahun target
+    const start = parseInt(req.query.start, 10); // Mendapatkan nilai start dari query parameter
+    const end = parseInt(req.query.end, 10); // Mendapatkan nilai end dari query parameter
+    const searchTerm = req.query.searchTerm
+      ? req.query.searchTerm.toLowerCase()
+      : ""; // Mendapatkan searchTerm dari query parameter
+
+    // Query untuk memfilter berdasarkan searchTerm
+    const result = await req.db.query(
+      "SELECT * FROM automation.pm_wafer WHERE grup = $1 AND (machine_name ILIKE $2 OR kode_barang ILIKE $2 OR equipment ILIKE $2 OR part_kebutuhan_alat ILIKE $2) ORDER BY CAST(no AS INTEGER) ASC LIMIT $3 OFFSET $4",
+      [group, `%${searchTerm}%`, end - start + 1, start]
+    );
+
+    const totalWeeks = getTotalWeeksInYear(year);
+    // console.log(totalWeeks);
+    const modifiedData = result.rows.map((row) => ({
+      ...row,
+      week: generateWeeklyDataForTargetYear(
+        totalWeeks,
+        row.periode,
+        row.periode_start,
+        year
+      ),
+    }));
+
+    res.json(modifiedData);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).json({ error: "Error fetching data" });
+  }
+});
 
 router.get("/pm_wafer/select/:group/", async (req, res) => {
   try {
@@ -145,41 +172,6 @@ router.post("/pm_wafer/machine", async (req, res) => {
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Error fetching machine data" });
-  }
-});
-
-router.get("/pm_wafer/:group/:year", async (req, res) => {
-  try {
-    const group = parseInt(req.params.group, 10);
-    const year = parseInt(req.params.year, 10); // Tahun target
-    const start = parseInt(req.query.start, 10); // Mendapatkan nilai start dari query parameter
-    const end = parseInt(req.query.end, 10); // Mendapatkan nilai end dari query parameter
-    const searchTerm = req.query.searchTerm
-      ? req.query.searchTerm.toLowerCase()
-      : ""; // Mendapatkan searchTerm dari query parameter
-
-    // Query untuk memfilter berdasarkan searchTerm
-    const result = await req.db.query(
-      "SELECT * FROM automation.pm_wafer WHERE grup = $1 AND (machine_name ILIKE $2 OR kode_barang ILIKE $2 OR equipment ILIKE $2 OR part_kebutuhan_alat ILIKE $2) ORDER BY CAST(no AS INTEGER) ASC LIMIT $3 OFFSET $4",
-      [group, `%${searchTerm}%`, end - start + 1, start]
-    );
-
-    const totalWeeks = getTotalWeeksInYear(year);
-    console.log(totalWeeks);
-    const modifiedData = result.rows.map((row) => ({
-      ...row,
-      week: generateWeeklyDataForTargetYear(
-        totalWeeks,
-        row.periode,
-        row.periode_start,
-        year
-      ),
-    }));
-
-    res.json(modifiedData);
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    res.status(500).json({ error: "Error fetching data" });
   }
 });
 
