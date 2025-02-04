@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import importExcelBiscuit from "../../../controllers/importExcelBiscuit.js";
+import importExcelWafer from "../../../controllers/importExcelWafer.js";
 import fs from "fs";
 
 const router = Router();
@@ -103,30 +103,24 @@ function generateWeeklyDataForTargetYear(
 }
 
 function getTotalWeeksInYear(year) {
+  const lastDay = new Date(year, 11, 31);
   const firstDayOfYear = new Date(year, 0, 1);
-  const lastDayOfYear = new Date(year, 11, 31);
-
-  // Cari Senin pertama di tahun tersebut
-  const firstMonday = new Date(firstDayOfYear);
-  firstMonday.setDate(
-    firstDayOfYear.getDate() - ((firstDayOfYear.getDay() + 6) % 7)
+  const dayOfWeek = firstDayOfYear.getDay();
+  const firstMonday = new Date(
+    year,
+    0,
+    1 + (dayOfWeek <= 4 ? -dayOfWeek : 7 - dayOfWeek)
   );
-
-  // Hitung total minggu
-  const totalWeeks = Math.floor(
-    (lastDayOfYear - firstMonday) / (7 * 24 * 60 * 60 * 1000)
-  );
-
-  return totalWeeks;
+  return Math.ceil((lastDay - firstMonday) / (7 * 24 * 60 * 60 * 1000));
 }
 
-router.get("/pm_biscuit/select/:group/", async (req, res) => {
+router.get("/pm_wafer/select/:group/", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10);
 
     // Query untuk mendapatkan machine_name yang unik
     const result = await req.db.query(
-      "SELECT DISTINCT machine_name FROM automation.pm_biscuit WHERE grup = $1 ORDER BY machine_name ASC",
+      "SELECT DISTINCT machine_name FROM automation.pm_wafer WHERE grup = $1 ORDER BY machine_name ASC",
       [group]
     );
 
@@ -138,12 +132,12 @@ router.get("/pm_biscuit/select/:group/", async (req, res) => {
   }
 });
 
-router.post("/pm_biscuit/machine", async (req, res) => {
+router.post("/pm_wafer/machine", async (req, res) => {
   try {
     const { machineName, group } = req.body;
 
     const result = await req.db.query(
-      "SELECT * FROM automation.pm_biscuit WHERE machine_name = $1 AND grup = $2",
+      "SELECT * FROM automation.pm_wafer WHERE machine_name = $1 AND grup = $2",
       [machineName, group]
     );
 
@@ -154,7 +148,7 @@ router.post("/pm_biscuit/machine", async (req, res) => {
   }
 });
 
-router.get("/pm_biscuit/:group/:year", async (req, res) => {
+router.get("/pm_wafer/:group/:year", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10);
     const year = parseInt(req.params.year, 10); // Tahun target
@@ -166,12 +160,12 @@ router.get("/pm_biscuit/:group/:year", async (req, res) => {
 
     // Query untuk memfilter berdasarkan searchTerm
     const result = await req.db.query(
-      "SELECT * FROM automation.pm_biscuit WHERE grup = $1 AND (machine_name ILIKE $2 OR kode_barang ILIKE $2 OR equipment ILIKE $2 OR part_kebutuhan_alat ILIKE $2) ORDER BY CAST(no AS INTEGER) ASC LIMIT $3 OFFSET $4",
+      "SELECT * FROM automation.pm_wafer WHERE grup = $1 AND (machine_name ILIKE $2 OR kode_barang ILIKE $2 OR equipment ILIKE $2 OR part_kebutuhan_alat ILIKE $2) ORDER BY CAST(no AS INTEGER) ASC LIMIT $3 OFFSET $4",
       [group, `%${searchTerm}%`, end - start + 1, start]
     );
 
     const totalWeeks = getTotalWeeksInYear(year);
-
+    console.log(totalWeeks);
     const modifiedData = result.rows.map((row) => ({
       ...row,
       week: generateWeeklyDataForTargetYear(
@@ -189,7 +183,7 @@ router.get("/pm_biscuit/:group/:year", async (req, res) => {
   }
 });
 
-// router.get("/pm_biscuit/:group/:year", async (req, res) => {
+// router.get("/pm_wafer/:group/:year", async (req, res) => {
 //   try {
 //     const group = parseInt(req.params.group, 10);
 //     const year = parseInt(req.params.year, 10); // Tahun target (misalnya, 2024)
@@ -207,7 +201,7 @@ router.get("/pm_biscuit/:group/:year", async (req, res) => {
 
 //     // Query dengan pembatasan hasil berdasarkan start dan end
 //     const result = await req.db.query(
-//       "SELECT * FROM automation.pm_biscuit WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC LIMIT $2 OFFSET $3",
+//       "SELECT * FROM automation.pm_wafer WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC LIMIT $2 OFFSET $3",
 //       [group, endIndex - startIndex, startIndex]
 //     );
 
@@ -230,14 +224,14 @@ router.get("/pm_biscuit/:group/:year", async (req, res) => {
 //   }
 // });
 
-router.get("/pm_biscuit/filter/:group/:year/:week", async (req, res) => {
+router.get("/pm_wafer/filter/:group/:year/:week", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10);
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
 
     const result = await req.db.query(
-      "SELECT * FROM automation.pm_biscuit WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC",
+      "SELECT * FROM automation.pm_wafer WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC",
       [group]
     );
     const totalWeeks = getTotalWeeksInYear(year);
@@ -291,14 +285,14 @@ router.get("/pm_biscuit/filter/:group/:year/:week", async (req, res) => {
   }
 });
 
-router.get("/pm_biscuit/filter/all/:group/:year/:week", async (req, res) => {
+router.get("/pm_wafer/filter/all/:group/:year/:week", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10);
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
 
     const result = await req.db.query(
-      "SELECT * FROM automation.pm_biscuit WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC",
+      "SELECT * FROM automation.pm_wafer WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC",
       [group]
     );
 
@@ -348,14 +342,14 @@ router.get("/pm_biscuit/filter/all/:group/:year/:week", async (req, res) => {
   }
 });
 
-router.get("/pm_biscuit/filter/length/:group/:year/:week", async (req, res) => {
+router.get("/pm_wafer/filter/length/:group/:year/:week", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10);
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
 
     const result = await req.db.query(
-      "SELECT * FROM automation.pm_biscuit WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC",
+      "SELECT * FROM automation.pm_wafer WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC",
       [group]
     );
     const totalWeeks = getTotalWeeksInYear(year);
@@ -400,7 +394,7 @@ router.get("/pm_biscuit/filter/length/:group/:year/:week", async (req, res) => {
   }
 });
 
-router.post("/pm_biscuit/add_biscuit", async (req, res) => {
+router.post("/pm_wafer/add_wafer", async (req, res) => {
   // Validasi body request
   const {
     machine_name,
@@ -432,7 +426,7 @@ router.post("/pm_biscuit/add_biscuit", async (req, res) => {
   try {
     // Insert data ke database
     const result = await req.db.query(
-      `INSERT INTO automation.pm_biscuit 
+      `INSERT INTO automation.pm_wafer 
        (machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode, periode_start, grup)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
@@ -460,7 +454,7 @@ router.post("/pm_biscuit/add_biscuit", async (req, res) => {
       data: result.rows[0],
     });
   } catch (error) {
-    console.error("Error adding PM Biscuit data:", error);
+    console.error("Error adding PM Wafer data:", error);
 
     // Handling specific database errors
     if (error.code === "23505") {
@@ -501,7 +495,7 @@ router.put("/update_field/:id", async (req, res) => {
   try {
     // Perbarui kolom yang sesuai pada baris dengan id yang diberikan
     const result = await req.db.query(
-      `UPDATE automation.pm_biscuit SET ${field} = $1 WHERE id = $2 RETURNING *`,
+      `UPDATE automation.pm_wafer SET ${field} = $1 WHERE id = $2 RETURNING *`,
       [value, id]
     );
 
@@ -521,43 +515,39 @@ router.put("/update_field/:id", async (req, res) => {
 });
 
 // Endpoint API
-router.post("/import/biscuit", upload.single("file"), async (req, res) => {
+router.post("/import/wafer", upload.single("file"), async (req, res) => {
   const filePath = req.file.path;
 
   try {
-    await importExcelBiscuit(filePath);
+    await importExcelWafer(filePath);
     res.status(200).send("Data berhasil diimpor ke PostgreSQL.");
   } catch (error) {
     res.status(500).send("Gagal mengimpor data: " + error.message);
   }
 });
 
-router.post(
-  "/import/biscuit/:grup",
-  upload.single("file"),
-  async (req, res) => {
-    const filePath = req.file.path;
-    const grup = req.params.grup; // Mengambil parameter grup dari URL
-    try {
-      // Anda dapat meneruskan `grup` ke fungsi `importExcelBiscuit` jika diperlukan
-      await importExcelBiscuit(filePath, grup);
-      res
-        .status(200)
-        .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
-    } catch (error) {
-      res
-        .status(500)
-        .send(`Gagal mengimpor data untuk grup ${grup}: ` + error.message);
-    }
+router.post("/import/wafer/:grup", upload.single("file"), async (req, res) => {
+  const filePath = req.file.path;
+  const grup = req.params.grup; // Mengambil parameter grup dari URL
+  try {
+    // Anda dapat meneruskan `grup` ke fungsi `importExcelWafer` jika diperlukan
+    await importExcelWafer(filePath, grup);
+    res
+      .status(200)
+      .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
+  } catch (error) {
+    res
+      .status(500)
+      .send(`Gagal mengimpor data untuk grup ${grup}: ` + error.message);
   }
-);
+});
 
-router.delete("/deleted/biscuit/:group", async (req, res) => {
+router.delete("/deleted/wafer/:group", async (req, res) => {
   try {
     // Menghapus data di database berdasarkan group
     const group = parseInt(req.params.group, 10);
     const result = await req.db.query(
-      "DELETE FROM automation.pm_biscuit WHERE grup = $1 RETURNING *",
+      "DELETE FROM automation.pm_wafer WHERE grup = $1 RETURNING *",
       [group]
     );
     // Mengirimkan hasil sebagai JSON, yaitu data yang telah dihapus
@@ -571,7 +561,7 @@ router.delete("/deleted/biscuit/:group", async (req, res) => {
   }
 });
 
-router.delete("/deleted/biscuit_pm/batch", async (req, res) => {
+router.delete("/deleted/wafer_pm/batch", async (req, res) => {
   try {
     const { ids } = req.body;
     console.log("Received IDs:", ids);
@@ -586,7 +576,7 @@ router.delete("/deleted/biscuit_pm/batch", async (req, res) => {
     }
     // Query untuk menghapus data berdasarkan IDs
     const result = await req.db.query(
-      "DELETE FROM automation.pm_biscuit WHERE id = ANY($1::int[]) RETURNING *",
+      "DELETE FROM automation.pm_wafer WHERE id = ANY($1::int[]) RETURNING *",
       [ids]
     );
     console.log("Deleted rows:", result.rows);
@@ -613,9 +603,9 @@ router.delete("/deleted/biscuit_pm/batch", async (req, res) => {
   }
 });
 
-router.delete("/delete_all_biscuit", async (req, res) => {
+router.delete("/delete_all_wafer", async (req, res) => {
   try {
-    const result = await req.db.query("DELETE FROM automation.pm_biscuit");
+    const result = await req.db.query("DELETE FROM automation.pm_wafer");
     res.json({
       message: "Semua data telah berhasil dihapus.",
       affectedRows: result.rowCount,

@@ -26,7 +26,7 @@ import line5 from './routes/biscuit/line5/line5.js';
 import downtime_biscuit from './routes/biscuit/downtime/downtime.js';
 import lhp_biscuit from './routes/biscuit/lhp/lhp.js';
 import central_kitchen from './routes/central_kitchen.js';
-import importRoutesWafer from './routes/wafer/import/import.js';
+import importRoutesWafer from './routes/wafer/pm/import.js';
 import importRoutesBiscuit from './routes/biscuit/import/import.js';
 
 // Load environment variables
