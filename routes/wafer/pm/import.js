@@ -106,6 +106,25 @@ function getTotalWeeksInYear(year) {
   );
   return Math.floor((lastDay - firstMonday) / (7 * 24 * 60 * 60 * 1000));
 }
+
+router.get("/pm_wafer/select/:group", async (req, res) => {
+  try {
+    const group = parseInt(req.params.group, 10);
+
+    // Query untuk mendapatkan machine_name yang unik
+    const result = await req.db.query(
+      "SELECT machine_name, no FROM (SELECT DISTINCT ON (machine_name) machine_name, no FROM automation.pm_wafer WHERE grup = $1 ORDER BY machine_name, no ASC) AS unique_machines ORDER BY no ASC",
+      [group]
+    );
+
+    // Mengirimkan hasil query sebagai response
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    res.status(500).json({ error: "Error fetching data" });
+  }
+});
+
 router.get("/pm_wafer/:group/:year", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10);
@@ -115,10 +134,14 @@ router.get("/pm_wafer/:group/:year", async (req, res) => {
     const searchTerm = req.query.searchTerm
       ? req.query.searchTerm.toLowerCase()
       : ""; // Mendapatkan searchTerm dari query parameter
+    // Pastikan start dan end bukan NaN
+    if (isNaN(start) || isNaN(end)) {
+      return res.status(400).json({ error: "Invalid start or end parameters" });
+    }
 
     // Query untuk memfilter berdasarkan searchTerm
     const result = await req.db.query(
-      "SELECT * FROM automation.pm_wafer WHERE grup = $1 AND (machine_name ILIKE $2 OR kode_barang ILIKE $2 OR equipment ILIKE $2 OR part_kebutuhan_alat ILIKE $2) ORDER BY CAST(no AS INTEGER) ASC LIMIT $3 OFFSET $4",
+      "SELECT * FROM automation.pm_wafer WHERE grup = $1 AND (machine_name ILIKE $2 OR kode_barang ILIKE $2 OR equipment ILIKE $2 OR part_kebutuhan_alat ILIKE $2) ORDER BY no ASC LIMIT $3 OFFSET $4",
       [group, `%${searchTerm}%`, end - start + 1, start]
     );
 
@@ -135,24 +158,6 @@ router.get("/pm_wafer/:group/:year", async (req, res) => {
     }));
 
     res.json(modifiedData);
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    res.status(500).json({ error: "Error fetching data" });
-  }
-});
-
-router.get("/pm_wafer/select/:group/", async (req, res) => {
-  try {
-    const group = parseInt(req.params.group, 10);
-
-    // Query untuk mendapatkan machine_name yang unik
-    const result = await req.db.query(
-      "SELECT DISTINCT machine_name FROM automation.pm_wafer WHERE grup = $1 ORDER BY machine_name ASC",
-      [group]
-    );
-
-    // Mengirimkan hasil query sebagai response
-    res.json(result.rows);
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).json({ error: "Error fetching data" });
@@ -223,7 +228,7 @@ router.get("/pm_wafer/filter/:group/:year/:week", async (req, res) => {
     const currentWeek = parseInt(req.params.week, 10);
 
     const result = await req.db.query(
-      "SELECT * FROM automation.pm_wafer WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC",
+      "SELECT * FROM automation.pm_wafer WHERE grup = $1 ORDER BY no ASC",
       [group]
     );
     const totalWeeks = getTotalWeeksInYear(year);
@@ -284,7 +289,7 @@ router.get("/pm_wafer/filter/all/:group/:year/:week", async (req, res) => {
     const currentWeek = parseInt(req.params.week, 10);
 
     const result = await req.db.query(
-      "SELECT * FROM automation.pm_wafer WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC",
+      "SELECT * FROM automation.pm_wafer WHERE grup = $1 ORDER BY no ASC",
       [group]
     );
 
@@ -341,7 +346,7 @@ router.get("/pm_wafer/filter/length/:group/:year/:week", async (req, res) => {
     const currentWeek = parseInt(req.params.week, 10);
 
     const result = await req.db.query(
-      "SELECT * FROM automation.pm_wafer WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC",
+      "SELECT * FROM automation.pm_wafer WHERE grup = $1 ORDER BY no ASC",
       [group]
     );
     const totalWeeks = getTotalWeeksInYear(year);
@@ -416,11 +421,37 @@ router.post("/pm_wafer/add_wafer", async (req, res) => {
   }
 
   try {
+    // Cari nomor urut untuk machine_name yang sama dalam group
+    const existingMachineQuery = await req.db.query(
+      `SELECT no FROM automation.pm_wafer 
+       WHERE machine_name = $1 AND grup = $2 
+       ORDER BY no DESC 
+       LIMIT 1`,
+      [machine_name, grup]
+    );
+
+    let machineNo;
+    if (existingMachineQuery.rowCount > 0) {
+      // Jika machine_name sudah ada, gunakan nomor yang sama
+      machineNo = existingMachineQuery.rows[0].no;
+    } else {
+      // Jika machine_name belum ada, cari nomor urut terakhir di group
+      const lastNumberQuery = await req.db.query(
+        `SELECT COALESCE(
+          (SELECT MAX(no) FROM automation.pm_wafer WHERE grup = $1), 
+          0
+        ) + 1 AS last_number`,
+        [grup]
+      );
+
+      machineNo = lastNumberQuery.rows[0].last_number.toString();
+    }
+
     // Insert data ke database
     const result = await req.db.query(
       `INSERT INTO automation.pm_wafer 
-       (machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode, periode_start, grup)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       (machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode, periode_start, grup, no)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         machine_name,
@@ -431,6 +462,7 @@ router.post("/pm_wafer/add_wafer", async (req, res) => {
         periode,
         periode_start,
         grup,
+        machineNo,
       ]
     );
 
@@ -444,6 +476,7 @@ router.post("/pm_wafer/add_wafer", async (req, res) => {
     res.status(201).json({
       message: "Data berhasil ditambahkan",
       data: result.rows[0],
+      machineNo: machineNo,
     });
   } catch (error) {
     console.error("Error adding PM Wafer data:", error);
@@ -458,11 +491,70 @@ router.post("/pm_wafer/add_wafer", async (req, res) => {
 
     res.status(500).json({
       error: "Terjadi kesalahan saat menambahkan data",
+      details: error.message,
     });
   }
 });
 
-router.put("/update_field/:id", async (req, res) => {
+router.put("/pm_wafer/list/machine/update", async (req, res) => {
+  try {
+    const { group, machines } = req.body;
+    // Validasi input
+    if (!group || !Array.isArray(machines) || machines.length === 0) {
+      return res.status(400).json({
+        error: "Invalid input",
+        message: "Group dan daftar mesin harus disediakan",
+      });
+    }
+    try {
+      // Loop through each machine in the request
+      for (const machine of machines) {
+        // Validasi setiap mesin
+        if (!machine.name || !machine.order) {
+          console.warn(`Mesin tidak valid: ${JSON.stringify(machine)}`);
+          continue;
+        }
+
+        // Update nomor urutan untuk semua mesin dengan nama yang sama di group tertentu
+        const updateQuery = `
+          UPDATE automation.pm_wafer 
+          SET no = $1 
+          WHERE machine_name = $2 AND grup = $3
+        `;
+        await req.db.query(updateQuery, [machine.order, machine.name, group]);
+
+        // Jika ada oldName, update nama mesin jika berbeda
+        if (machine.oldName && machine.name !== machine.oldName) {
+          const renameQuery = `
+            UPDATE automation.pm_wafer 
+            SET machine_name = $1 
+            WHERE machine_name = $2 AND grup = $3
+          `;
+          await req.db.query(renameQuery, [
+            machine.name,
+            machine.oldName,
+            group,
+          ]);
+        }
+      }
+
+      res.json({
+        message: "Daftar mesin berhasil diperbarui",
+        updatedCount: machines.length,
+      });
+    } catch (error) {
+      throw error;
+    }
+  } catch (error) {
+    console.error("Error updating machine list:", error);
+    res.status(500).json({
+      error: "Gagal memperbarui daftar mesin",
+      details: error.message,
+    });
+  }
+});
+
+router.put("/pm_wafer/update_field/:id", async (req, res) => {
   const { id } = req.params;
   const { field, value } = req.body;
 
@@ -485,7 +577,67 @@ router.put("/update_field/:id", async (req, res) => {
   }
 
   try {
-    // Perbarui kolom yang sesuai pada baris dengan id yang diberikan
+    // Jika field yang diupdate adalah machine_name
+    if (field === "machine_name") {
+      // Ambil data existing terlebih dahulu
+      const existingData = await req.db.query(
+        `SELECT grup, machine_name FROM automation.pm_wafer WHERE id = $1`,
+        [id]
+      );
+
+      if (existingData.rowCount === 0) {
+        return res.status(404).json({ error: "Data tidak ditemukan" });
+      }
+
+      const { grup, machine_name: oldMachineName } = existingData.rows[0];
+
+      // Cari nomor urut untuk machine_name yang sama dalam group
+      const existingMachineQuery = await req.db.query(
+        `SELECT no FROM automation.pm_wafer 
+         WHERE machine_name = $1 AND grup = $2 
+         ORDER BY no DESC 
+         LIMIT 1`,
+        [value, grup]
+      );
+
+      let machineNo;
+      if (existingMachineQuery.rowCount > 0) {
+        // Jika machine_name sudah ada, gunakan nomor yang sama
+        machineNo = existingMachineQuery.rows[0].no;
+      } else {
+        // Jika machine_name belum ada, cari nomor urut terakhir di group
+        const lastNumberQuery = await req.db.query(
+          `SELECT COALESCE(
+            (SELECT MAX(no) FROM automation.pm_wafer WHERE grup = $1), 
+            0
+          ) + 1 AS last_number`,
+          [grup]
+        );
+
+        machineNo = lastNumberQuery.rows[0].last_number;
+      }
+
+      // Update machine_name dan no
+      const result = await req.db.query(
+        `UPDATE automation.pm_wafer 
+         SET machine_name = $1, no = $2 
+         WHERE id = $3 RETURNING *`,
+        [value, machineNo, id]
+      );
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: "Data tidak ditemukan" });
+      }
+
+      // Kirimkan data yang diperbarui sebagai respons
+      return res.json({
+        message: "Machine name berhasil diperbarui",
+        data: result.rows[0],
+        machineNo: machineNo,
+      });
+    }
+
+    // Untuk field selain machine_name, lakukan update biasa
     const result = await req.db.query(
       `UPDATE automation.pm_wafer SET ${field} = $1 WHERE id = $2 RETURNING *`,
       [value, id]
@@ -495,6 +647,7 @@ router.put("/update_field/:id", async (req, res) => {
       // Jika tidak ada baris yang diperbarui, kirimkan respons 404
       return res.status(404).json({ error: "Data tidak ditemukan" });
     }
+
     // Kirimkan data yang diperbarui sebagai respons
     res.json({
       message: `${field} berhasil diperbarui`,
