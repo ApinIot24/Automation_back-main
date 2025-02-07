@@ -317,7 +317,7 @@ router.get(
       p.periode_start
     FROM automation.checklist_pm_wafer c
     JOIN automation.pm_wafer p ON c.pm_wafer_id = p.id
-    WHERE p.grup = $1
+    WHERE c.grup = $1
       AND c.year = $2
       AND c.week = $3
     ORDER BY p.no ASC;
@@ -559,20 +559,24 @@ router.get("/pm_wafer/filter/length/:group/:year/:week", async (req, res) => {
   }
 });
 
-router.post("/pm_wafer/submit_pm_checklist", async (req, res) => {
+router.post("/pm_wafer/submit_pm_checklist/:grup", async (req, res) => {
   const { year, week, data } = req.body; // Ambil data dari request
+  const { grup } = req.params; // Ambil data dari request
+
+  // Validasi input
   if (!year || !week || !Array.isArray(data) || data.length === 0) {
     return res.status(400).json({ error: "Data tidak valid" });
   }
+
   try {
     // Cek apakah sudah ada data dengan week dan year yang sama
     const checkQuery = `
       SELECT 1
       FROM automation.checklist_pm_wafer
-      WHERE week = $1 AND year = $2
+      WHERE week = $1 AND year = $2 AND grup = $3
       LIMIT 1;
     `;
-    const checkResult = await req.db.query(checkQuery, [week, year]);
+    const checkResult = await req.db.query(checkQuery, [week, year, grup]);
 
     if (checkResult.rows.length > 0) {
       return res
@@ -584,20 +588,28 @@ router.post("/pm_wafer/submit_pm_checklist", async (req, res) => {
     const values = data
       .map(
         (id, index) =>
-          `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3})`
+          `($${index * 4 + 1}, $${index * 4 + 2}, $${index * 4 + 3}, $${
+            index * 4 + 4
+          })`
       )
       .join(", ");
-    const queryParams = data.flatMap((id) => [id, week, year]);
+
+    // Menyiapkan query params berdasarkan data
+    const queryParams = data.flatMap((id) => [id, week, year, grup]);
 
     const insertQuery = `
-      INSERT INTO automation.checklist_pm_wafer (pm_wafer_id, week, year)
+      INSERT INTO automation.checklist_pm_wafer (pm_wafer_id, week, year, grup)
       VALUES ${values}
       RETURNING *;
     `;
 
-    const result = await req.db.query(insertQuery, queryParams); // Eksekusi query
+    // Eksekusi query insert
+    const result = await req.db.query(insertQuery, queryParams);
+
+    // Kembalikan response sukses
     return res.status(201).json({ success: true, insertedRows: result.rows });
   } catch (error) {
+    // Menangani error
     console.error(error);
     return res.status(500).json({ error: "Terjadi kesalahan pada server" });
   }
@@ -663,7 +675,7 @@ router.post("/pm_wafer/add_wafer", async (req, res) => {
     const result = await req.db.query(
       `INSERT INTO automation.pm_wafer 
        (machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode, periode_start, grup, no)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       VALUES ($1, $2, $4, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         machine_name,
