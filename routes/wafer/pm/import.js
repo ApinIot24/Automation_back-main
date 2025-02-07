@@ -133,20 +133,13 @@ router.get("/pm_wafer/:group/:year", async (req, res) => {
     const end = parseInt(req.query.end, 10); // Mendapatkan nilai end dari query parameter
     const searchTerm = req.query.searchTerm
       ? req.query.searchTerm.toLowerCase()
-      : ""; // Mendapatkan searchTerm dari query parameter
-    // Pastikan start dan end bukan NaN
-    if (isNaN(start) || isNaN(end)) {
-      return res.status(400).json({ error: "Invalid start or end parameters" });
-    }
-
-    // Query untuk memfilter berdasarkan searchTerm
+      : "";
     const result = await req.db.query(
       "SELECT * FROM automation.pm_wafer WHERE grup = $1 AND (machine_name ILIKE $2 OR kode_barang ILIKE $2 OR equipment ILIKE $2 OR part_kebutuhan_alat ILIKE $2) ORDER BY no ASC LIMIT $3 OFFSET $4",
       [group, `%${searchTerm}%`, end - start + 1, start]
     );
 
     const totalWeeks = getTotalWeeksInYear(year);
-    // console.log(totalWeeks);
     const modifiedData = result.rows.map((row) => ({
       ...row,
       week: generateWeeklyDataForTargetYear(
@@ -220,6 +213,181 @@ router.post("/pm_wafer/machine", async (req, res) => {
 //     res.status(500).json({ error: "Error fetching data" });
 //   }
 // });
+
+router.get(
+  "/pm_wafer/filter/checklist/data/:group/:year/:week",
+  async (req, res) => {
+    try {
+      const group = parseInt(req.params.group, 10);
+      const year = parseInt(req.params.year, 10);
+      const currentWeek = parseInt(req.params.week, 10);
+
+      const result = await req.db.query(
+        "SELECT * FROM automation.pm_wafer WHERE grup = $1 ORDER BY no ASC",
+        [group]
+      );
+      const totalWeeks = getTotalWeeksInYear(year);
+
+      // Hitung range minggu (4 minggu ke depan)
+      const startWeek = currentWeek;
+      const endWeek = Math.min(currentWeek, totalWeeks);
+
+      const modifiedData = result.rows
+        .map((row) => {
+          // Generate data mingguan
+          const weeklyData = generateWeeklyDataForTargetYear(
+            totalWeeks,
+            row.periode,
+            row.periode_start,
+            year
+          );
+
+          // Filter minggu yang diinginkan
+          const filteredWeeks = {};
+          let hasScheduledMaintenance = false; // Flag untuk cek apakah ada maintenance
+
+          for (let i = startWeek; i <= endWeek; i++) {
+            const weekValue = weeklyData[`w${i}`];
+            if (weekValue !== "-") {
+              filteredWeeks[`w${i}`] = weekValue;
+              hasScheduledMaintenance = true;
+            }
+          }
+
+          // Hanya return jika ada maintenance terjadwal
+          if (hasScheduledMaintenance) {
+            return {
+              id: row.id,
+              machine_name: row.machine_name,
+              part_kebutuhan_alat: row.part_kebutuhan_alat,
+              equipment: row.equipment,
+              periode: row.periode,
+              grup: row.grup,
+              week: filteredWeeks,
+            };
+          }
+          return null;
+        })
+        .filter((item) => item !== null); // Hapus semua item null
+
+      res.json(modifiedData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      res.status(500).json({ error: "Error fetching data" });
+    }
+  }
+);
+
+router.get(
+  "/pm_wafer/filter/checklist/:group/:year/:week",
+  async (req, res) => {
+    try {
+      const group = parseInt(req.params.group, 10);
+      const year = parseInt(req.params.year, 10);
+      const currentWeek = parseInt(req.params.week, 10);
+
+      // Asumsikan kamu sudah punya fungsi untuk menghitung total minggu dalam satu tahun
+      const totalWeeks = getTotalWeeksInYear(year); // Implementasikan fungsi ini sesuai kebutuhan
+      // Query database dengan filter berdasarkan grup, tahun, dan minggu
+      const result = await req.db.query(
+        `
+        SELECT
+      c.id,
+      c.pm_wafer_id,
+      c.status_checklist,
+      c.pic,
+      c.c_i,
+      c.l,
+      c.r,
+      c.keterangan,
+      c.foto,
+      c.created_at,
+      c.updated_at,
+      c.week,
+      c.year,
+      c.tanggal,
+      p.no,
+      p.machine_name,
+      p.part_kebutuhan_alat,
+      p.qty,
+      p.equipment,
+      p.periode,
+      p.grup,
+      p.kode_barang,
+      p.periode_start
+    FROM automation.checklist_pm_wafer c
+    JOIN automation.pm_wafer p ON c.pm_wafer_id = p.id
+    WHERE p.grup = $1
+      AND c.year = $2
+      AND c.week = $3
+    ORDER BY p.no ASC;
+      `,
+        [group, year, currentWeek]
+      );
+      // console.log(result.rows);
+      const startWeek = currentWeek;
+      const endWeek = Math.min(currentWeek + 1, totalWeeks);
+
+      // Proses data jika perlu (modifikasi, filter, dll)
+      const modifiedData = result.rows
+        .map((row) => {
+          // Generate data mingguan
+          const weeklyData = generateWeeklyDataForTargetYear(
+            totalWeeks,
+            row.periode,
+            row.periode_start,
+            year
+          );
+
+          // Filter minggu yang diinginkan
+          const filteredWeeks = {};
+          let hasScheduledMaintenance = false; // Flag untuk cek apakah ada maintenance
+
+          for (let i = startWeek; i <= endWeek; i++) {
+            const weekValue = weeklyData[`w${i}`];
+            if (weekValue !== "-") {
+              filteredWeeks[`w${i}`] = weekValue;
+              hasScheduledMaintenance = true;
+            }
+          }
+
+          // Hanya return jika ada maintenance terjadwal
+          if (hasScheduledMaintenance) {
+            return {
+              id: row.id,
+              pm_wafer_id: row.pm_wafer_id,
+              status_checklist: row.status_checklist,
+              pic: row.pic,
+              c_i: row.c_i,
+              l: row.l,
+              r: row.r,
+              keterangan: row.keterangan,
+              foto: row.foto,
+              created_at: row.created_at,
+              updated_at: row.updated_at,
+              week: filteredWeeks, // Filtered weeks sesuai dengan minggu yang terjadwal
+              year: row.year,
+              machine_name: row.machine_name,
+              part_kebutuhan_alat: row.part_kebutuhan_alat,
+              equipment: row.equipment,
+              periode: row.periode,
+              grup: row.grup,
+              tanggal: row.tanggal,
+            };
+          }
+
+          return null;
+        })
+        .filter((item) => item !== null); // Hapus semua item null
+
+      // Kirimkan data hasil query dan modifikasi
+      res.json(modifiedData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      res.status(500).json({ error: "Error fetching data" });
+    }
+  }
+);
 
 router.get("/pm_wafer/filter/:group/:year/:week", async (req, res) => {
   try {
@@ -391,6 +559,50 @@ router.get("/pm_wafer/filter/length/:group/:year/:week", async (req, res) => {
   }
 });
 
+router.post("/pm_wafer/submit_pm_checklist", async (req, res) => {
+  const { year, week, data } = req.body; // Ambil data dari request
+  if (!year || !week || !Array.isArray(data) || data.length === 0) {
+    return res.status(400).json({ error: "Data tidak valid" });
+  }
+  try {
+    // Cek apakah sudah ada data dengan week dan year yang sama
+    const checkQuery = `
+      SELECT 1
+      FROM automation.checklist_pm_wafer
+      WHERE week = $1 AND year = $2
+      LIMIT 1;
+    `;
+    const checkResult = await req.db.query(checkQuery, [week, year]);
+
+    if (checkResult.rows.length > 0) {
+      return res
+        .status(400)
+        .json({ error: "Data dengan week dan year yang sama sudah ada" });
+    }
+
+    // Jika tidak ada, lanjutkan dengan query batch insert
+    const values = data
+      .map(
+        (id, index) =>
+          `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3})`
+      )
+      .join(", ");
+    const queryParams = data.flatMap((id) => [id, week, year]);
+
+    const insertQuery = `
+      INSERT INTO automation.checklist_pm_wafer (pm_wafer_id, week, year)
+      VALUES ${values}
+      RETURNING *;
+    `;
+
+    const result = await req.db.query(insertQuery, queryParams); // Eksekusi query
+    return res.status(201).json({ success: true, insertedRows: result.rows });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Terjadi kesalahan pada server" });
+  }
+});
+
 router.post("/pm_wafer/add_wafer", async (req, res) => {
   // Validasi body request
   const {
@@ -491,6 +703,50 @@ router.post("/pm_wafer/add_wafer", async (req, res) => {
 
     res.status(500).json({
       error: "Terjadi kesalahan saat menambahkan data",
+      details: error.message,
+    });
+  }
+});
+
+router.put("/pm_wafer/checklist/:id", async (req, res) => {
+  const { pic, c_i, l, r, keterangan, tanggal } = req.body;
+
+  const { id } = req.params;
+
+  try {
+    // Prepare the update query (only updating the provided fields)
+    const query = `
+      UPDATE checklist_pm_wafer
+      SET
+        pic = $1,
+        c_i = $2,
+        l = $3,
+        r = $4,
+        keterangan = $5,
+        tanggal = $6,
+        updated_at = NOW()
+      WHERE id = $7
+      RETURNING *;
+    `;
+
+    // Execute the update query with the values
+    const values = [pic, c_i, l, r, keterangan, tanggal, id];
+
+    const result = await req.db.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Data not found for the given ID" });
+    }
+
+    // Return the updated data
+    res.status(200).json({
+      message: "Data successfully updated",
+      data: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error updating machine checklist:", error);
+    res.status(500).json({
+      error: "Failed to update checklist",
       details: error.message,
     });
   }
