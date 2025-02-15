@@ -124,21 +124,39 @@ router.get("/pm_wafer/select/:group", async (req, res) => {
     res.status(500).json({ error: "Error fetching data" });
   }
 });
-
 router.get("/pm_wafer/:group/:year", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10);
     const year = parseInt(req.params.year, 10); // Tahun target
-    const start = parseInt(req.query.start, 10); // Mendapatkan nilai start dari query parameter
-    const end = parseInt(req.query.end, 10); // Mendapatkan nilai end dari query parameter
+
+    // Ambil query parameter, jika tidak ada maka beri nilai null
+    const start = req.query.start ? parseInt(req.query.start, 10) : null;
+    const end = req.query.end ? parseInt(req.query.end, 10) : null;
     const searchTerm = req.query.searchTerm
       ? req.query.searchTerm.toLowerCase()
       : "";
-    const result = await req.db.query(
-      "SELECT * FROM automation.pm_wafer WHERE grup = $1 AND (machine_name ILIKE $2 OR kode_barang ILIKE $2 OR equipment ILIKE $2 OR part_kebutuhan_alat ILIKE $2) ORDER BY no ASC LIMIT $3 OFFSET $4",
-      [group, `%${searchTerm}%`, end - start + 1, start]
-    );
 
+    let result;
+
+    // Jika parameter start dan end valid, gunakan pagination dan pencarian
+    if (start !== null && end !== null && !isNaN(start) && !isNaN(end)) {
+      result = await req.db.query(
+        `SELECT * FROM automation.pm_wafer 
+         WHERE grup = $1 
+           AND (machine_name ILIKE $2 OR kode_barang ILIKE $2 OR equipment ILIKE $2 OR part_kebutuhan_alat ILIKE $2)
+         ORDER BY no ASC 
+         LIMIT $3 OFFSET $4`,
+        [group, `%${searchTerm}%`, end - start + 1, start]
+      );
+    } else {
+      // Jika tidak ada parameter start dan end, ambil seluruh data berdasarkan grup
+      result = await req.db.query(
+        "SELECT * FROM automation.pm_wafer WHERE grup = $1 ORDER BY no ASC",
+        [group]
+      );
+    }
+
+    // Asumsikan fungsi getTotalWeeksInYear dan generateWeeklyDataForTargetYear sudah didefinisikan
     const totalWeeks = getTotalWeeksInYear(year);
     const modifiedData = result.rows.map((row) => ({
       ...row,
