@@ -28,7 +28,7 @@ import lhp_biscuit from "./routes/biscuit/lhp/lhp.js";
 import central_kitchen from "./routes/central_kitchen.js";
 import importRoutesWafer from "./routes/wafer/pm/import.js";
 import importRoutesBiscuit from "./routes/biscuit/import/import.js";
-import ruang_cu from "./routes/utility/ruang_cu/ruang_cu.js";
+import utility from "./routes/utility/utility.js";
 
 // Load environment variables
 dotenv.config();
@@ -124,7 +124,7 @@ app.use("/", control_wafer);
 app.use("/", line5);
 app.use("/", downtime_biscuit);
 app.use("/", lhp_biscuit);
-app.use("/api", ruang_cu);
+app.use("/api", utility);
 app.use("/api", importRoutesWafer);
 app.use("/api", importRoutesBiscuit);
 
