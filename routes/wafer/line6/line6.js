@@ -1,6 +1,8 @@
 
 import { Router } from 'express';
 import moment from 'moment';
+import pool from "../../../config/automation.js";
+
 const app = Router();
 function format(date) {
     if (!(date instanceof Date)) {
@@ -38,21 +40,21 @@ function getWeekDates(year, month, week) {
     return arr;
 }
 app.get('/packing_l6', async (req, res) => {
-    const result = await req.db.query('SELECT * FROM automation.packing_l6 ORDER BY id DESC LIMIT 1');
+    const result = await pool.query('SELECT * FROM automation.packing_l6 ORDER BY id DESC LIMIT 1');
     // console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
 });
 app.get('/shift_l6', async (req, res) => {
     var thisdaytime = format(new Date());
-    const result = await req.db.query(`SELECT shift1, shift2, shift3 FROM automation.counter_shift_l6 where tanggal = '${thisdaytime}' ORDER BY id DESC LIMIT 1`);
+    const result = await pool.query(`SELECT shift1, shift2, shift3 FROM automation.counter_shift_l6 where tanggal = '${thisdaytime}' ORDER BY id DESC LIMIT 1`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
     res.send(datalast);
 });
 app.get('/shift1_l6', async (req, res) => {
     var thisdaytime = format(new Date());
-    const result = await req.db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l6 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+    const result = await pool.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l6 where graph = 'Y' AND tanggal = '${thisdaytime}' 
         AND jam in ('7.0','7.31','8.0','8.31','9.0','9.31','10.0','10.31','11.0','11.31','12.0','12.31','13.0','13.31','14.0','14.31','14.58') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
@@ -60,7 +62,7 @@ app.get('/shift1_l6', async (req, res) => {
 });
 app.get('/shift2_l6', async (req, res) => {
     var thisdaytime = format(new Date());
-    const result = await req.db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l6 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+    const result = await pool.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l6 where graph = 'Y' AND tanggal = '${thisdaytime}' 
         AND jam in ('15.0','15.31','16.0','16.31','17.0','17.31','18.0','18.31','19.0','19.31','20.0','20.31','21.0','21.31','22.0','22.31','22.58') ORDER BY id ASC`);
     //console.log("DATA" ,result)
     var datalast = result.rows;
@@ -73,7 +75,7 @@ app.get('/shift3_l6', async (req, res) => {
     var thisdate = new Date();
     thisdate.setDate(thisdate.getDate() + 1)
     var thisyestertime = format(thisdate)
-    const resultone = await req.db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l6 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+    const resultone = await pool.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l6 where graph = 'Y' AND tanggal = '${thisdaytime}' 
         AND jam = '23.0' ORDER BY id ASC`);
     var datalastone = resultone.rows;
     let element = {};
@@ -83,7 +85,7 @@ app.get('/shift3_l6', async (req, res) => {
         element.counter = datalastone[index].counter
         cart.push(element)
     }
-    const resulttwo = await req.db.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l6 where graph = 'Y' AND tanggal = '${thisyestertime}' 
+    const resulttwo = await pool.query(`SELECT cntr_bandet, cntr_carton , jam FROM automation.packing_l6 where graph = 'Y' AND tanggal = '${thisyestertime}' 
         AND jam in ('0.30', '1.0','1.31','2.0','2.31','3.0','3.31','4.0','4.31','5.0','5.31','6.0','6.31','6.59') ORDER BY id ASC`);
     var datalasttwo = resulttwo.rows;
     var twoarray = cart.concat(datalasttwo)
@@ -102,7 +104,7 @@ app.get('/shift1_l6_hourly', async (req, res) => {
         ? ['7.45', '8.45', '9.45', '10.45', '11.45'] // 5 jam Sabtu
         : ['7.45', '8.45', '9.45', '10.45', '11.45', '12.45', '13.45', '14.44']; // Hari biasa
 
-    const result = await req.db.query(`
+    const result = await pool.query(`
         SELECT * FROM (
             SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
             FROM automation.packing_l6
@@ -128,7 +130,7 @@ app.get('/shift2_l6_hourly', async (req, res) => {
         ? ['12.45', '13.45', '14.45', '15.45', '16.45'] // 5 jam Sabtu
         : ['15.45', '16.45', '17.45', '18.45', '19.45', '20.45', '21.45', '22.45']; // Hari biasa
 
-    const result = await req.db.query(`
+    const result = await pool.query(`
         SELECT * FROM (
             SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
             FROM automation.packing_l6
@@ -154,7 +156,7 @@ app.get('/shift3_l6_hourly', async (req, res) => {
 
     // Jika hari Sabtu, gunakan jam shift 3 khusus Sabtu
     if (isSaturday) {
-        resultone = await req.db.query(`
+        resultone = await pool.query(`
             SELECT * FROM (
                 SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
                 FROM automation.packing_l6
@@ -176,7 +178,7 @@ app.get('/shift3_l6_hourly', async (req, res) => {
         res.send(cart);
     } else {
         // Hari biasa: Ambil data '23.45' pada tanggal hari ini
-        resultone = await req.db.query(`
+        resultone = await pool.query(`
             SELECT * FROM (
                 SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
                 FROM automation.packing_l6
@@ -196,7 +198,7 @@ app.get('/shift3_l6_hourly', async (req, res) => {
         }));
 
         // Ambil data untuk jam '0.45' hingga '6.45' pada tanggal berikutnya
-        const resulttwo = await req.db.query(`
+        const resulttwo = await pool.query(`
             SELECT * FROM (
                 SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
                 FROM automation.packing_l6
