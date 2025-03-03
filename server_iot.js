@@ -9,11 +9,11 @@ import cron from "node-cron";
 import { Server } from "socket.io";
 import db from "./config/util.js";
 import db_iot from "./config/users.js";
-import register from "./routes/auth/register.js";
 import { Bot } from "grammy";
 import fs from "fs";
 import dotenv from "dotenv";
 
+// import register from "./routes/auth/register.js";
 // Routes Definisi
 import downtime_wafer from "./routes/wafer/downtime/downtime.js";
 import lhp_wafer from "./routes/wafer/lhp/lhp.js";
@@ -30,6 +30,10 @@ import importRoutesWafer from "./routes/wafer/pm/import.js";
 import importRoutesBiscuit from "./routes/biscuit/import/import.js";
 import utility from "./routes/utility/utility.js";
 
+// users
+import authRoutes from "./routes/auth/authRoutes.js";
+import roleRoutes from "./routes/settings/roleRoutes.js";
+import users from "./routes/users/userRoutes.js";
 // Load environment variables
 dotenv.config();
 
@@ -81,7 +85,7 @@ function validateUser(req, res, next) {
 
 app.use(express.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use("/login", register);
+// app.use("/login", register);
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // Menambahkan `db` ke `req`
@@ -128,6 +132,23 @@ app.use("/api", utility);
 app.use("/api", importRoutesWafer);
 app.use("/api", importRoutesBiscuit);
 
+app.use("/api/auth", authRoutes);
+app.use("/api", users);
+app.use("/api/setting", roleRoutes);
+
+
+
+app.get('/test', async (req, res) => {
+  try {
+
+  } catch (error) {
+    console.error("Error fetching downtime data:", error);
+    res.status(500).send('Internal Server Error');
+  }
+  });
+
+
+  
 // Membaca sertifikat SSL
 const privateKey = fs.readFileSync(process.env.SSL_KEY_PATH, "utf8");
 const certificate = fs.readFileSync(process.env.SSL_CERT_PATH, "utf8");

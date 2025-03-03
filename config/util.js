@@ -1,17 +1,18 @@
-import pg from 'pg';
+import pg from "pg";
 
 const { Pool } = pg;
 
 const pool = new Pool({
-  user: 'automation',
-  password: 'Auto123',
-  host: 'localhost',
+  user: "automation",
+  password: "Auto123",
+  host: "localhost",
   port: 5432,
-  database: 'automation'
+  database: "automation",
 });
 
 const db = {
-  query: (text, params) => pool.query(text, params)
+  connect: () => pool.connect(),
+  query: (text, params) => pool.query(text, params),
 };
 
 export default db;
