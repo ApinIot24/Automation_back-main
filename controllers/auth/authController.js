@@ -17,7 +17,6 @@ export const register = async (req, res) => {
 
   const { username, email, password, roles } = req.body; // Tidak perlu permissions lagi
   const role_name = roles ? roles.role_name : null;
-
   const client = await pool.connect(); // Start transaction using connection pool
 
   try {
@@ -78,6 +77,7 @@ export const register = async (req, res) => {
     res.status(201).json({ message: "User registered successfully!", userId });
   } catch (error) {
     await client.query("ROLLBACK");
+    // console.log(error)
     res
       .status(500)
       .json({ message: "An unexpected error occurred during registration" });
