@@ -84,6 +84,47 @@ app.get(
           : 0;
         const shift3MinusShift2 = shift3Data - shift2Data;
 
+        // Menambahkan variabel per jam
+        const startTimestamp08 = moment(
+          `${dateStr} 08:00`,
+          "YYYY-MM-DD HH:mm"
+        ).toISOString();
+        const result08 = await db.query(
+          `SELECT ${kwhpm} FROM purwosari.${utility} WHERE created_at <= $1 ORDER BY created_at DESC LIMIT 1`,
+          [startTimestamp08]
+        );
+        const hours08Data = result08.rows[0] ? result08.rows[0][kwhpm] : 0;
+
+        const startTimestamp17 = moment(
+          `${dateStr} 17:00`,
+          "YYYY-MM-DD HH:mm"
+        ).toISOString();
+        const result17 = await db.query(
+          `SELECT ${kwhpm} FROM purwosari.${utility} WHERE created_at <= $1 ORDER BY created_at DESC LIMIT 1`,
+          [startTimestamp17]
+        );
+        const hours17Data = result17.rows[0] ? result17.rows[0][kwhpm] : 0;
+
+        const startTimestamp22 = moment(
+          `${dateStr} 22:00`,
+          "YYYY-MM-DD HH:mm"
+        ).toISOString();
+        const result22 = await db.query(
+          `SELECT ${kwhpm} FROM purwosari.${utility} WHERE created_at <= $1 ORDER BY created_at DESC LIMIT 1`,
+          [startTimestamp22]
+        );
+        const hours22Data = result22.rows[0] ? result22.rows[0][kwhpm] : 0;
+
+        const startTimestamp03 = moment(
+          `${nextDateStr} 03:00`,
+          "YYYY-MM-DD HH:mm"
+        ).toISOString();
+        const result03 = await db.query(
+          `SELECT ${kwhpm} FROM purwosari.${utility} WHERE created_at <= $1 ORDER BY created_at DESC LIMIT 1`,
+          [startTimestamp03]
+        );
+        const hours03Data = result03.rows[0] ? result03.rows[0][kwhpm] : 0;
+
         // Menyimpan data hasil perhitungan per tanggal
         results.push({
           date: dateStr,
@@ -94,6 +135,10 @@ app.get(
           shift1MinusShift0: shift1MinusShift0,
           shift2MinusShift1: shift2MinusShift1,
           shift3MinusShift2: shift3MinusShift2,
+          hours_08: hours08Data,
+          hours_17: hours17Data,
+          hours_22: hours22Data,
+          hours_03: hours03Data,
         });
 
         // Lanjutkan ke tanggal berikutnya
@@ -102,6 +147,61 @@ app.get(
 
       // Kirimkan data untuk seluruh rentang tanggal
       res.json(results);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      res
+        .status(500)
+        .json({ message: "Error fetching data", error: error.message });
+    }
+  }
+);
+app.get(
+  "/history/table/hours/:utility/:kwhpm/:start_date/:end_date/",
+  async (req, res) => {
+    const { utility, kwhpm, start_date, end_date } = req.params;
+
+    // Mengubah start_date dan end_date ke format waktu yang sesuai (00:00:00 dan 23:59:59)
+    const startTimestamp = moment(
+      `${start_date} 00:00:00`,
+      "YYYY-MM-DD HH:mm"
+    ).toISOString();
+    const endTimestamp = moment(
+      `${end_date} 23:59:59`,
+      "YYYY-MM-DD HH:mm"
+    ).toISOString();
+    console.log("start", startTimestamp);
+    console.log("end", endTimestamp);
+    try {
+      // Query dengan DISTINCT ON untuk memastikan hanya ada 1 data per jam
+      const result = await db.query(
+        `WITH hourly_data AS (
+  SELECT 
+    created_at, 
+    ${kwhpm} AS kwh,
+    DATE_TRUNC('hour', created_at) AS hour
+  FROM purwosari.${utility}
+  WHERE created_at >= $1 AND created_at <= $2
+)
+SELECT DISTINCT ON (hour) 
+  created_at, 
+  kwh, 
+  hour
+FROM hourly_data
+ORDER BY hour, created_at;
+`,
+        [startTimestamp, endTimestamp]
+      );
+
+      const dataLast = result.rows.map((row) => ({
+        ...row,
+        hour: moment(row.created_at).utcOffset(7).format("HH:mm"),
+        created_at: moment(row.created_at)
+          .utcOffset(7)
+          .format("YYYY-MM-DD HH:mm:ss"),
+      }));
+
+      // Mengembalikan hasil dalam format JSON
+      res.json(dataLast);
     } catch (error) {
       console.error("Error fetching data:", error);
       res

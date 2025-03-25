@@ -124,29 +124,40 @@ router.get("/pm_biscuit/select/:group", async (req, res) => {
     res.status(500).json({ error: "Error fetching data" });
   }
 });
-
 router.get("/pm_biscuit/:group/:year", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10);
     const year = parseInt(req.params.year, 10); // Tahun target
-    const start = parseInt(req.query.start, 10); // Mendapatkan nilai start dari query parameter
-    const end = parseInt(req.query.end, 10); // Mendapatkan nilai end dari query parameter
+
+    // Ambil query parameter, jika tidak ada maka beri nilai null
+    const start = req.query.start ? parseInt(req.query.start, 10) : null;
+    const end = req.query.end ? parseInt(req.query.end, 10) : null;
     const searchTerm = req.query.searchTerm
       ? req.query.searchTerm.toLowerCase()
-      : ""; // Mendapatkan searchTerm dari query parameter
-    // Pastikan start dan end bukan NaN
-    if (isNaN(start) || isNaN(end)) {
-      return res.status(400).json({ error: "Invalid start or end parameters" });
+      : "";
+
+    let result;
+
+    // Jika parameter start dan end valid, gunakan pagination dan pencarian
+    if (start !== null && end !== null && !isNaN(start) && !isNaN(end)) {
+      result = await req.db.query(
+        `SELECT * FROM automation.pm_biscuit 
+         WHERE grup = $1 
+           AND (machine_name ILIKE $2 OR kode_barang ILIKE $2 OR equipment ILIKE $2 OR part_kebutuhan_alat ILIKE $2)
+         ORDER BY no ASC 
+         LIMIT $3 OFFSET $4`,
+        [group, `%${searchTerm}%`, end - start + 1, start]
+      );
+    } else {
+      // Jika tidak ada parameter start dan end, ambil seluruh data berdasarkan grup
+      result = await req.db.query(
+        "SELECT * FROM automation.pm_biscuit WHERE grup = $1 ORDER BY no ASC",
+        [group]
+      );
     }
 
-    // Query untuk memfilter berdasarkan searchTerm
-    const result = await req.db.query(
-      "SELECT * FROM automation.pm_biscuit WHERE grup = $1 AND (machine_name ILIKE $2 OR kode_barang ILIKE $2 OR equipment ILIKE $2 OR part_kebutuhan_alat ILIKE $2) ORDER BY no ASC LIMIT $3 OFFSET $4",
-      [group, `%${searchTerm}%`, end - start + 1, start]
-    );
-
+    // Asumsikan fungsi getTotalWeeksInYear dan generateWeeklyDataForTargetYear sudah didefinisikan
     const totalWeeks = getTotalWeeksInYear(year);
-    // console.log(totalWeeks);
     const modifiedData = result.rows.map((row) => ({
       ...row,
       week: generateWeeklyDataForTargetYear(
@@ -220,6 +231,181 @@ router.post("/pm_biscuit/machine", async (req, res) => {
 //     res.status(500).json({ error: "Error fetching data" });
 //   }
 // });
+
+router.get(
+  "/pm_biscuit/filter/checklist/data/:group/:year/:week",
+  async (req, res) => {
+    try {
+      const group = parseInt(req.params.group, 10);
+      const year = parseInt(req.params.year, 10);
+      const currentWeek = parseInt(req.params.week, 10);
+
+      const result = await req.db.query(
+        "SELECT * FROM automation.pm_biscuit WHERE grup = $1 ORDER BY no ASC",
+        [group]
+      );
+      const totalWeeks = getTotalWeeksInYear(year);
+
+      // Hitung range minggu (4 minggu ke depan)
+      const startWeek = currentWeek;
+      const endWeek = Math.min(currentWeek, totalWeeks);
+
+      const modifiedData = result.rows
+        .map((row) => {
+          // Generate data mingguan
+          const weeklyData = generateWeeklyDataForTargetYear(
+            totalWeeks,
+            row.periode,
+            row.periode_start,
+            year
+          );
+
+          // Filter minggu yang diinginkan
+          const filteredWeeks = {};
+          let hasScheduledMaintenance = false; // Flag untuk cek apakah ada maintenance
+
+          for (let i = startWeek; i <= endWeek; i++) {
+            const weekValue = weeklyData[`w${i}`];
+            if (weekValue !== "-") {
+              filteredWeeks[`w${i}`] = weekValue;
+              hasScheduledMaintenance = true;
+            }
+          }
+
+          // Hanya return jika ada maintenance terjadwal
+          if (hasScheduledMaintenance) {
+            return {
+              id: row.id,
+              machine_name: row.machine_name,
+              part_kebutuhan_alat: row.part_kebutuhan_alat,
+              equipment: row.equipment,
+              periode: row.periode,
+              grup: row.grup,
+              week: filteredWeeks,
+            };
+          }
+          return null;
+        })
+        .filter((item) => item !== null); // Hapus semua item null
+
+      res.json(modifiedData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      res.status(500).json({ error: "Error fetching data" });
+    }
+  }
+);
+
+router.get(
+  "/pm_biscuit/filter/checklist/:group/:year/:week",
+  async (req, res) => {
+    try {
+      const group = parseInt(req.params.group, 10);
+      const year = parseInt(req.params.year, 10);
+      const currentWeek = parseInt(req.params.week, 10);
+
+      // Asumsikan kamu sudah punya fungsi untuk menghitung total minggu dalam satu tahun
+      const totalWeeks = getTotalWeeksInYear(year); // Implementasikan fungsi ini sesuai kebutuhan
+      // Query database dengan filter berdasarkan grup, tahun, dan minggu
+      const result = await req.db.query(
+        `
+        SELECT
+      c.id,
+      c.pm_biscuit_id,
+      c.status_checklist,
+      c.pic,
+      c.c_i,
+      c.l,
+      c.r,
+      c.keterangan,
+      c.foto,
+      c.created_at,
+      c.updated_at,
+      c.week,
+      c.year,
+      c.tanggal,
+      p.no,
+      p.machine_name,
+      p.part_kebutuhan_alat,
+      p.qty,
+      p.equipment,
+      p.periode,
+      p.grup,
+      p.kode_barang,
+      p.periode_start
+    FROM automation.checklist_pm_biscuit c
+    JOIN automation.pm_biscuit p ON c.pm_biscuit_id = p.id
+    WHERE c.grup = $1
+      AND c.year = $2
+      AND c.week = $3
+    ORDER BY p.no ASC;
+      `,
+        [group, year, currentWeek]
+      );
+      // console.log(result.rows);
+      const startWeek = currentWeek;
+      const endWeek = Math.min(currentWeek + 1, totalWeeks);
+
+      // Proses data jika perlu (modifikasi, filter, dll)
+      const modifiedData = result.rows
+        .map((row) => {
+          // Generate data mingguan
+          const weeklyData = generateWeeklyDataForTargetYear(
+            totalWeeks,
+            row.periode,
+            row.periode_start,
+            year
+          );
+
+          // Filter minggu yang diinginkan
+          const filteredWeeks = {};
+          let hasScheduledMaintenance = false; // Flag untuk cek apakah ada maintenance
+
+          for (let i = startWeek; i <= endWeek; i++) {
+            const weekValue = weeklyData[`w${i}`];
+            if (weekValue !== "-") {
+              filteredWeeks[`w${i}`] = weekValue;
+              hasScheduledMaintenance = true;
+            }
+          }
+
+          // Hanya return jika ada maintenance terjadwal
+          if (hasScheduledMaintenance) {
+            return {
+              id: row.id,
+              pm_biscuit_id: row.pm_biscuit_id,
+              status_checklist: row.status_checklist,
+              pic: row.pic,
+              c_i: row.c_i,
+              l: row.l,
+              r: row.r,
+              keterangan: row.keterangan,
+              foto: row.foto,
+              created_at: row.created_at,
+              updated_at: row.updated_at,
+              week: filteredWeeks, // Filtered weeks sesuai dengan minggu yang terjadwal
+              year: row.year,
+              machine_name: row.machine_name,
+              part_kebutuhan_alat: row.part_kebutuhan_alat,
+              equipment: row.equipment,
+              periode: row.periode,
+              grup: row.grup,
+              tanggal: row.tanggal,
+            };
+          }
+
+          return null;
+        })
+        .filter((item) => item !== null); // Hapus semua item null
+
+      // Kirimkan data hasil query dan modifikasi
+      res.json(modifiedData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      res.status(500).json({ error: "Error fetching data" });
+    }
+  }
+);
 
 router.get("/pm_biscuit/filter/:group/:year/:week", async (req, res) => {
   try {
@@ -391,6 +577,62 @@ router.get("/pm_biscuit/filter/length/:group/:year/:week", async (req, res) => {
   }
 });
 
+router.post("/pm_biscuit/submit_pm_checklist/:grup", async (req, res) => {
+  const { year, week, data } = req.body; // Ambil data dari request
+  const { grup } = req.params; // Ambil data dari request
+
+  // Validasi input
+  if (!year || !week || !Array.isArray(data) || data.length === 0) {
+    return res.status(400).json({ error: "Data tidak valid" });
+  }
+
+  try {
+    // Cek apakah sudah ada data dengan week dan year yang sama
+    const checkQuery = `
+      SELECT 1
+      FROM automation.checklist_pm_biscuit
+      WHERE week = $1 AND year = $2 AND grup = $3
+      LIMIT 1;
+    `;
+    const checkResult = await req.db.query(checkQuery, [week, year, grup]);
+
+    if (checkResult.rows.length > 0) {
+      return res
+        .status(400)
+        .json({ error: "Data dengan week dan year yang sama sudah ada" });
+    }
+
+    // Jika tidak ada, lanjutkan dengan query batch insert
+    const values = data
+      .map(
+        (id, index) =>
+          `($${index * 4 + 1}, $${index * 4 + 2}, $${index * 4 + 3}, $${
+            index * 4 + 4
+          })`
+      )
+      .join(", ");
+
+    // Menyiapkan query params berdasarkan data
+    const queryParams = data.flatMap((id) => [id, week, year, grup]);
+
+    const insertQuery = `
+      INSERT INTO automation.checklist_pm_biscuit (pm_biscuit_id, week, year, grup)
+      VALUES ${values}
+      RETURNING *;
+    `;
+
+    // Eksekusi query insert
+    const result = await req.db.query(insertQuery, queryParams);
+
+    // Kembalikan response sukses
+    return res.status(201).json({ success: true, insertedRows: result.rows });
+  } catch (error) {
+    // Menangani error
+    console.error(error);
+    return res.status(500).json({ error: "Terjadi kesalahan pada server" });
+  }
+});
+
 router.post("/pm_biscuit/add_biscuit", async (req, res) => {
   // Validasi body request
   const {
@@ -451,7 +693,7 @@ router.post("/pm_biscuit/add_biscuit", async (req, res) => {
     const result = await req.db.query(
       `INSERT INTO automation.pm_biscuit 
        (machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode, periode_start, grup, no)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       VALUES ($1, $2, $4, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         machine_name,
@@ -491,6 +733,50 @@ router.post("/pm_biscuit/add_biscuit", async (req, res) => {
 
     res.status(500).json({
       error: "Terjadi kesalahan saat menambahkan data",
+      details: error.message,
+    });
+  }
+});
+
+router.put("/pm_biscuit/checklist/:id", async (req, res) => {
+  const { pic, c_i, l, r, keterangan, tanggal } = req.body;
+
+  const { id } = req.params;
+
+  try {
+    // Prepare the update query (only updating the provided fields)
+    const query = `
+      UPDATE checklist_pm_biscuit
+      SET
+        pic = $1,
+        c_i = $2,
+        l = $3,
+        r = $4,
+        keterangan = $5,
+        tanggal = $6,
+        updated_at = NOW()
+      WHERE id = $7
+      RETURNING *;
+    `;
+
+    // Execute the update query with the values
+    const values = [pic, c_i, l, r, keterangan, tanggal, id];
+
+    const result = await req.db.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Data not found for the given ID" });
+    }
+
+    // Return the updated data
+    res.status(200).json({
+      message: "Data successfully updated",
+      data: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error updating machine checklist:", error);
+    res.status(500).json({
+      error: "Failed to update checklist",
       details: error.message,
     });
   }
