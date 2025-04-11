@@ -692,8 +692,8 @@ router.post("/pm_biscuit/add_biscuit", async (req, res) => {
     // Insert data ke database
     const result = await req.db.query(
       `INSERT INTO automation.pm_biscuit 
-       (machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode, periode_start, grup, no)
-       VALUES ($1, $2, $4, $4, $5, $6, $7, $8, $9)
+      (machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode, periode_start, grup, no)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         machine_name,

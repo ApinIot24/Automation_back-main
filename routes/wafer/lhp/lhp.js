@@ -339,79 +339,95 @@ app.get("/lhp_daily/date/:date/:line", async (req, res) => {
 
     // Query SQL
     const query = `
-        WITH shifts AS (SELECT '1' AS shift UNION ALL SELECT '2' UNION ALL SELECT '3'),
-             dates AS (SELECT DISTINCT realdatetime::date FROM automation.lhp WHERE realdatetime::date = $1),
-             all_combinations AS (SELECT d.realdatetime, s.shift FROM dates d CROSS JOIN shifts s)
-        SELECT
-            COALESCE(sd.id, ROW_NUMBER() OVER (PARTITION BY ac.realdatetime ORDER BY ac.shift)) AS id,
-            ac.realdatetime,
-            ac.shift,
-            ${[
-              "grup",
-              "shift",
-              "sku",
-              "plan",
-              "real",
-              "ach",
-              "cello",
-              "cellocpp",
-              "ctn_type",
-              "cello_used",
-              "adonan_used",
-              "ccbcream_used",
-              "avgsheet",
-              "avgbook",
-              "sheet",
-              "book",
-              "cutkasar",
-              "bubukcutting",
-              "sapuancut",
-              "qcpacking",
-              "qccello",
-              "packing_reject",
-              "banded",
-              "sapuanpack",
-              "buble",
-              "suppliercello",
-              "speed_mesin",
-              "sample_ctn_qc",
-              "banded_under",
-              "banded_over",
-              "cutoff_jam",
-              "ctn_luar",
-              "d_b",
-              "plastik_pof",
-              "coklat_used",
-              "sortir",
-              "pof_kue",
-              "users_input",
-              "uh",
-              "hadir",
-              "jam_kerja",
-              "jenis_adonan",
-              "give_ado",
-              "give_cream",
-              "give_cello",
-              "rej_ado",
-              "rej_cream",
-              "wip_kg",
-              "book_kotor",
-              "bs_cello",
-              "pakai_ctn",
-              "bs_cpp_roll",
-              "mc_quality",
-              "sbl_ls_es",
-              "sbl_tbd",
-              "sbl_sua",
-              "sbl_ims",
-              "sbl_rs",
-            ]
-              .map((col) => `COALESCE(sd.${col}, '0') AS ${col}`)
-              .join(",\n            ")}
-        FROM all_combinations ac
-        LEFT JOIN automation.lhp sd ON ac.realdatetime = sd.realdatetime AND ac.shift = sd.shift
-        WHERE (sd.grup = $2 OR sd.grup IS NULL)
-        ORDER BY ac.realdatetime, ac.shift;
+  WITH shifts AS (
+  SELECT '1' AS shift 
+  UNION ALL 
+  SELECT '2' 
+  UNION ALL 
+  SELECT '3'
+),
+dates AS (
+  SELECT DISTINCT realdatetime::date AS realdatetime 
+  FROM automation.lhp 
+  WHERE realdatetime::date = $1
+),
+all_combinations AS (
+  SELECT d.realdatetime, s.shift 
+  FROM dates d 
+  CROSS JOIN shifts s
+)
+SELECT
+  COALESCE(sd.id, ROW_NUMBER() OVER (PARTITION BY ac.realdatetime ORDER BY ac.shift)) AS id,
+  ac.realdatetime,
+  ac.shift,
+  ${[
+    "grup",
+    "shift",
+    "sku",
+    "plan",
+    "real",
+    "ach",
+    "cello",
+    "cellocpp",
+    "ctn_type",
+    "cello_used",
+    "adonan_used",
+    "ccbcream_used",
+    "avgsheet",
+    "avgbook",
+    "sheet",
+    "book",
+    "cutkasar",
+    "bubukcutting",
+    "sapuancut",
+    "qcpacking",
+    "qccello",
+    "packing_reject",
+    "banded",
+    "sapuanpack",
+    "buble",
+    "suppliercello",
+    "speed_mesin",
+    "sample_ctn_qc",
+    "banded_under",
+    "banded_over",
+    "cutoff_jam",
+    "ctn_luar",
+    "d_b",
+    "plastik_pof",
+    "coklat_used",
+    "sortir",
+    "pof_kue",
+    "users_input",
+    "uh",
+    "hadir",
+    "jam_kerja",
+    "jenis_adonan",
+    "give_ado",
+    "give_cream",
+    "give_cello",
+    "rej_ado",
+    "rej_cream",
+    "wip_kg",
+    "book_kotor",
+    "bs_cello",
+    "pakai_ctn",
+    "bs_cpp_roll",
+    "mc_quality",
+    "sbl_ls_es",
+    "sbl_tbd",
+    "sbl_sua",
+    "sbl_ims",
+    "sbl_rs",
+  ]
+    .map((col) => `COALESCE(sd.${col}, '0') AS ${col}`)
+    .join(",\n  ")}
+FROM all_combinations ac
+LEFT JOIN automation.lhp sd 
+  ON ac.realdatetime = sd.realdatetime 
+  AND ac.shift = sd.shift 
+  AND sd.grup = $2
+ORDER BY ac.realdatetime, ac.shift;
         `;
 
     console.log("Executing query:", query);

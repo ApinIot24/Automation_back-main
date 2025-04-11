@@ -693,7 +693,7 @@ router.post("/pm_wafer/add_wafer", async (req, res) => {
     const result = await req.db.query(
       `INSERT INTO automation.pm_wafer 
        (machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode, periode_start, grup, no)
-       VALUES ($1, $2, $4, $4, $5, $6, $7, $8, $9)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         machine_name,
