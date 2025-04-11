@@ -5,7 +5,6 @@ import fs from "fs";
 
 const router = Router();
 const upload = multer({ dest: "uploads/" });
-
 function generateWeeklyDataForTargetYear(
   totalWeeks,
   period,
@@ -48,45 +47,85 @@ function generateWeeklyDataForTargetYear(
 
     if (!interval) continue;
 
+    console.log(`Period: ${currentPeriod}`);
+    console.log(`Symbol: ${symbol}, Interval: ${interval}`);
+
     // Extract year and starting week from currentStartPeriod
     const [startYear, startWeekString] = currentStartPeriod.split("w");
     let startWeek = parseInt(startWeekString?.trim(), 10);
-    let year = parseInt(startYear, 10);
+    let originalYear = parseInt(startYear, 10);
 
-    if (isNaN(startWeek) || isNaN(year)) continue;
-    if (targetYear < year) continue;
+    if (isNaN(startWeek) || isNaN(originalYear)) continue;
 
-    // Track total weeks passed to maintain the exact pattern
-    let totalWeeksPassed = 0;
+    console.log(`Start Period: ${currentStartPeriod}`);
+    console.log(`Start Year: ${startYear}, Start Week: ${startWeek}`);
 
-    // Calculate total weeks passed until target year
-    while (year < targetYear) {
-      const weeksInYear = getTotalWeeksInYear(year);
-      totalWeeksPassed += weeksInYear;
-      year++;
-    }
-
-    // Calculate the starting week in the target year based on the original pattern
-    if (year === targetYear && totalWeeksPassed > 0) {
-      // Calculate how many complete intervals have passed
-      const totalIntervalsPassed = Math.floor(totalWeeksPassed / interval);
-      // The new starting week should maintain the same position in the interval
-      const offsetInPattern = (startWeek - 1) % interval;
-      startWeek =
-        (totalIntervalsPassed * interval + offsetInPattern + 1) % interval;
-      if (startWeek === 0) startWeek = interval;
-    }
-
-    // Adjust if startWeek exceeds total weeks in target year
-    if (year === targetYear) {
-      const weeksInTargetYear = getTotalWeeksInYear(targetYear);
-      if (startWeek > weeksInTargetYear) {
-        startWeek = weeksInTargetYear;
+    // If we're generating data for the original year, simply fill weeks from the start week
+    if (targetYear === originalYear) {
+      console.log(
+        `Target year is the original start year. Starting from week ${startWeek}`
+      );
+      for (let i = startWeek; i <= totalWeeks; i += interval) {
+        console.log(`Filling week: ${i} with symbol: ${symbol}`);
+        weekData[`w${i}`] =
+          weekData[`w${i}`] === "-" ? symbol : `${weekData[`w${i}`]},${symbol}`;
       }
+      continue;
     }
 
-    // Fill weeks in target year based on calculated startWeek and interval
-    for (let i = startWeek; i <= totalWeeks; i += interval) {
+    // If targetYear is before the original year, no entries to fill
+    if (targetYear < originalYear) {
+      console.log(`Target year is before original year. No entries to fill.`);
+      continue;
+    }
+
+    // Calculate which weeks in the target year should be filled based on the pattern
+    // First, calculate total weeks from the start date to the end of the original year
+    let weeksInOriginalYear = getTotalWeeksInYear(originalYear);
+    let weeksFromStartToEndOfOriginalYear = weeksInOriginalYear - startWeek + 1;
+
+    console.log(
+      `Weeks from start to end of original year: ${weeksFromStartToEndOfOriginalYear}`
+    );
+
+    // Calculate total weeks in years between original and target
+    let totalWeeksInBetween = 0;
+    for (let year = originalYear + 1; year < targetYear; year++) {
+      totalWeeksInBetween += getTotalWeeksInYear(year);
+    }
+
+    console.log(`Total weeks in years between: ${totalWeeksInBetween}`);
+
+    // The total number of weeks from the start date to the beginning of the target year
+    let totalWeeksPassed =
+      weeksFromStartToEndOfOriginalYear + totalWeeksInBetween;
+    console.log(`Total weeks passed since pattern start: ${totalWeeksPassed}`);
+
+    // Calculate the first week in target year where the pattern should appear
+    let remainder = totalWeeksPassed % interval;
+    let firstWeekInTargetYear;
+
+    if (remainder === 0) {
+      // If remainder is 0, the first week should be the first week
+      firstWeekInTargetYear = 1;
+    } else {
+      // Otherwise, the first week is (interval - remainder + 1)
+      firstWeekInTargetYear = interval - remainder + 1;
+    }
+
+    // Ensure the first week is within valid range
+    firstWeekInTargetYear = Math.max(
+      1,
+      Math.min(firstWeekInTargetYear, totalWeeks)
+    );
+
+    console.log(
+      `First occurrence in target year at week: ${firstWeekInTargetYear}`
+    );
+
+    // Fill weeks in target year based on the pattern
+    for (let i = firstWeekInTargetYear; i <= totalWeeks; i += interval) {
+      console.log(`Filling week: ${i} with symbol: ${symbol}`);
       weekData[`w${i}`] =
         weekData[`w${i}`] === "-" ? symbol : `${weekData[`w${i}`]},${symbol}`;
     }
@@ -957,21 +996,25 @@ router.post("/import/biscuit", upload.single("file"), async (req, res) => {
   }
 });
 
-router.post("/import/biscuit/:grup", upload.single("file"), async (req, res) => {
-  const filePath = req.file.path;
-  const grup = req.params.grup; // Mengambil parameter grup dari URL
-  try {
-    // Anda dapat meneruskan `grup` ke fungsi `importExcelBiscuit` jika diperlukan
-    await importExcelBiscuit(filePath, grup);
-    res
-      .status(200)
-      .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
-  } catch (error) {
-    res
-      .status(500)
-      .send(`Gagal mengimpor data untuk grup ${grup}: ` + error.message);
+router.post(
+  "/import/biscuit/:grup",
+  upload.single("file"),
+  async (req, res) => {
+    const filePath = req.file.path;
+    const grup = req.params.grup; // Mengambil parameter grup dari URL
+    try {
+      // Anda dapat meneruskan `grup` ke fungsi `importExcelBiscuit` jika diperlukan
+      await importExcelBiscuit(filePath, grup);
+      res
+        .status(200)
+        .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
+    } catch (error) {
+      res
+        .status(500)
+        .send(`Gagal mengimpor data untuk grup ${grup}: ` + error.message);
+    }
   }
-});
+);
 
 router.delete("/deleted/biscuit/:group", async (req, res) => {
   try {
