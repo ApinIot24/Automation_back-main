@@ -497,6 +497,7 @@ router.get("/pm_biscuit/filter/:group/:year/:week", async (req, res) => {
             part_kebutuhan_alat: row.part_kebutuhan_alat,
             equipment: row.equipment,
             periode: row.periode,
+            kode_barang: row.kode_barang,
             grup: row.grup,
             week: filteredWeeks,
           };
@@ -553,6 +554,7 @@ router.get("/pm_biscuit/filter/all/:group/:year/:week", async (req, res) => {
             machine_name: row.machine_name,
             part_kebutuhan_alat: row.part_kebutuhan_alat,
             equipment: row.equipment,
+            kode_barang: row.kode_barang,
             periode: row.periode,
             grup: row.grup,
             week: weeklyData, // Mengembalikan semua data week
@@ -736,7 +738,7 @@ router.post("/pm_biscuit/add_biscuit", async (req, res) => {
     // Insert data ke database
     const result = await req.db.query(
       `INSERT INTO automation.pm_biscuit 
-      (machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode, periode_start, grup, no)
+       (machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode, periode_start, grup, no)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
@@ -1001,25 +1003,21 @@ router.post("/import/biscuit", upload.single("file"), async (req, res) => {
   }
 });
 
-router.post(
-  "/import/biscuit/:grup",
-  upload.single("file"),
-  async (req, res) => {
-    const filePath = req.file.path;
-    const grup = req.params.grup; // Mengambil parameter grup dari URL
-    try {
-      // Anda dapat meneruskan `grup` ke fungsi `importExcelBiscuit` jika diperlukan
-      await importExcelBiscuit(filePath, grup);
-      res
-        .status(200)
-        .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
-    } catch (error) {
-      res
-        .status(500)
-        .send(`Gagal mengimpor data untuk grup ${grup}: ` + error.message);
-    }
+router.post("/import/biscuit/:grup", upload.single("file"), async (req, res) => {
+  const filePath = req.file.path;
+  const grup = req.params.grup; // Mengambil parameter grup dari URL
+  try {
+    // Anda dapat meneruskan `grup` ke fungsi `importExcelBiscuit` jika diperlukan
+    await importExcelBiscuit(filePath, grup);
+    res
+      .status(200)
+      .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
+  } catch (error) {
+    res
+      .status(500)
+      .send(`Gagal mengimpor data untuk grup ${grup}: ` + error.message);
   }
-);
+});
 
 router.delete("/deleted/biscuit/:group", async (req, res) => {
   try {

@@ -497,6 +497,7 @@ router.get("/pm_wafer/filter/:group/:year/:week", async (req, res) => {
             part_kebutuhan_alat: row.part_kebutuhan_alat,
             equipment: row.equipment,
             periode: row.periode,
+            kode_barang: row.kode_barang,
             grup: row.grup,
             week: filteredWeeks,
           };
@@ -553,6 +554,7 @@ router.get("/pm_wafer/filter/all/:group/:year/:week", async (req, res) => {
             machine_name: row.machine_name,
             part_kebutuhan_alat: row.part_kebutuhan_alat,
             equipment: row.equipment,
+            kode_barang: row.kode_barang,
             periode: row.periode,
             grup: row.grup,
             week: weeklyData, // Mengembalikan semua data week
