@@ -5,6 +5,7 @@ import fs from "fs";
 
 const router = Router();
 const upload = multer({ dest: "uploads/" });
+
 function generateWeeklyDataForTargetYear(
   totalWeeks,
   period,
@@ -12,12 +13,12 @@ function generateWeeklyDataForTargetYear(
   targetYear
 ) {
   const weekData = {};
-  // Initialize all weeks in target year with default "-"
+  // Inisialisasi semua minggu di tahun target dengan default "-"
   for (let i = 1; i <= totalWeeks; i++) {
     weekData[`w${i}`] = "-";
   }
 
-  // Validate period and startPeriod
+  // Validasi period dan startPeriod
   if (
     !period ||
     typeof period !== "string" ||
@@ -34,12 +35,12 @@ function generateWeeklyDataForTargetYear(
     return weekData;
   }
 
-  // Process each period
+  // Proses setiap periode
   for (let idx = 0; idx < periods.length; idx++) {
     const currentPeriod = periods[idx];
     const currentStartPeriod = startPeriods[idx];
 
-    // Extract symbol and interval from currentPeriod
+    // Ekstrak simbol dan interval dari currentPeriod
     const symbolMatch = currentPeriod.match(/^[A-Za-z\/]+/);
     const symbol = symbolMatch ? symbolMatch[0] : "-";
     const intervalMatch = currentPeriod.match(/\d+/);
@@ -50,7 +51,7 @@ function generateWeeklyDataForTargetYear(
     console.log(`Period: ${currentPeriod}`);
     console.log(`Symbol: ${symbol}, Interval: ${interval}`);
 
-    // Extract year and starting week from currentStartPeriod
+    // Ekstrak tahun dan minggu awal dari currentStartPeriod
     const [startYear, startWeekString] = currentStartPeriod.split("w");
     let startWeek = parseInt(startWeekString?.trim(), 10);
     let originalYear = parseInt(startYear, 10);
@@ -60,72 +61,76 @@ function generateWeeklyDataForTargetYear(
     console.log(`Start Period: ${currentStartPeriod}`);
     console.log(`Start Year: ${startYear}, Start Week: ${startWeek}`);
 
-    // If we're generating data for the original year, simply fill weeks from the start week
+    // Jika kita menghasilkan data untuk tahun awal, cukup isi minggu dari minggu awal
     if (targetYear === originalYear) {
       console.log(
-        `Target year is the original start year. Starting from week ${startWeek}`
+        `Tahun target sama dengan tahun awal. Mulai dari minggu ${startWeek}`
       );
       for (let i = startWeek; i <= totalWeeks; i += interval) {
-        console.log(`Filling week: ${i} with symbol: ${symbol}`);
+        console.log(`Mengisi minggu: ${i} dengan simbol: ${symbol}`);
         weekData[`w${i}`] =
           weekData[`w${i}`] === "-" ? symbol : `${weekData[`w${i}`]},${symbol}`;
       }
       continue;
     }
 
-    // If targetYear is before the original year, no entries to fill
+    // Jika targetYear sebelum tahun awal, tidak ada entri untuk diisi
     if (targetYear < originalYear) {
-      console.log(`Target year is before original year. No entries to fill.`);
+      console.log(
+        `Tahun target sebelum tahun awal. Tidak ada entri untuk diisi.`
+      );
       continue;
     }
 
-    // Calculate which weeks in the target year should be filled based on the pattern
-    // First, calculate total weeks from the start date to the end of the original year
+    // Hitung minggu mana di tahun target yang harus diisi berdasarkan pola
+    // Pertama, hitung total minggu dari tanggal mulai hingga akhir tahun awal
     let weeksInOriginalYear = getTotalWeeksInYear(originalYear);
     let weeksFromStartToEndOfOriginalYear = weeksInOriginalYear - startWeek + 1;
 
     console.log(
-      `Weeks from start to end of original year: ${weeksFromStartToEndOfOriginalYear}`
+      `Minggu dari awal hingga akhir tahun awal: ${weeksFromStartToEndOfOriginalYear}`
     );
 
-    // Calculate total weeks in years between original and target
+    // Hitung total minggu di antara tahun awal dan tahun target
     let totalWeeksInBetween = 0;
     for (let year = originalYear + 1; year < targetYear; year++) {
       totalWeeksInBetween += getTotalWeeksInYear(year);
     }
 
-    console.log(`Total weeks in years between: ${totalWeeksInBetween}`);
+    console.log(`Total minggu di tahun-tahun antara: ${totalWeeksInBetween}`);
 
-    // The total number of weeks from the start date to the beginning of the target year
+    // Total jumlah minggu dari tanggal mulai hingga awal tahun target
     let totalWeeksPassed =
       weeksFromStartToEndOfOriginalYear + totalWeeksInBetween;
-    console.log(`Total weeks passed since pattern start: ${totalWeeksPassed}`);
+    console.log(
+      `Total minggu yang berlalu sejak awal pola: ${totalWeeksPassed}`
+    );
 
-    // Calculate the first week in target year where the pattern should appear
+    // Hitung minggu pertama di tahun target di mana pola harus muncul
     let remainder = totalWeeksPassed % interval;
     let firstWeekInTargetYear;
 
     if (remainder === 0) {
-      // If remainder is 0, the first week should be the first week
+      // Jika sisa adalah 0, minggu pertama harus minggu pertama
       firstWeekInTargetYear = 1;
     } else {
-      // Otherwise, the first week is (interval - remainder + 1)
+      // Jika tidak, minggu pertama adalah (interval - remainder + 1)
       firstWeekInTargetYear = interval - remainder + 1;
     }
 
-    // Ensure the first week is within valid range
+    // Pastikan minggu pertama berada dalam rentang yang valid
     firstWeekInTargetYear = Math.max(
       1,
       Math.min(firstWeekInTargetYear, totalWeeks)
     );
 
     console.log(
-      `First occurrence in target year at week: ${firstWeekInTargetYear}`
+      `Kemunculan pertama di tahun target pada minggu: ${firstWeekInTargetYear}`
     );
 
-    // Fill weeks in target year based on the pattern
+    // Isi minggu di tahun target berdasarkan pola
     for (let i = firstWeekInTargetYear; i <= totalWeeks; i += interval) {
-      console.log(`Filling week: ${i} with symbol: ${symbol}`);
+      console.log(`Mengisi minggu: ${i} dengan simbol: ${symbol}`);
       weekData[`w${i}`] =
         weekData[`w${i}`] === "-" ? symbol : `${weekData[`w${i}`]},${symbol}`;
     }
