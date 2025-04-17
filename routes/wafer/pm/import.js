@@ -48,8 +48,8 @@ function generateWeeklyDataForTargetYear(
 
     if (!interval) continue;
 
-    console.log(`Period: ${currentPeriod}`);
-    console.log(`Symbol: ${symbol}, Interval: ${interval}`);
+    // console.log(`Period: ${currentPeriod}`);
+    // console.log(`Symbol: ${symbol}, Interval: ${interval}`);
 
     // Ekstrak tahun dan minggu awal dari currentStartPeriod
     const [startYear, startWeekString] = currentStartPeriod.split("w");
@@ -58,16 +58,16 @@ function generateWeeklyDataForTargetYear(
 
     if (isNaN(startWeek) || isNaN(originalYear)) continue;
 
-    console.log(`Start Period: ${currentStartPeriod}`);
-    console.log(`Start Year: ${startYear}, Start Week: ${startWeek}`);
+    // console.log(`Start Period: ${currentStartPeriod}`);
+    // console.log(`Start Year: ${startYear}, Start Week: ${startWeek}`);
 
     // Jika kita menghasilkan data untuk tahun awal, cukup isi minggu dari minggu awal
     if (targetYear === originalYear) {
-      console.log(
-        `Tahun target sama dengan tahun awal. Mulai dari minggu ${startWeek}`
-      );
+      // console.log(
+      //   `Tahun target sama dengan tahun awal. Mulai dari minggu ${startWeek}`
+      // );
       for (let i = startWeek; i <= totalWeeks; i += interval) {
-        console.log(`Mengisi minggu: ${i} dengan simbol: ${symbol}`);
+        // console.log(`Mengisi minggu: ${i} dengan simbol: ${symbol}`);
         weekData[`w${i}`] =
           weekData[`w${i}`] === "-" ? symbol : `${weekData[`w${i}`]},${symbol}`;
       }
@@ -76,9 +76,9 @@ function generateWeeklyDataForTargetYear(
 
     // Jika targetYear sebelum tahun awal, tidak ada entri untuk diisi
     if (targetYear < originalYear) {
-      console.log(
-        `Tahun target sebelum tahun awal. Tidak ada entri untuk diisi.`
-      );
+      // console.log(
+      //   `Tahun target sebelum tahun awal. Tidak ada entri untuk diisi.`
+      // );
       continue;
     }
 
@@ -87,9 +87,9 @@ function generateWeeklyDataForTargetYear(
     let weeksInOriginalYear = getTotalWeeksInYear(originalYear);
     let weeksFromStartToEndOfOriginalYear = weeksInOriginalYear - startWeek + 1;
 
-    console.log(
-      `Minggu dari awal hingga akhir tahun awal: ${weeksFromStartToEndOfOriginalYear}`
-    );
+    // console.log(
+    //   `Minggu dari awal hingga akhir tahun awal: ${weeksFromStartToEndOfOriginalYear}`
+    // );
 
     // Hitung total minggu di antara tahun awal dan tahun target
     let totalWeeksInBetween = 0;
@@ -97,14 +97,14 @@ function generateWeeklyDataForTargetYear(
       totalWeeksInBetween += getTotalWeeksInYear(year);
     }
 
-    console.log(`Total minggu di tahun-tahun antara: ${totalWeeksInBetween}`);
+    // console.log(`Total minggu di tahun-tahun antara: ${totalWeeksInBetween}`);
 
     // Total jumlah minggu dari tanggal mulai hingga awal tahun target
     let totalWeeksPassed =
       weeksFromStartToEndOfOriginalYear + totalWeeksInBetween;
-    console.log(
-      `Total minggu yang berlalu sejak awal pola: ${totalWeeksPassed}`
-    );
+    // console.log(
+    //   `Total minggu yang berlalu sejak awal pola: ${totalWeeksPassed}`
+    // );
 
     // Hitung minggu pertama di tahun target di mana pola harus muncul
     let remainder = totalWeeksPassed % interval;
@@ -124,13 +124,13 @@ function generateWeeklyDataForTargetYear(
       Math.min(firstWeekInTargetYear, totalWeeks)
     );
 
-    console.log(
-      `Kemunculan pertama di tahun target pada minggu: ${firstWeekInTargetYear}`
-    );
+    // console.log(
+    //   `Kemunculan pertama di tahun target pada minggu: ${firstWeekInTargetYear}`
+    // );
 
     // Isi minggu di tahun target berdasarkan pola
     for (let i = firstWeekInTargetYear; i <= totalWeeks; i += interval) {
-      console.log(`Mengisi minggu: ${i} dengan simbol: ${symbol}`);
+      // console.log(`Mengisi minggu: ${i} dengan simbol: ${symbol}`);
       weekData[`w${i}`] =
         weekData[`w${i}`] === "-" ? symbol : `${weekData[`w${i}`]},${symbol}`;
     }
@@ -324,6 +324,7 @@ router.get(
               part_kebutuhan_alat: row.part_kebutuhan_alat,
               equipment: row.equipment,
               periode: row.periode,
+              kode_barang: row.kode_barang,
               grup: row.grup,
               week: filteredWeeks,
             };
@@ -354,35 +355,33 @@ router.get(
       const result = await req.db.query(
         `
         SELECT
-      c.id,
-      c.pm_wafer_id,
-      c.status_checklist,
-      c.pic,
-      c.c_i,
-      c.l,
-      c.r,
-      c.keterangan,
-      c.foto,
-      c.created_at,
-      c.updated_at,
-      c.week,
-      c.year,
-      c.tanggal,
-      p.no,
-      p.machine_name,
-      p.part_kebutuhan_alat,
-      p.qty,
-      p.equipment,
-      p.periode,
-      p.grup,
-      p.kode_barang,
-      p.periode_start
-    FROM automation.checklist_pm_wafer c
-    JOIN automation.pm_wafer p ON c.pm_wafer_id = p.id
-    WHERE c.grup = $1
-      AND c.year = $2
-      AND c.week = $3
-    ORDER BY p.no ASC;
+      id,
+      pm_wafer_id,
+      status_checklist,
+      pic,
+      c_i,
+      l,
+      r,
+      keterangan,
+      foto,
+      created_at,
+      updated_at,
+      week,
+      year,
+      tanggal,
+      no,
+      machine_name,
+      part_kebutuhan_alat,
+      equipment,
+      periode,
+      grup,
+      kode_barang,
+      periode_start
+    FROM automation.checklist_pm_wafer
+    WHERE grup = $1
+      AND year = $2
+      AND week = $3
+    ORDER BY no ASC;
       `,
         [group, year, currentWeek]
       );
@@ -432,6 +431,7 @@ router.get(
               machine_name: row.machine_name,
               part_kebutuhan_alat: row.part_kebutuhan_alat,
               equipment: row.equipment,
+              kode_barang: row.kode_barang,
               periode: row.periode,
               grup: row.grup,
               tanggal: row.tanggal,
@@ -624,56 +624,67 @@ router.get("/pm_wafer/filter/length/:group/:year/:week", async (req, res) => {
 });
 
 router.post("/pm_wafer/submit_pm_checklist/:grup", async (req, res) => {
-  const { year, week, data } = req.body; // Ambil data dari request
-  const { grup } = req.params; // Ambil data dari request
+  const { year, week, data } = req.body;
+  const { grup } = req.params;
 
-  // Validasi input
+  const grupString = grup.toString();
+
   if (!year || !week || !Array.isArray(data) || data.length === 0) {
     return res.status(400).json({ error: "Data tidak valid" });
   }
 
   try {
-    // Cek apakah sudah ada data dengan week dan year yang sama
     const checkQuery = `
-      SELECT 1
-      FROM automation.checklist_pm_wafer
-      WHERE week = $1 AND year = $2 AND grup = $3
-      LIMIT 1;
+      SELECT id, machine_name, part_kebutuhan_alat, equipment, kode_barang, no, periode, periode_start
+      FROM automation.pm_wafer
+      WHERE id = ANY($1::int[]) AND grup = $2;
     `;
-    const checkResult = await req.db.query(checkQuery, [week, year, grup]);
+
+    const checkResult = await req.db.query(checkQuery, [data, grupString]);
 
     if (checkResult.rows.length > 0) {
+      const values = checkResult.rows
+        .map(
+          (row, index) =>
+            `($${index * 11 + 1}, $${index * 11 + 2}, $${index * 11 + 3}, $${
+              index * 11 + 4
+            }, 
+            $${index * 11 + 5}, $${index * 11 + 6}, $${index * 11 + 7}, $${
+              index * 11 + 8
+            }, 
+            $${index * 11 + 9}, $${index * 11 + 10}, $${index * 11 + 11})`
+        )
+        .join(", ");
+
+      const insertQueryParams = checkResult.rows.flatMap((row) => [
+        row.id, // id dari pm_wafer
+        week,
+        year,
+        grupString,
+        row.machine_name,
+        row.part_kebutuhan_alat,
+        row.equipment,
+        row.kode_barang,
+        row.no,
+        row.periode,
+        row.periode_start,
+      ]);
+
+      const insertQuery = `
+        INSERT INTO automation.checklist_pm_wafer (pm_wafer_id, week, year, grup, machine_name, part_kebutuhan_alat, equipment, kode_barang, no, periode, periode_start)
+        VALUES ${values}
+        RETURNING *;
+      `;
+
+      const result = await req.db.query(insertQuery, insertQueryParams);
+
+      return res.status(201).json({ success: true, insertedRows: result.rows });
+    } else {
       return res
         .status(400)
-        .json({ error: "Data dengan week dan year yang sama sudah ada" });
+        .json({ error: "Data tidak ditemukan di pm_wafer" });
     }
-
-    // Jika tidak ada, lanjutkan dengan query batch insert
-    const values = data
-      .map(
-        (id, index) =>
-          `($${index * 4 + 1}, $${index * 4 + 2}, $${index * 4 + 3}, $${
-            index * 4 + 4
-          })`
-      )
-      .join(", ");
-
-    // Menyiapkan query params berdasarkan data
-    const queryParams = data.flatMap((id) => [id, week, year, grup]);
-
-    const insertQuery = `
-      INSERT INTO automation.checklist_pm_wafer (pm_wafer_id, week, year, grup)
-      VALUES ${values}
-      RETURNING *;
-    `;
-
-    // Eksekusi query insert
-    const result = await req.db.query(insertQuery, queryParams);
-
-    // Kembalikan response sukses
-    return res.status(201).json({ success: true, insertedRows: result.rows });
   } catch (error) {
-    // Menangani error
     console.error(error);
     return res.status(500).json({ error: "Terjadi kesalahan pada server" });
   }
@@ -792,7 +803,7 @@ router.put("/pm_wafer/checklist/:id", async (req, res) => {
   try {
     // Prepare the update query (only updating the provided fields)
     const query = `
-      UPDATE checklist_pm_wafer
+      UPDATE automation.checklist_pm_wafer
       SET
         pic = $1,
         c_i = $2,
@@ -823,6 +834,35 @@ router.put("/pm_wafer/checklist/:id", async (req, res) => {
     console.error("Error updating machine checklist:", error);
     res.status(500).json({
       error: "Failed to update checklist",
+      details: error.message,
+    });
+  }
+});
+
+router.delete("/pm_wafer/checklist/:week/:grup", async (req, res) => {
+  const { week, grup } = req.params;
+  try {
+    // Correct the query by passing an array of parameters
+    const query = `
+      DELETE FROM automation.checklist_pm_wafer WHERE week = $1 AND grup = $2
+    `;
+    const result = await req.db.query(query, [week, grup]); // Pass parameters as an array
+
+    if (result.rowCount === 0) {
+      // Use `rowCount` to check the number of affected rows
+      return res
+        .status(404)
+        .json({ error: "Data not found to delete for this week" });
+    }
+
+    // Return success message
+    res.status(200).json({
+      message: "Data successfully deleted",
+    });
+  } catch (error) {
+    console.error("Error delete machine checklist:", error);
+    res.status(500).json({
+      error: "Failed to delete checklist",
       details: error.message,
     });
   }
