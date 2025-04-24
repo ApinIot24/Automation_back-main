@@ -30,6 +30,8 @@ import importRoutesWafer from "./routes/wafer/pm/import.js";
 import importRoutesBiscuit from "./routes/biscuit/import/import.js";
 import utility from "./routes/utility/utility.js";
 
+// checklist
+import qrchecklist from "./routes/checklist.js";
 // users
 import authRoutes from "./routes/auth/authRoutes.js";
 import roleRoutes from "./routes/settings/roleRoutes.js";
@@ -131,6 +133,7 @@ app.use("/", lhp_biscuit);
 app.use("/api", utility);
 app.use("/api", importRoutesWafer);
 app.use("/api", importRoutesBiscuit);
+app.use("/api", qrchecklist);
 
 app.use("/api/auth", authRoutes);
 app.use("/api", users);

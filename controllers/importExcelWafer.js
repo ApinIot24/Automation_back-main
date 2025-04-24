@@ -35,7 +35,7 @@ export default async function importExcelWafer(filePath, specifiedGrup = null) {
         try {
           // Menjalankan query untuk memasukkan data ke tabel pm_wafer dengan grup yang ditentukan
           const result = await db.query(
-            `INSERT INTO automation.pm_wafer (no, machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode_start, periode, grup) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            `INSERT INTO automation.pm_wafer (no, qrcode,machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode_start, periode, grup) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
             [
               no,
               row[0],
@@ -45,6 +45,7 @@ export default async function importExcelWafer(filePath, specifiedGrup = null) {
               row[4],
               row[5],
               row[6],
+              row[7],
               specifiedGrup,
             ]
           );

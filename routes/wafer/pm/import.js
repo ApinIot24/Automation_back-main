@@ -168,6 +168,26 @@ router.get("/pm_wafer/select/:group", async (req, res) => {
     res.status(500).json({ error: "Error fetching data" });
   }
 });
+
+router.get("/pm_wafer/qrcode/:group", async (req, res) => {
+  try {
+    const group = parseInt(req.params.group, 10); // Get the group parameter from the route
+    if (isNaN(group)) {
+      return res.status(400).send("Invalid group parameter");
+    }
+
+    // Modified SQL query to fetch distinct QR codes for the given group
+    const result = await req.db.query(
+      "SELECT DISTINCT ON (qrcode) machine_name, qrcode FROM automation.pm_wafer WHERE grup = $1 ORDER BY qrcode",
+      [group] // The value of group will replace $1 in the query
+    );
+
+    res.json(result.rows); // Return the unique result rows as JSON
+  } catch (error) {
+    res.status(500).send("Gagal ambil data: " + error.message);
+  }
+});
+
 router.get("/pm_wafer/:group/:year", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10);
@@ -622,37 +642,60 @@ router.get("/pm_wafer/filter/length/:group/:year/:week", async (req, res) => {
     res.status(500).json({ error: "Error fetching data" });
   }
 });
-
 router.post("/pm_wafer/submit_pm_checklist/:grup", async (req, res) => {
   const { year, week, data } = req.body;
   const { grup } = req.params;
 
   const grupString = grup.toString();
 
+  // Cek apakah year, week, dan data valid
   if (!year || !week || !Array.isArray(data) || data.length === 0) {
     return res.status(400).json({ error: "Data tidak valid" });
   }
 
   try {
+    // Cek apakah sudah ada data dengan week dan year yang sama
+    const checkQueryweek = `
+      SELECT 1
+      FROM automation.checklist_pm_wafer
+      WHERE week = $1 AND year = $2 AND grup = $3
+      LIMIT 1;
+    `;
+    const checkResultweek = await req.db.query(checkQueryweek, [
+      week,
+      year,
+      grupString,
+    ]);
+
+    // Jika data sudah ada, kembalikan error
+    if (checkResultweek.rows.length > 0) {
+      return res.status(400).json({
+        error: "Data dengan week dan year yang sama sudah ada",
+      });
+    }
+
+    // Query untuk mengambil data dari pm_wafer berdasarkan ID yang diberikan
     const checkQuery = `
-      SELECT id, machine_name, part_kebutuhan_alat, equipment, kode_barang, no, periode, periode_start
+      SELECT id, machine_name, part_kebutuhan_alat, equipment, kode_barang, no, periode, periode_start, qrcode
       FROM automation.pm_wafer
       WHERE id = ANY($1::int[]) AND grup = $2;
     `;
-
     const checkResult = await req.db.query(checkQuery, [data, grupString]);
 
+    // Jika data ditemukan, lanjutkan dengan penyimpanan
     if (checkResult.rows.length > 0) {
       const values = checkResult.rows
         .map(
           (row, index) =>
-            `($${index * 11 + 1}, $${index * 11 + 2}, $${index * 11 + 3}, $${
-              index * 11 + 4
+            `($${index * 12 + 1}, $${index * 12 + 2}, $${index * 12 + 3}, $${
+              index * 12 + 4
             }, 
-            $${index * 11 + 5}, $${index * 11 + 6}, $${index * 11 + 7}, $${
-              index * 11 + 8
+            $${index * 12 + 5}, $${index * 12 + 6}, $${index * 12 + 7}, $${
+              index * 12 + 8
             }, 
-            $${index * 11 + 9}, $${index * 11 + 10}, $${index * 11 + 11})`
+            $${index * 12 + 9}, $${index * 12 + 10}, $${index * 12 + 11}, $${
+              index * 12 + 12
+            })`
         )
         .join(", ");
 
@@ -668,23 +711,29 @@ router.post("/pm_wafer/submit_pm_checklist/:grup", async (req, res) => {
         row.no,
         row.periode,
         row.periode_start,
+        row.qrcode,
       ]);
 
       const insertQuery = `
-        INSERT INTO automation.checklist_pm_wafer (pm_wafer_id, week, year, grup, machine_name, part_kebutuhan_alat, equipment, kode_barang, no, periode, periode_start)
+        INSERT INTO automation.checklist_pm_wafer 
+        (pm_wafer_id, week, year, grup, machine_name, part_kebutuhan_alat, equipment, kode_barang, no, periode, periode_start, qrcode)
         VALUES ${values}
         RETURNING *;
       `;
 
+      // Eksekusi query untuk menyimpan data
       const result = await req.db.query(insertQuery, insertQueryParams);
 
+      // Kembalikan respons sukses dengan data yang dimasukkan
       return res.status(201).json({ success: true, insertedRows: result.rows });
     } else {
+      // Jika data tidak ditemukan di pm_wafer
       return res
         .status(400)
         .json({ error: "Data tidak ditemukan di pm_wafer" });
     }
   } catch (error) {
+    // Tangani error pada server
     console.error(error);
     return res.status(500).json({ error: "Terjadi kesalahan pada server" });
   }
