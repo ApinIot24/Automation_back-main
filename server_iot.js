@@ -6,15 +6,16 @@ import jwt from "jsonwebtoken";
 import http from "http";
 import https from "https";
 import cron from "node-cron";
-import { Server } from "socket.io";
+import { WebSocketServer } from "ws";
 import db from "./config/util.js";
 import db_iot from "./config/users.js";
-import { Bot } from "grammy";
 import fs from "fs";
 import dotenv from "dotenv";
 
-// import register from "./routes/auth/register.js";
-// Routes Definisi
+// Load environment variables
+dotenv.config();
+
+// Routes Definitions
 import downtime_wafer from "./routes/wafer/downtime/downtime.js";
 import lhp_wafer from "./routes/wafer/lhp/lhp.js";
 import control_wafer from "./routes/wafer/lhp/control.js";
@@ -29,26 +30,24 @@ import central_kitchen from "./routes/central_kitchen.js";
 import importRoutesWafer from "./routes/wafer/pm/import.js";
 import importRoutesBiscuit from "./routes/biscuit/import/import.js";
 import utility from "./routes/utility/utility.js";
-
 // checklist
 import qrchecklist from "./routes/checklist.js";
 // users
 import authRoutes from "./routes/auth/authRoutes.js";
 import roleRoutes from "./routes/settings/roleRoutes.js";
 import users from "./routes/users/userRoutes.js";
-// Load environment variables
-dotenv.config();
 
 const app = express();
-const httpPort = process.env.HTTP_PORT;
-const httpsPort = process.env.HTTPS_PORT;
-const localHttpPort = process.env.LOCAL_HTTP_PORT;
-const ipAddress = process.env.IP_ADDRESS;
-const secretKey = process.env.SECRET_KEY;
+const httpPort = process.env.HTTP_PORT || 3000;
+const httpsPort = process.env.HTTPS_PORT || 3443;
+const localHttpPort = process.env.LOCAL_HTTP_PORT || 8080;
+const ipAddress = process.env.IP_ADDRESS || "0.0.0.0";
+const secretKey =
+  process.env.SECRET_KEY || "default_secret_key_for_development";
 
 // Middleware
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN,
+  origin: process.env.CORS_ORIGIN || "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: [
     "Content-Type",
@@ -56,28 +55,31 @@ const corsOptions = {
     "X-Requested-With",
     "Accept",
     "Origin",
+    "x-access-token",
   ],
 };
 
 app.use(logger("dev"));
 app.use(cors(corsOptions));
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  next();
-});
+app.use(express.json({ limit: "50mb" }));
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 
-// Autentikasi Middleware
+// Authentication Middleware
 function validateUser(req, res, next) {
-  jwt.verify(req.headers["x-access-token"], secretKey, (err, decoded) => {
+  const token = req.headers["x-access-token"];
+
+  if (!token) {
+    return res
+      .status(401)
+      .json({ status: "error", message: "No token provided", data: null });
+  }
+
+  jwt.verify(token, secretKey, (err, decoded) => {
     if (err) {
-      res.json({ status: "error", message: err.message, data: null });
+      return res
+        .status(401)
+        .json({ status: "error", message: err.message, data: null });
     } else {
       req.body.userId = decoded.id;
       next();
@@ -85,40 +87,110 @@ function validateUser(req, res, next) {
   });
 }
 
-app.use(express.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ extended: true }));
-// app.use("/login", register);
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
-
-// Menambahkan `db` ke `req`
+// Attach database connections to request object
 app.use((req, res, next) => {
   req.db = db;
   req.db_iot = db_iot;
   next();
 });
 
-// Membuat server HTTP dan HTTPS
-const httpServer = http.createServer(app);
-const io = new Server(httpServer, {
-  cors: corsOptions,
-});
+// Create HTTP and HTTPS servers
+let httpServer, httpsServer, localHttpServer;
 
-// Socket.IO
-io.on("connection", (socket) => {
-  console.log(`Client connected: ${socket.id}`);
-  socket.on("disconnect", () => {
-    console.log(`Client disconnected: ${socket.id}`);
+try {
+  // Create HTTP server
+  httpServer = http.createServer(app);
+
+  // Create HTTPS server if SSL certificates are available
+  try {
+    const privateKey = fs.readFileSync(process.env.SSL_KEY_PATH, "utf8");
+    const certificate = fs.readFileSync(process.env.SSL_CERT_PATH, "utf8");
+    const credentials = { key: privateKey, cert: certificate };
+    httpsServer = https.createServer(credentials, app);
+  } catch (error) {
+    console.warn(
+      "SSL certificates not found or invalid. HTTPS server will not start:",
+      error.message
+    );
+  }
+
+  // Create local development server
+  localHttpServer = http.createServer(app);
+} catch (error) {
+  console.error("Failed to create servers:", error);
+  process.exit(1);
+}
+
+// WebSocket Configuration
+// Membuat WebSocketServer
+const wss = new WebSocketServer({ noServer: true });
+
+// Objek untuk menyimpan status koneksi berdasarkan path
+const clientConnections = {
+  "/status/mobile": [],
+  "/chat": [],
+  "/notifications": [],
+};
+
+// Menangani koneksi WebSocket
+wss.on("connection", (ws, req) => {
+  const path = req.url;
+  console.log(`A new client connected to path: ${path}`);
+
+  // Menyimpan koneksi WebSocket berdasarkan path
+  if (clientConnections[path]) {
+    clientConnections[path].push(ws);
+    console.log(
+      `Total clients connected to ${path}: ${clientConnections[path].length}`
+    );
+  }
+
+  // Kirim pesan selamat datang saat koneksi berhasil
+  ws.send(
+    JSON.stringify({
+      type: "welcome",
+      message: `Welcome to the WebSocket server at ${path}!`,
+    })
+  );
+
+  // Tangani pesan yang masuk dari klien
+  ws.on("message", (message) => {
+    console.log(`Message from client on ${path}: ${message}`);
+  });
+
+  // Menangani error
+  ws.on("error", (error) => {
+    console.error("WebSocket error:", error);
+  });
+
+  // Menangani koneksi yang terputus
+  ws.on("close", () => {
+    // Hapus koneksi yang terputus dari array
+    const index = clientConnections[path].indexOf(ws);
+    if (index !== -1) {
+      clientConnections[path].splice(index, 1);
+      console.log(
+        `A client disconnected from ${path}. Remaining clients: ${clientConnections[path].length}`
+      );
+    }
   });
 });
+// Set up WebSocket upgrade handling for all servers
+const handleUpgrade = (server) => {
+  server.on("upgrade", (request, socket, head) => {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit("connection", ws, request);
+    });
+  });
+};
 
-// Cron job
-// cron.schedule('* * * * *', () => {
-//     const payload = { title: 'Notifikasi Terjadwal', body: 'Ini adalah notifikasi setiap menit.' };
-//     io.emit('notification', payload);
-//     console.log('Notifikasi dikirim:', payload);
-// });
+// Apply WebSocket upgrade handler to all servers
+if (httpServer) handleUpgrade(httpServer);
+if (httpsServer) handleUpgrade(httpsServer);
+if (localHttpServer) handleUpgrade(localHttpServer);
 
 // Routes
+// Unprotected routes
 app.use("/", central_kitchen);
 app.use("/", line1);
 app.use("/", line2);
@@ -130,47 +202,78 @@ app.use("/", control_wafer);
 app.use("/", line5);
 app.use("/", downtime_biscuit);
 app.use("/", lhp_biscuit);
+
+// Protected routes - use validateUser middleware
 app.use("/api", utility);
 app.use("/api", importRoutesWafer);
 app.use("/api", importRoutesBiscuit);
-app.use("/api", qrchecklist);
-
 app.use("/api/auth", authRoutes);
 app.use("/api", users);
-app.use("/api/setting", roleRoutes);
+app.use("/api/setting", validateUser, roleRoutes);
+app.use("/api", qrchecklist);
 
+// Health check endpoint
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", message: "Server is running" });
+});
 
-
-app.get('/test', async (req, res) => {
+// Test endpoint
+app.get("/test", async (req, res) => {
   try {
-
+    res.send("HTTP server is running");
   } catch (error) {
-    console.error("Error fetching downtime data:", error);
-    res.status(500).send('Internal Server Error');
+    console.error("Error in test endpoint:", error);
+    res.status(500).json({ status: "error", message: "Internal Server Error" });
   }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ status: "error", message: "Internal Server Error" });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ status: "error", message: "Resource not found" });
+});
+
+// Start servers
+if (httpServer) {
+  httpServer.listen(httpPort, ipAddress, () => {
+    console.log(`HTTP server running at http://${ipAddress}:${httpPort}`);
   });
+}
 
+if (httpsServer) {
+  httpsServer.listen(httpsPort, ipAddress, () => {
+    console.log(`HTTPS server running at https://${ipAddress}:${httpsPort}`);
+  });
+}
 
-  
-// Membaca sertifikat SSL
-const privateKey = fs.readFileSync(process.env.SSL_KEY_PATH, "utf8");
-const certificate = fs.readFileSync(process.env.SSL_CERT_PATH, "utf8");
-const credentials = { key: privateKey, cert: certificate };
+if (localHttpServer) {
+  localHttpServer.listen(localHttpPort, "localhost", () => {
+    console.log(
+      `Local HTTP server running at http://localhost:${localHttpPort}`
+    );
+  });
+}
 
-const httpsServer = https.createServer(credentials, app);
-
-// Jalankan server
-httpServer.listen(httpPort, ipAddress, () => {
-  console.log(`Server HTTP berjalan di http://${ipAddress}:${httpPort}`);
+// Handle process termination
+process.on("SIGTERM", () => {
+  console.log("SIGTERM received, shutting down gracefully");
+  httpServer?.close();
+  httpsServer?.close();
+  localHttpServer?.close();
+  process.exit(0);
 });
 
-httpsServer.listen(httpsPort, ipAddress, () => {
-  console.log(`Server HTTPS berjalan di https://${ipAddress}:${httpsPort}`);
+process.on("SIGINT", () => {
+  console.log("SIGINT received, shutting down gracefully");
+  httpServer?.close();
+  httpsServer?.close();
+  localHttpServer?.close();
+  process.exit(0);
 });
 
-const localHttpServer = http.createServer(app);
-localHttpServer.listen(localHttpPort, "localhost", () => {
-  console.log(
-    `Server HTTP lokal berjalan di http://localhost:${localHttpPort}`
-  );
-});
+export default app;

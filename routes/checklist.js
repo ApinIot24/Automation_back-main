@@ -60,4 +60,71 @@ app.get("/qrchecklist/checklist/get", async (req, res) => {
   }
 });
 
+app.put("/qrchecklist/checklist/put", async (req, res) => {
+  try {
+    const { id, c_i, l, r, keterangan, tanggal, status } = req.body;
+
+    let itemId = id;
+    let tableName;
+
+    // Pertama, cari di tabel checklist_pm_biscuit
+    const biscuitQuery = `
+          SELECT id FROM automation.checklist_pm_biscuit 
+          WHERE id = $1
+      `;
+    const biscuitResult = await req.db.query(biscuitQuery, [id]);
+
+    if (biscuitResult.rows.length > 0) {
+      tableName = "automation.checklist_pm_biscuit";
+    } else {
+      // Jika tidak ada di biscuit, cari di wafer
+      const waferQuery = `
+              SELECT id FROM automation.checklist_pm_wafer 
+              WHERE id = $1
+          `;
+      const waferResult = await req.db.query(waferQuery, [id]);
+
+      if (waferResult.rows.length > 0) {
+        tableName = "automation.checklist_pm_wafer";
+      } else {
+        return res.status(404).json({ error: "Item not found in both tables" });
+      }
+    }
+
+    // Query update dengan mapping status
+    const updateQuery = `
+          UPDATE ${tableName}
+          SET 
+              c_i = $1, 
+              l = $2, 
+              r = $3, 
+              keterangan = $4, 
+              tanggal = $5, 
+              status_checklist = $6
+          WHERE id = $7
+      `;
+
+    await req.db.query(updateQuery, [
+      c_i,
+      l,
+      r,
+      keterangan,
+      tanggal,
+      status,
+      itemId,
+    ]);
+
+    res.status(200).json({
+      message: "Item updated successfully",
+      id: itemId,
+      table: tableName,
+    });
+  } catch (error) {
+    console.error("Error updating checklist:", error);
+    res.status(500).json({
+      error: "Error updating checklist",
+      details: error.message,
+    });
+  }
+});
 export default app;

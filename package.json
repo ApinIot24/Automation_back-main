@@ -5,7 +5,10 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon server_iot.js"
+    "dev": "nodemon server_iot.js",
+    "start": "pm2 start server_iot.js --name server_iot && cd ../FUXA-1.2.5/server && pm2 start main.js --name fuxa",
+    "restart": "pm2 restart server_iot && pm2 restart fuxa",
+    "stop": "pm2 stop server_iot && pm2 stop fuxa"
   },
   "author": "Mayora.Indah.Tbk PSR",
   "license": "ISC",
@@ -34,6 +37,7 @@
     "routeros-client": "^1.1.0",
     "socket.io": "^4.8.1",
     "web-push": "^3.6.7",
+    "ws": "^8.18.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
