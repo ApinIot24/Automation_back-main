@@ -166,13 +166,9 @@ wss.on("connection", (ws, req) => {
   // Menangani koneksi yang terputus
   ws.on("close", () => {
     // Hapus koneksi yang terputus dari array
-    const index = clientConnections[path].indexOf(ws);
-    if (index !== -1) {
-      clientConnections[path].splice(index, 1);
       console.log(
-        `A client disconnected from ${path}. Remaining clients: ${clientConnections[path].length}`
+        `A client disconnected from ${path}. Remaining clients`
       );
-    }
   });
 });
 // Set up WebSocket upgrade handling for all servers

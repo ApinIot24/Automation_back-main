@@ -14,6 +14,39 @@ function calculateCurrentWeek() {
 
   return weekNumber;
 }
+app.get("/mobile/current/week/:line/:currentweek", async (req, res) => {
+  try {
+    // Extracting parameters from the request and ensuring line is a string
+    const { line, currentweek } = req.params;
+    const lineString = String(line); // Ensure line is a string
+
+    // Pertama, cari di tabel checklist_pm_biscuit
+    let result = await req.db.query(
+      "SELECT * FROM automation.checklist_pm_biscuit WHERE week = $1 AND grup = $2",
+      [currentweek, lineString] // Pass the string version of line
+    );
+
+    // Jika tidak ditemukan di tabel checklist_pm_biscuit, cari di tabel checklist_pm_wafer
+    let allResults = result.rows;
+
+    if (result.rows.length === 0) {
+      result = await req.db.query(
+        "SELECT * FROM automation.checklist_pm_wafer WHERE week = $1 AND grup = $2",
+        [currentweek, lineString] // Pass the string version of line
+      );
+      allResults = result.rows;
+    }
+
+    // Mengirimkan hasil query kepada client
+    res.json({ data: allResults });
+  } catch (error) {
+    // Logging error and sending the response with a 500 status code
+    console.error("Error occurred:", error);
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
+  }
+});
 
 // Mendapatkan data melalui query parameter
 app.get("/qrchecklist/checklist/get", async (req, res) => {
