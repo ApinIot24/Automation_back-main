@@ -36,6 +36,8 @@ import qrchecklist from "./routes/checklist.js";
 import authRoutes from "./routes/auth/authRoutes.js";
 import roleRoutes from "./routes/settings/roleRoutes.js";
 import users from "./routes/users/userRoutes.js";
+import formtiket from "./routes/ticket.js";
+
 
 const app = express();
 const httpPort = process.env.HTTP_PORT || 3000;
@@ -166,9 +168,7 @@ wss.on("connection", (ws, req) => {
   // Menangani koneksi yang terputus
   ws.on("close", () => {
     // Hapus koneksi yang terputus dari array
-      console.log(
-        `A client disconnected from ${path}. Remaining clients`
-      );
+    console.log(`A client disconnected from ${path}. Remaining clients`);
   });
 });
 // Set up WebSocket upgrade handling for all servers
@@ -207,6 +207,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api", users);
 app.use("/api/setting", validateUser, roleRoutes);
 app.use("/api", qrchecklist);
+
+app.use("/api", formtiket);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
