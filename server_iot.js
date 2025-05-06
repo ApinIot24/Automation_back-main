@@ -205,7 +205,7 @@ app.use("/api", importRoutesWafer);
 app.use("/api", importRoutesBiscuit);
 app.use("/api/auth", authRoutes);
 app.use("/api", users);
-app.use("/api/setting", validateUser, roleRoutes);
+app.use("/api/setting", roleRoutes);
 app.use("/api", qrchecklist);
 
 app.use("/api", formtiket);

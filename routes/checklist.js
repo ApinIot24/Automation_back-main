@@ -95,7 +95,10 @@ app.get("/qrchecklist/checklist/get", async (req, res) => {
 
 app.put("/qrchecklist/checklist/put", async (req, res) => {
   try {
-    const { id, c_i, l, r, keterangan, tanggal, status } = req.body;
+    const { id, c_i, l, r, keterangan, tanggal, status_checklist } = req.body;
+    console.log(
+      
+      c_i, r, l);
 
     let itemId = id;
     let tableName;
@@ -143,7 +146,7 @@ app.put("/qrchecklist/checklist/put", async (req, res) => {
       r,
       keterangan,
       tanggal,
-      status,
+      status_checklist,
       itemId,
     ]);
 
@@ -160,4 +163,6 @@ app.put("/qrchecklist/checklist/put", async (req, res) => {
     });
   }
 });
+
+
 export default app;
