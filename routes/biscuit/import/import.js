@@ -360,7 +360,6 @@ router.get(
     }
   }
 );
-
 router.get(
   "/pm_biscuit/filter/checklist/:group/:year/:week",
   async (req, res) => {
@@ -371,41 +370,41 @@ router.get(
 
       // Asumsikan kamu sudah punya fungsi untuk menghitung total minggu dalam satu tahun
       const totalWeeks = getTotalWeeksInYear(year); // Implementasikan fungsi ini sesuai kebutuhan
+
       // Query database dengan filter berdasarkan grup, tahun, dan minggu
       const result = await req.db.query(
         `
         SELECT
-      id,
-      pm_biscuit_id,
-      status_checklist,
-      pic,
-      c_i,
-      l,
-      r,
-      keterangan,
-      foto,
-      created_at,
-      updated_at,
-      week,
-      year,
-      tanggal,
-      no,
-      machine_name,
-      part_kebutuhan_alat,
-      equipment,
-      periode,
-      grup,
-      kode_barang,
-      periode_start
-    FROM automation.checklist_pm_biscuit
-    WHERE grup = $1
-      AND year = $2
-      AND week = $3
-    ORDER BY no ASC;
-      `,
+          id,
+          pm_biscuit_id,
+          status_checklist,
+          pic,
+          c_i,
+          l,
+          r,
+          keterangan,
+          foto,
+          created_at,
+          updated_at,
+          week,
+          year,
+          tanggal,
+          no,
+          machine_name,
+          part_kebutuhan_alat,
+          equipment,
+          periode,
+          grup,
+          kode_barang,
+          periode_start
+        FROM automation.checklist_pm_biscuit
+        WHERE grup = $1
+          AND year = $2
+          AND week = $3
+        ORDER BY no ASC;
+        `,
         [group, year, currentWeek]
       );
-      // console.log(result.rows);
       const startWeek = currentWeek;
       const endWeek = Math.min(currentWeek + 1, totalWeeks);
 
@@ -462,8 +461,10 @@ router.get(
         })
         .filter((item) => item !== null); // Hapus semua item null
 
+  
+
       // Kirimkan data hasil query dan modifikasi
-      res.json(modifiedData);
+      res.json(modifiedData); // Kirim hasil data yang sudah difilter
     } catch (error) {
       console.error("Error fetching data:", error);
       res.status(500).json({ error: "Error fetching data" });
@@ -1092,21 +1093,25 @@ router.post("/import/biscuit", upload.single("file"), async (req, res) => {
   }
 });
 
-router.post("/import/biscuit/:grup", upload.single("file"), async (req, res) => {
-  const filePath = req.file.path;
-  const grup = req.params.grup; // Mengambil parameter grup dari URL
-  try {
-    // Anda dapat meneruskan `grup` ke fungsi `importExcelBiscuit` jika diperlukan
-    await importExcelBiscuit(filePath, grup);
-    res
-      .status(200)
-      .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
-  } catch (error) {
-    res
-      .status(500)
-      .send(`Gagal mengimpor data untuk grup ${grup}: ` + error.message);
+router.post(
+  "/import/biscuit/:grup",
+  upload.single("file"),
+  async (req, res) => {
+    const filePath = req.file.path;
+    const grup = req.params.grup; // Mengambil parameter grup dari URL
+    try {
+      // Anda dapat meneruskan `grup` ke fungsi `importExcelBiscuit` jika diperlukan
+      await importExcelBiscuit(filePath, grup);
+      res
+        .status(200)
+        .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
+    } catch (error) {
+      res
+        .status(500)
+        .send(`Gagal mengimpor data untuk grup ${grup}: ` + error.message);
+    }
   }
-});
+);
 
 router.delete("/deleted/biscuit/:group", async (req, res) => {
   try {
