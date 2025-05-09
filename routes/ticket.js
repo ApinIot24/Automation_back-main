@@ -2,6 +2,7 @@ import { Router } from "express";
 import fs from "fs";
 import path from "path";
 import multer from "multer";
+import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { ticket, updateTicket } from "../controllers/ticket.js";
 
@@ -162,6 +163,24 @@ router.get("/uploads/:filename", (req, res) => {
       success: false,
       message: "Image not found",
     });
+  }
+});
+
+router.post("/send-whatsapp", async (req, res) => {
+  const { phoneNumber, message } = req.body;
+
+  try {
+    const apiKey = "7631523"; // Ganti dengan API Key CallMeBot
+    const whatsappUrl = `https://api.callmebot.com/whatsapp.php?phone=${phoneNumber}&text=${encodeURIComponent(
+      message
+    )}&apikey=${apiKey}`;
+
+    await axios.get(whatsappUrl);
+
+    res.status(200).json({ success: true, message: "Pesan berhasil dikirim" });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ success: false, message: "Gagal mengirim pesan" });
   }
 });
 
