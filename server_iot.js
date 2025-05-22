@@ -29,6 +29,7 @@ import lhp_biscuit from "./routes/biscuit/lhp/lhp.js";
 import central_kitchen from "./routes/central_kitchen.js";
 import importRoutesWafer from "./routes/wafer/pm/import.js";
 import importRoutesBiscuit from "./routes/biscuit/import/import.js";
+import importRoutesAstor from "./routes/astor/import/import.js";
 import utility from "./routes/utility/utility.js";
 // checklist
 import qrchecklist from "./routes/checklist.js";
@@ -203,6 +204,7 @@ app.use("/", lhp_biscuit);
 app.use("/api", utility);
 app.use("/api", importRoutesWafer);
 app.use("/api", importRoutesBiscuit);
+app.use("/api", importRoutesAstor);
 app.use("/api/auth", authRoutes);
 app.use("/api", users);
 app.use("/api/setting", roleRoutes);
