@@ -35,7 +35,7 @@ export default async function importExcelAstor(filePath, specifiedGrup = null) {
         try {
           // Menjalankan query untuk memasukkan data ke tabel pm_biscuit dengan grup yang ditentukan
           const result = await db.query(
-            `INSERT INTO automation.pm_biscuit (no, qrcode, machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode_start, periode, grup) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+            `INSERT INTO automation.pm_astor (no, qrcode, machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode_start, periode, grup) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
             [
               no,
               row[0],
