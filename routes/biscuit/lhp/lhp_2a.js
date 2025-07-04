@@ -11,7 +11,7 @@ function format(date) {
   return `${year}-${month}-${day}`;
 }
 
-app.post("/lhpl2", async (req, res) => {
+app.post("/line2a", async (req, res) => {
   const {
     users_input,
     realdatetime,
@@ -28,14 +28,14 @@ app.post("/lhpl2", async (req, res) => {
     tray_output,
     tray_output_kg,
     bubuk,
-    beratKering,
-    beratBasah,
+    berat_kering,
+    berat_basah,
     rmd,
     rfeeding,
     sampahpacking,
     rpackinner_tray,
     rpackinner_renceng,
-    rpackTable,
+    rpacktable,
     rmall,
     rejectpacking,
     rejectstacking,
@@ -82,17 +82,16 @@ app.post("/lhpl2", async (req, res) => {
     viambil,
     vireturn,
     viinner,
-    viRainner,
+    virainner,
     viakhir,
     krkawal,
-    krAwal,
+    krawal,
     krpakai,
     kreturn,
     kreject,
     krakhir,
     serbuk,
     tampungan,
-    wiinner,
     kendalaall,
     downtime,
   } = req.body;
@@ -103,7 +102,7 @@ app.post("/lhpl2", async (req, res) => {
     }
     const dateformat = realdatetime.slice(0, 10);
     const existingEntry = await req.db.query(
-      `SELECT * FROM automation.lhp_l5 WHERE realdatetime = $1 AND shift = $2  AND grup = $3`,
+      `SELECT * FROM automation.lhp_malkist_2 WHERE realdatetime = $1 AND shift = $2  AND grup = $3`,
       [dateformat, shift, grup]
     );
     console.log("Hasil query existingEntry:", existingEntry.rows);
@@ -115,10 +114,10 @@ app.post("/lhpl2", async (req, res) => {
     }
     // Step 1: Insert data LHP L5 ke dalam database
     const result = await req.db.query(
-      `INSERT INTO automation.lhp_malkist (
+      `INSERT INTO automation.lhp_malkist_2 (
     users_input, realdatetime, grup, shift, sku, reguler, hold, output,
     rmd, rfeeding, rmall, rpacktable, rmtotal, roven, soven, mcbks, ptable,
-    sampah_metal, sampah_c_convey, total, brtpack, brtpcs, wiinner,
+    sampah_metal, sampah_c_convey, total, brtpack, brtpcs,
     wipkulitawal, wipkulitakhir, wipselisih, viawal, viambil, viakhir,
     vireturn, viinner, virainner, viall, variance, krkawal, krawal, krakhir,
     krpakai, kreturn, kreject, kendalaall, rpackinner, roll, sampahpacking,
@@ -127,7 +126,10 @@ app.post("/lhpl2", async (req, res) => {
     wip_adonan_awal, wip_adonan_akhir, wip_adonan_selisih, wip_adonan_kulit,
     adonan_gagal_kg, adonan_gagal_kulit, weight_bsc_pcs, weight_bsc_pack,
     wipkulit, rejectpacking, rejectstacking, rejectcoolingconveyor,
-    rpackinner_tray, rpackinner_renceng
+    rpackinner_tray, rpackinner_renceng, tray_output,
+    tray_output_kg, renceng_output, renceng_output_kg, batch_tuang_tray,
+    batch_cetak_tray, batch_buat_tray, brtpcs_tray, brtpack_tray,
+    weight_bsc_pcs_tray, weight_bsc_pack_tray, tampungan, serbuk
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
     $11, $12, $13, $14, $15, $16, $17, $18, 
@@ -137,95 +139,95 @@ app.post("/lhpl2", async (req, res) => {
     $43, $44, $45, $46, $47, $48, $49, $50,
     $51, $52, $53, $54, $55, $56, $57, $58,
     $59, $60, $61, $62, $63, $64, $65, $66, 
-    $67,  $68, $69
+    $67,  $68, $69, $70, $71, $72, $73, $74,
+    $75, $76, $77, $78, $79, $80
 ) RETURNING id`,
       [
         users_input,
-        realdatetime,
-        grup,
-        shift,
-        sku,
-        reguler,
-        planning,
-        hold,
-        output,
-        output_kg,
-        renceng_output,
-        renceng_output_kg,
-        tray_output,
-        tray_output_kg,
-        bubuk,
-        beratKering,
-        beratBasah,
-        rmd,
-        rfeeding,
-        sampahpacking,
-        rpackinner_tray,
-        rpackinner_renceng,
-        rpackTable,
-        rmall,
-        rejectpacking,
-        rejectstacking,
-        rejectcoolingconveyor,
-        rmtotal,
-        roll,
-        roven,
-        soven,
-        mcbks,
-        ptable,
-        sampah_metal,
-        sampah_c_convey,
-        total,
-        batch_tuang,
-        batch_tuang_tray,
-        batch_cetak,
-        batch_cetak_tray,
-        batch_buat,
-        batch_buat_tray,
-        rpackinner,
-        brtpcs,
-        brtpcs_tray,
-        brtpack,
-        brtpack_tray,
-        weight_bsc_pcs,
-        weight_bsc_pcs_tray,
-        weight_bsc_pack,
-        weight_bsc_pack_tray,
-        adonan_gagal_kg,
-        adonan_gagal_kulit,
-        wip_adonan_awal,
-        wip_adonan_akhir,
-        wip_adonan_selisih,
-        wip_adonan_kulit,
-        wipkulitawal,
-        wipkulitakhir,
-        wipselisih,
-        wipkulit,
-        viall,
-        variance,
-        variance_batch,
-        variance_fg,
-        viawal,
-        viambil,
-        vireturn,
-        viinner,
-        viRainner,
-        viakhir,
-        krkawal,
-        krAwal,
-        krpakai,
-        kreturn,
-        kreject,
-        krakhir,
-        serbuk,
-        tampungan,
-        wiinner,
-        kendalaall,
-        downtime,
+realdatetime,
+grup,
+shift,
+sku,
+reguler,
+hold,
+output,
+rmd,
+rfeeding,
+rmall,
+rpacktable,
+rmtotal,
+roven,
+soven,
+mcbks,
+ptable,
+sampah_metal,
+sampah_c_convey,
+total,
+brtpack,
+brtpcs,
+wipkulitawal,
+wipkulitakhir,
+wipselisih,
+viawal,
+viambil,
+viakhir,
+vireturn,
+viinner,
+virainner,   
+viall,
+variance,
+krkawal,
+krawal,         // ← perhatikan: di field SQL pakai `krawal`, tapi di VALUES ini kamu pakai `krAwal`
+krakhir,
+krpakai,
+kreturn,
+kreject,
+kendalaall,
+rpackinner,
+roll,
+sampahpacking,
+planning,
+bubuk,
+berat_basah,
+berat_kering,
+output_kg,
+batch_buat,
+variance_batch,
+variance_fg,
+batch_tuang,
+batch_cetak,
+wip_adonan_awal,
+wip_adonan_akhir,
+wip_adonan_selisih,
+wip_adonan_kulit,
+adonan_gagal_kg,
+adonan_gagal_kulit,
+weight_bsc_pcs,
+weight_bsc_pack,
+wipkulit,
+rejectpacking,
+rejectstacking,
+rejectcoolingconveyor,
+rpackinner_tray,
+rpackinner_renceng,
+tray_output,
+tray_output_kg,
+renceng_output,
+renceng_output_kg,
+batch_tuang_tray,
+batch_cetak_tray,
+batch_buat_tray,
+brtpcs_tray,
+brtpack_tray,
+weight_bsc_pcs_tray,
+weight_bsc_pack_tray,
+tampungan,
+serbuk
+
       ]
     );
     if (result.rows.length === 0) {
-      throw new Error("Failed to insert data into LHP L5");
+      throw new Error("Failed to insert data into LHP L2a");
     }
 
     const idLhpL5 = result.rows[0].id;
@@ -240,7 +242,7 @@ app.post("/lhpl2", async (req, res) => {
 
     // Step 3: Update kendala di tabel LHP dengan JSONB
     await req.db.query(
-      `UPDATE automation.lhp_l5
+      `UPDATE automation.lhp_malkist_2
                SET kendalaall = $1
                WHERE id = $2`,
       [JSON.stringify(kendalaDowntime), idLhpL5]
@@ -250,7 +252,7 @@ app.post("/lhpl2", async (req, res) => {
     // Step 4: Insert data downtime ke dalam tabel downtime, kaitkan dengan id_lhp
     const downtimeInsertPromises = downtime.map((entry) => {
       return req.db.query(
-        `INSERT INTO automation.downtime_l5 (
+        `INSERT INTO automation.downtime_line2a (
                   id_lhp,
                   time_start,
                   time_stop,
@@ -287,9 +289,9 @@ app.post("/lhpl2", async (req, res) => {
   }
 });
 
-app.get("/lhpl5", async (req, res) => {
+app.get("/line2a", async (req, res) => {
   const result = await req.db.query(
-    "SELECT * FROM automation.lhp_l5 ORDER BY id DESC LIMIT 1"
+    "SELECT * FROM automation.lhp_malkist_2 ORDER BY id DESC LIMIT 1"
   );
   // console.log("DATA", result)
   var datalast = result.rows;
@@ -298,7 +300,7 @@ app.get("/lhpl5", async (req, res) => {
 app.get("/lhpl5/detail/:id", async (req, res) => {
   var id = req.params.id;
   const result = await req.db.query(
-    `SELECT * FROM automation.lhp_l5 where id = '${id}'`
+    `SELECT * FROM automation.lhp_malkist_2 where id = '${id}'`
   );
   // console.log("DATA", result)
   var datalast = result.rows;
@@ -308,7 +310,7 @@ app.get("/lhpl5_daily/:line", async (req, res) => {
   var line = req.params.line;
   var thisdaytime = format(new Date());
   const result = await req.db
-    .query(`SELECT * FROM automation.lhp_l5 where realdatetime = '${thisdaytime}' AND grup = '${line}' 
+    .query(`SELECT * FROM automation.lhp_malkist_2 where realdatetime = '${thisdaytime}' AND grup = '${line}' 
     AND shift in ('Shift 1') ORDER BY id ASC`);
   //console.log("DATA" ,result)
   var datalast = result.rows;
@@ -344,7 +346,7 @@ app.get("/lhpl5_daily/date/:date/:line", async (req, res) => {
     // Query SQL untuk mengambil data
     const query = `
         WITH shifts AS (SELECT 'Shift 1' AS shift UNION ALL SELECT 'Shift 2' UNION ALL SELECT 'Shift 3'),
-             dates AS (SELECT DISTINCT realdatetime::date FROM automation.lhp_l5 WHERE realdatetime::date = $1),
+             dates AS (SELECT DISTINCT realdatetime::date FROM automation.lhp_malkist_2 WHERE realdatetime::date = $1),
              all_combinations AS (SELECT d.realdatetime, s.shift FROM dates d CROSS JOIN shifts s)
         SELECT
             COALESCE(sd.id, ROW_NUMBER() OVER (PARTITION BY ac.realdatetime ORDER BY ac.shift)) AS id,
@@ -376,8 +378,7 @@ app.get("/lhpl5_daily/date/:date/:line", async (req, res) => {
               "tampungan",
               "total",
               "brtpack",
-              "brtpcs",
-              "wiinner",
+              "brtpcs",,
               "wipkulitawal",
               "wipkulitakhir",
               "wipselisih",
@@ -420,7 +421,7 @@ app.get("/lhpl5_daily/date/:date/:line", async (req, res) => {
               .join(",\n            ")}
 
         FROM all_combinations ac
-        LEFT JOIN automation.lhp_l5 sd ON ac.realdatetime = sd.realdatetime AND ac.shift = sd.shift
+        LEFT JOIN automation.lhp_malkist_2 sd ON ac.realdatetime = sd.realdatetime AND ac.shift = sd.shift
         WHERE (sd.grup = $2 OR sd.grup IS NULL)
         ORDER BY ac.realdatetime, ac.shift;`;
 
