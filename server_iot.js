@@ -43,6 +43,9 @@ import roleRoutes from "./routes/settings/roleRoutes.js";
 import users from "./routes/users/userRoutes.js";
 import formtiket from "./routes/ticket.js";
 
+// setting_pm
+import settingpm from "./routes/setting_pm/index.js";
+
 const app = express();
 const httpPort = process.env.HTTP_PORT || 3000;
 const httpsPort = process.env.HTTPS_PORT || 3443;
@@ -218,6 +221,7 @@ app.use("/api/setting", roleRoutes);
 app.use("/api", qrchecklist);
 
 app.use("/api", formtiket);
+app.use("/api", settingpm);
 
 // Health check endpoint
 app.get("/health", (req, res) => {

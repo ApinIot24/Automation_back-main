@@ -476,6 +476,16 @@ router.get("/pm_wafer/filter/:group/:year/:week", async (req, res) => {
     const group = parseInt(req.params.group, 10);
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
+    let totalweeksetting = await req.db.query(
+        "SELECT week FROM automation.setting_pm WHERE grup = $1 AND pmtablename = 'pm_wafer'",
+        [group]
+    );
+
+    // Pastikan hasil query valid
+    if (!totalweeksetting || !totalweeksetting.rows) {
+        return res.status(500).json({ error: "Failed to fetch week settings" });
+    }
+    const totalWeeksSettingValue = totalweeksetting.rows[0].week;
 
     const result = await req.db.query(
       "SELECT * FROM automation.pm_wafer WHERE grup = $1 ORDER BY no ASC",
@@ -485,7 +495,7 @@ router.get("/pm_wafer/filter/:group/:year/:week", async (req, res) => {
 
     // Hitung range minggu (4 minggu ke depan)
     const startWeek = currentWeek;
-    const endWeek = Math.min(currentWeek + 3, totalWeeks);
+   const endWeek = Math.min(currentWeek + totalWeeksSettingValue - 1, totalWeeks);
 
     const modifiedData = result.rows
       .map((row) => {

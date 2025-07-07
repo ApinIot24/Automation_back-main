@@ -461,8 +461,6 @@ router.get(
         })
         .filter((item) => item !== null); // Hapus semua item null
 
-  
-
       // Kirimkan data hasil query dan modifikasi
       res.json(modifiedData); // Kirim hasil data yang sudah difilter
     } catch (error) {
@@ -477,6 +475,18 @@ router.get("/pm_astor/filter/:group/:year/:week", async (req, res) => {
     const group = parseInt(req.params.group, 10);
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
+    let totalweeksetting = await req.db.query(
+      "SELECT week FROM automation.setting_pm WHERE grup = $1 AND pmtablename = 'pm_astor'",
+      [group]
+    );
+
+    // Pastikan hasil query valid
+    if (!totalweeksetting || !totalweeksetting.rows) {
+      return res.status(500).json({ error: "Failed to fetch week settings" });
+    }
+
+    // Hitung total minggu dari setting
+      const totalWeeksSettingValue = totalweeksetting.rows[0].week;
 
     const result = await req.db.query(
       "SELECT * FROM automation.pm_astor WHERE grup = $1 ORDER BY no ASC",
@@ -486,7 +496,10 @@ router.get("/pm_astor/filter/:group/:year/:week", async (req, res) => {
 
     // Hitung range minggu (4 minggu ke depan)
     const startWeek = currentWeek;
-    const endWeek = Math.min(currentWeek + 3, totalWeeks);
+    const endWeek = Math.min(
+      currentWeek + totalWeeksSettingValue - 1,
+      totalWeeks
+    );
 
     const modifiedData = result.rows
       .map((row) => {
@@ -1093,25 +1106,21 @@ router.post("/import/astor", upload.single("file"), async (req, res) => {
   }
 });
 
-router.post(
-  "/import/astor/:grup",
-  upload.single("file"),
-  async (req, res) => {
-    const filePath = req.file.path;
-    const grup = req.params.grup; // Mengambil parameter grup dari URL
-    try {
-      // Anda dapat meneruskan `grup` ke fungsi `importExcelAstor` jika diperlukan
-      await importExcelAstor(filePath, grup);
-      res
-        .status(200)
-        .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
-    } catch (error) {
-      res
-        .status(500)
-        .send(`Gagal mengimpor data untuk grup ${grup}: ` + error.message);
-    }
+router.post("/import/astor/:grup", upload.single("file"), async (req, res) => {
+  const filePath = req.file.path;
+  const grup = req.params.grup; // Mengambil parameter grup dari URL
+  try {
+    // Anda dapat meneruskan `grup` ke fungsi `importExcelAstor` jika diperlukan
+    await importExcelAstor(filePath, grup);
+    res
+      .status(200)
+      .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
+  } catch (error) {
+    res
+      .status(500)
+      .send(`Gagal mengimpor data untuk grup ${grup}: ` + error.message);
   }
-);
+});
 
 router.delete("/deleted/astor/:group", async (req, res) => {
   try {
