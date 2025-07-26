@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import importExcelAstor from "../../../controllers/importExcelAstor.js";
+import importExcelUtility from "../../../controllers/importExcelUtility.js";
 import fs from "fs";
 
 const router = Router();
@@ -151,13 +151,13 @@ function getTotalWeeksInYear(year) {
   return Math.floor((lastDay - firstMonday) / (7 * 24 * 60 * 60 * 1000));
 }
 
-router.get("/pm_astor/select/:group", async (req, res) => {
+router.get("/pm_utility/select/:group", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10);
 
     // Query untuk mendapatkan machine_name yang unik
     const result = await req.db.query(
-      "SELECT machine_name, no FROM (SELECT DISTINCT ON (machine_name) machine_name, no FROM automation.pm_astor WHERE grup = $1 ORDER BY machine_name, no ASC) AS unique_machines ORDER BY no ASC",
+      "SELECT machine_name, no FROM (SELECT DISTINCT ON (machine_name) machine_name, no FROM automation.pm_utility WHERE grup = $1 ORDER BY machine_name, no ASC) AS unique_machines ORDER BY no ASC",
       [group]
     );
 
@@ -169,7 +169,7 @@ router.get("/pm_astor/select/:group", async (req, res) => {
   }
 });
 
-router.get("/pm_astor/qrcode/:group", async (req, res) => {
+router.get("/pm_utility/qrcode/:group", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10); // Get the group parameter from the route
     if (isNaN(group)) {
@@ -178,7 +178,7 @@ router.get("/pm_astor/qrcode/:group", async (req, res) => {
 
     // Modified SQL query to fetch distinct QR codes for the given group
     const result = await req.db.query(
-      "SELECT DISTINCT ON (qrcode) machine_name, qrcode FROM automation.pm_astor WHERE grup = $1 ORDER BY qrcode",
+      "SELECT DISTINCT ON (qrcode) machine_name, qrcode FROM automation.pm_utility WHERE grup = $1 ORDER BY qrcode",
       [group] // The value of group will replace $1 in the query
     );
 
@@ -188,7 +188,7 @@ router.get("/pm_astor/qrcode/:group", async (req, res) => {
   }
 });
 
-router.get("/pm_astor/:group/:year", async (req, res) => {
+router.get("/pm_utility/:group/:year", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10);
     const year = parseInt(req.params.year, 10); // Tahun target
@@ -205,7 +205,7 @@ router.get("/pm_astor/:group/:year", async (req, res) => {
     // Jika parameter start dan end valid, gunakan pagination dan pencarian
     if (start !== null && end !== null && !isNaN(start) && !isNaN(end)) {
       result = await req.db.query(
-        `SELECT * FROM automation.pm_astor 
+        `SELECT * FROM automation.pm_utility 
          WHERE grup = $1 
            AND (machine_name ILIKE $2 OR kode_barang ILIKE $2 OR equipment ILIKE $2 OR part_kebutuhan_alat ILIKE $2)
          ORDER BY no ASC 
@@ -215,7 +215,7 @@ router.get("/pm_astor/:group/:year", async (req, res) => {
     } else {
       // Jika tidak ada parameter start dan end, ambil seluruh data berdasarkan grup
       result = await req.db.query(
-        "SELECT * FROM automation.pm_astor WHERE grup = $1 ORDER BY no ASC",
+        "SELECT * FROM automation.pm_utility WHERE grup = $1 ORDER BY no ASC",
         [group]
       );
     }
@@ -239,12 +239,12 @@ router.get("/pm_astor/:group/:year", async (req, res) => {
   }
 });
 
-router.post("/pm_astor/machine", async (req, res) => {
+router.post("/pm_utility/machine", async (req, res) => {
   try {
     const { machineName, group } = req.body;
 
     const result = await req.db.query(
-      "SELECT * FROM automation.pm_astor WHERE machine_name = $1 AND grup = $2",
+      "SELECT * FROM automation.pm_utility WHERE machine_name = $1 AND grup = $2",
       [machineName, group]
     );
 
@@ -255,7 +255,7 @@ router.post("/pm_astor/machine", async (req, res) => {
   }
 });
 
-// router.get("/pm_astor/:group/:year", async (req, res) => {
+// router.get("/pm_utility/:group/:year", async (req, res) => {
 //   try {
 //     const group = parseInt(req.params.group, 10);
 //     const year = parseInt(req.params.year, 10); // Tahun target (misalnya, 2024)
@@ -273,7 +273,7 @@ router.post("/pm_astor/machine", async (req, res) => {
 
 //     // Query dengan pembatasan hasil berdasarkan start dan end
 //     const result = await req.db.query(
-//       "SELECT * FROM automation.pm_astor WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC LIMIT $2 OFFSET $3",
+//       "SELECT * FROM automation.pm_utility WHERE grup = $1 ORDER BY CAST(no AS INTEGER) ASC LIMIT $2 OFFSET $3",
 //       [group, endIndex - startIndex, startIndex]
 //     );
 
@@ -297,7 +297,7 @@ router.post("/pm_astor/machine", async (req, res) => {
 // });
 
 router.get(
-  "/pm_astor/filter/checklist/data/:group/:year/:week",
+  "/pm_utility/filter/checklist/data/:group/:year/:week",
   async (req, res) => {
     try {
       const group = parseInt(req.params.group, 10);
@@ -305,7 +305,7 @@ router.get(
       const currentWeek = parseInt(req.params.week, 10);
 
       const result = await req.db.query(
-        "SELECT * FROM automation.pm_astor WHERE grup = $1 ORDER BY no ASC",
+        "SELECT * FROM automation.pm_utility WHERE grup = $1 ORDER BY no ASC",
         [group]
       );
       const totalWeeks = getTotalWeeksInYear(year);
@@ -361,7 +361,7 @@ router.get(
   }
 );
 router.get(
-  "/pm_astor/filter/checklist/:group/:year/:week",
+  "/pm_utility/filter/checklist/:group/:year/:week",
   async (req, res) => {
     try {
       const group = parseInt(req.params.group, 10);
@@ -376,7 +376,7 @@ router.get(
         `
         SELECT
           id,
-          pm_astor_id,
+          pm_utility_id,
           status_checklist,
           pic,
           c_i,
@@ -397,7 +397,7 @@ router.get(
           grup,
           kode_barang,
           periode_start
-        FROM automation.checklist_pm_astor
+        FROM automation.checklist_pm_utility
         WHERE grup = $1
           AND year = $2
           AND week = $3
@@ -435,7 +435,7 @@ router.get(
           if (hasScheduledMaintenance) {
             return {
               id: row.id,
-              pm_astor_id: row.pm_astor_id,
+              pm_utility_id: row.pm_utility_id,
               status_checklist: row.status_checklist,
               pic: row.pic,
               c_i: row.c_i,
@@ -470,13 +470,13 @@ router.get(
   }
 );
 
-router.get("/pm_astor/filter/:group/:year/:week", async (req, res) => {
+router.get("/pm_utility/filter/:group/:year/:week", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10);
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
     let totalweeksetting = await req.db.query(
-      "SELECT week FROM automation.setting_pm WHERE grup = $1 AND pmtablename = 'pm_astor'",
+      "SELECT week FROM automation.setting_pm WHERE grup = $1 AND pmtablename = 'pm_utility'",
       [group]
     );
 
@@ -489,7 +489,7 @@ router.get("/pm_astor/filter/:group/:year/:week", async (req, res) => {
       const totalWeeksSettingValue = totalweeksetting.rows[0].week;
 
     const result = await req.db.query(
-      "SELECT * FROM automation.pm_astor WHERE grup = $1 ORDER BY no ASC",
+      "SELECT * FROM automation.pm_utility WHERE grup = $1 ORDER BY no ASC",
       [group]
     );
     const totalWeeks = getTotalWeeksInYear(year);
@@ -547,14 +547,14 @@ router.get("/pm_astor/filter/:group/:year/:week", async (req, res) => {
   }
 });
 
-router.get("/pm_astor/filter/all/:group/:year/:week", async (req, res) => {
+router.get("/pm_utility/filter/all/:group/:year/:week", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10);
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
 
     const result = await req.db.query(
-      "SELECT * FROM automation.pm_astor WHERE grup = $1 ORDER BY no ASC",
+      "SELECT * FROM automation.pm_utility WHERE grup = $1 ORDER BY no ASC",
       [group]
     );
 
@@ -605,14 +605,14 @@ router.get("/pm_astor/filter/all/:group/:year/:week", async (req, res) => {
   }
 });
 
-router.get("/pm_astor/filter/length/:group/:year/:week", async (req, res) => {
+router.get("/pm_utility/filter/length/:group/:year/:week", async (req, res) => {
   try {
     const group = parseInt(req.params.group, 10);
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
 
     const result = await req.db.query(
-      "SELECT * FROM automation.pm_astor WHERE grup = $1 ORDER BY no ASC",
+      "SELECT * FROM automation.pm_utility WHERE grup = $1 ORDER BY no ASC",
       [group]
     );
     const totalWeeks = getTotalWeeksInYear(year);
@@ -656,8 +656,7 @@ router.get("/pm_astor/filter/length/:group/:year/:week", async (req, res) => {
     res.status(500).json({ error: "Error fetching data" });
   }
 });
-
-router.post("/pm_astor/submit_pm_checklist/:grup", async (req, res) => {
+router.post("/pm_utility/submit_pm_checklist/:grup", async (req, res) => {
   const { year, week, data } = req.body;
   const { grup } = req.params;
 
@@ -672,7 +671,7 @@ router.post("/pm_astor/submit_pm_checklist/:grup", async (req, res) => {
     // Cek apakah sudah ada data dengan week dan year yang sama
     const checkQueryweek = `
       SELECT 1
-      FROM automation.checklist_pm_astor
+      FROM automation.checklist_pm_utility
       WHERE week = $1 AND year = $2 AND grup = $3
       LIMIT 1;
     `;
@@ -689,10 +688,10 @@ router.post("/pm_astor/submit_pm_checklist/:grup", async (req, res) => {
       });
     }
 
-    // Query untuk mengambil data dari pm_astor berdasarkan ID yang diberikan
+    // Query untuk mengambil data dari pm_utility berdasarkan ID yang diberikan
     const checkQuery = `
       SELECT id, machine_name, part_kebutuhan_alat, equipment, kode_barang, no, periode, periode_start, qrcode
-      FROM automation.pm_astor
+      FROM automation.pm_utility
       WHERE id = ANY($1::int[]) AND grup = $2;
     `;
     const checkResult = await req.db.query(checkQuery, [data, grupString]);
@@ -715,7 +714,7 @@ router.post("/pm_astor/submit_pm_checklist/:grup", async (req, res) => {
         .join(", ");
 
       const insertQueryParams = checkResult.rows.flatMap((row) => [
-        row.id, // id dari pm_astor
+        row.id, // id dari pm_utility
         week,
         year,
         grupString,
@@ -730,8 +729,8 @@ router.post("/pm_astor/submit_pm_checklist/:grup", async (req, res) => {
       ]);
 
       const insertQuery = `
-        INSERT INTO automation.checklist_pm_astor 
-        (pm_astor_id, week, year, grup, machine_name, part_kebutuhan_alat, equipment, kode_barang, no, periode, periode_start, qrcode)
+        INSERT INTO automation.checklist_pm_utility 
+        (pm_utility_id, week, year, grup, machine_name, part_kebutuhan_alat, equipment, kode_barang, no, periode, periode_start, qrcode)
         VALUES ${values}
         RETURNING *;
       `;
@@ -742,10 +741,10 @@ router.post("/pm_astor/submit_pm_checklist/:grup", async (req, res) => {
       // Kembalikan respons sukses dengan data yang dimasukkan
       return res.status(201).json({ success: true, insertedRows: result.rows });
     } else {
-      // Jika data tidak ditemukan di pm_astor
+      // Jika data tidak ditemukan di pm_utility
       return res
         .status(400)
-        .json({ error: "Data tidak ditemukan di pm_astor" });
+        .json({ error: "Data tidak ditemukan di pm_utility" });
     }
   } catch (error) {
     // Tangani error pada server
@@ -754,7 +753,7 @@ router.post("/pm_astor/submit_pm_checklist/:grup", async (req, res) => {
   }
 });
 
-router.post("/pm_astor/add_astor", async (req, res) => {
+router.post("/pm_utility/add_utility", async (req, res) => {
   // Validasi body request
   const {
     machine_name,
@@ -786,7 +785,7 @@ router.post("/pm_astor/add_astor", async (req, res) => {
   try {
     // Cari nomor urut untuk machine_name yang sama dalam group
     const existingMachineQuery = await req.db.query(
-      `SELECT no FROM automation.pm_astor 
+      `SELECT no FROM automation.pm_utility 
        WHERE machine_name = $1 AND grup = $2 
        ORDER BY no DESC 
        LIMIT 1`,
@@ -801,7 +800,7 @@ router.post("/pm_astor/add_astor", async (req, res) => {
       // Jika machine_name belum ada, cari nomor urut terakhir di group
       const lastNumberQuery = await req.db.query(
         `SELECT COALESCE(
-          (SELECT MAX(no) FROM automation.pm_astor WHERE grup = $1), 
+          (SELECT MAX(no) FROM automation.pm_utility WHERE grup = $1), 
           0
         ) + 1 AS last_number`,
         [grup]
@@ -812,7 +811,7 @@ router.post("/pm_astor/add_astor", async (req, res) => {
 
     // Insert data ke database
     const result = await req.db.query(
-      `INSERT INTO automation.pm_astor 
+      `INSERT INTO automation.pm_utility 
        (machine_name, equipment, kode_barang, part_kebutuhan_alat, qty, periode, periode_start, grup, no)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
@@ -842,7 +841,7 @@ router.post("/pm_astor/add_astor", async (req, res) => {
       machineNo: machineNo,
     });
   } catch (error) {
-    console.error("Error adding PM Astor data:", error);
+    console.error("Error adding PM Utility data:", error);
 
     // Handling specific database errors
     if (error.code === "23505") {
@@ -859,7 +858,7 @@ router.post("/pm_astor/add_astor", async (req, res) => {
   }
 });
 
-router.put("/pm_astor/checklist/:id", async (req, res) => {
+router.put("/pm_utility/checklist/:id", async (req, res) => {
   const { pic, c_i, l, r, keterangan, tanggal } = req.body;
 
   const { id } = req.params;
@@ -867,7 +866,7 @@ router.put("/pm_astor/checklist/:id", async (req, res) => {
   try {
     // Prepare the update query (only updating the provided fields)
     const query = `
-      UPDATE automation.checklist_pm_astor
+      UPDATE automation.checklist_pm_utility
       SET
         pic = $1,
         c_i = $2,
@@ -903,12 +902,12 @@ router.put("/pm_astor/checklist/:id", async (req, res) => {
   }
 });
 
-router.delete("/pm_astor/checklist/:week/:grup", async (req, res) => {
+router.delete("/pm_utility/checklist/:week/:grup", async (req, res) => {
   const { week, grup } = req.params;
   try {
     // Correct the query by passing an array of parameters
     const query = `
-      DELETE FROM automation.checklist_pm_astor WHERE week = $1 AND grup = $2
+      DELETE FROM automation.checklist_pm_utility WHERE week = $1 AND grup = $2
     `;
     const result = await req.db.query(query, [week, grup]); // Pass parameters as an array
 
@@ -932,7 +931,7 @@ router.delete("/pm_astor/checklist/:week/:grup", async (req, res) => {
   }
 });
 
-router.put("/pm_astor/list/machine/update", async (req, res) => {
+router.put("/pm_utility/list/machine/update", async (req, res) => {
   try {
     const { group, machines } = req.body;
     // Validasi input
@@ -953,7 +952,7 @@ router.put("/pm_astor/list/machine/update", async (req, res) => {
 
         // Update nomor urutan untuk semua mesin dengan nama yang sama di group tertentu
         const updateQuery = `
-          UPDATE automation.pm_astor 
+          UPDATE automation.pm_utility 
           SET no = $1 
           WHERE machine_name = $2 AND grup = $3
         `;
@@ -962,7 +961,7 @@ router.put("/pm_astor/list/machine/update", async (req, res) => {
         // Jika ada oldName, update nama mesin jika berbeda
         if (machine.oldName && machine.name !== machine.oldName) {
           const renameQuery = `
-            UPDATE automation.pm_astor 
+            UPDATE automation.pm_utility 
             SET machine_name = $1 
             WHERE machine_name = $2 AND grup = $3
           `;
@@ -990,7 +989,7 @@ router.put("/pm_astor/list/machine/update", async (req, res) => {
   }
 });
 
-router.put("/pm_astor/update_field/:id", async (req, res) => {
+router.put("/pm_utility/update_field/:id", async (req, res) => {
   const { id } = req.params;
   const { field, value } = req.body;
 
@@ -1017,7 +1016,7 @@ router.put("/pm_astor/update_field/:id", async (req, res) => {
     if (field === "machine_name") {
       // Ambil data existing terlebih dahulu
       const existingData = await req.db.query(
-        `SELECT grup, machine_name FROM automation.pm_astor WHERE id = $1`,
+        `SELECT grup, machine_name FROM automation.pm_utility WHERE id = $1`,
         [id]
       );
 
@@ -1029,7 +1028,7 @@ router.put("/pm_astor/update_field/:id", async (req, res) => {
 
       // Cari nomor urut untuk machine_name yang sama dalam group
       const existingMachineQuery = await req.db.query(
-        `SELECT no FROM automation.pm_astor 
+        `SELECT no FROM automation.pm_utility 
          WHERE machine_name = $1 AND grup = $2 
          ORDER BY no DESC 
          LIMIT 1`,
@@ -1044,7 +1043,7 @@ router.put("/pm_astor/update_field/:id", async (req, res) => {
         // Jika machine_name belum ada, cari nomor urut terakhir di group
         const lastNumberQuery = await req.db.query(
           `SELECT COALESCE(
-            (SELECT MAX(no) FROM automation.pm_astor WHERE grup = $1), 
+            (SELECT MAX(no) FROM automation.pm_utility WHERE grup = $1), 
             0
           ) + 1 AS last_number`,
           [grup]
@@ -1055,7 +1054,7 @@ router.put("/pm_astor/update_field/:id", async (req, res) => {
 
       // Update machine_name dan no
       const result = await req.db.query(
-        `UPDATE automation.pm_astor 
+        `UPDATE automation.pm_utility 
          SET machine_name = $1, no = $2 
          WHERE id = $3 RETURNING *`,
         [value, machineNo, id]
@@ -1075,7 +1074,7 @@ router.put("/pm_astor/update_field/:id", async (req, res) => {
 
     // Untuk field selain machine_name, lakukan update biasa
     const result = await req.db.query(
-      `UPDATE automation.pm_astor SET ${field} = $1 WHERE id = $2 RETURNING *`,
+      `UPDATE automation.pm_utility SET ${field} = $1 WHERE id = $2 RETURNING *`,
       [value, id]
     );
 
@@ -1096,23 +1095,23 @@ router.put("/pm_astor/update_field/:id", async (req, res) => {
 });
 
 // Endpoint API
-router.post("/import/astor", upload.single("file"), async (req, res) => {
+router.post("/import/utility", upload.single("file"), async (req, res) => {
   const filePath = req.file.path;
 
   try {
-    await importExcelAstor(filePath);
+    await importExcelUtility(filePath);
     res.status(200).send("Data berhasil diimpor ke PostgreSQL.");
   } catch (error) {
     res.status(500).send("Gagal mengimpor data: " + error.message);
   }
 });
 
-router.post("/import/astor/:grup", upload.single("file"), async (req, res) => {
+router.post("/import/utility/:grup", upload.single("file"), async (req, res) => {
   const filePath = req.file.path;
   const grup = req.params.grup; // Mengambil parameter grup dari URL
   try {
-    // Anda dapat meneruskan `grup` ke fungsi `importExcelAstor` jika diperlukan
-    await importExcelAstor(filePath, grup);
+    // Anda dapat meneruskan `grup` ke fungsi `importExcelUtility` jika diperlukan
+    await importExcelUtility(filePath, grup);
     res
       .status(200)
       .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
@@ -1123,12 +1122,12 @@ router.post("/import/astor/:grup", upload.single("file"), async (req, res) => {
   }
 });
 
-router.delete("/deleted/astor/:group", async (req, res) => {
+router.delete("/deleted/utility/:group", async (req, res) => {
   try {
     // Menghapus data di database berdasarkan group
     const group = parseInt(req.params.group, 10);
     const result = await req.db.query(
-      "DELETE FROM automation.pm_astor WHERE grup = $1 RETURNING *",
+      "DELETE FROM automation.pm_utility WHERE grup = $1 RETURNING *",
       [group]
     );
     // Mengirimkan hasil sebagai JSON, yaitu data yang telah dihapus
@@ -1142,7 +1141,7 @@ router.delete("/deleted/astor/:group", async (req, res) => {
   }
 });
 
-router.delete("/deleted/astor_pm/batch", async (req, res) => {
+router.delete("/deleted/utility_pm/batch", async (req, res) => {
   try {
     const { ids } = req.body;
     console.log("Received IDs:", ids);
@@ -1157,7 +1156,7 @@ router.delete("/deleted/astor_pm/batch", async (req, res) => {
     }
     // Query untuk menghapus data berdasarkan IDs
     const result = await req.db.query(
-      "DELETE FROM automation.pm_astor WHERE id = ANY($1::int[]) RETURNING *",
+      "DELETE FROM automation.pm_utility WHERE id = ANY($1::int[]) RETURNING *",
       [ids]
     );
     console.log("Deleted rows:", result.rows);
@@ -1184,9 +1183,9 @@ router.delete("/deleted/astor_pm/batch", async (req, res) => {
   }
 });
 
-router.delete("/delete_all_astor", async (req, res) => {
+router.delete("/delete_all_utility", async (req, res) => {
   try {
-    const result = await req.db.query("DELETE FROM automation.pm_astor");
+    const result = await req.db.query("DELETE FROM automation.pm_utility");
     res.json({
       message: "Semua data telah berhasil dihapus.",
       affectedRows: result.rowCount,

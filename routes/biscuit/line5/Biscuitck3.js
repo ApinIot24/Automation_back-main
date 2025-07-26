@@ -36,6 +36,209 @@ function getWeekDates(year, month, week) {
   return arr;
 }
 
+app.post("/ck_biscuit/loadcell/processed", async (req, res) => {
+  const { startDate, endDate, additionalData } = req.body;
+
+  // Ensure `additionalData` is an array and valid
+  if (!Array.isArray(additionalData)) {
+    return res
+      .status(400)
+      .send("Invalid data format for additionalData. It should be an array.");
+  }
+
+  // Ensure valid date formats (YYYY-MM-DD)
+  const startDateValid = /^\d{4}-\d{2}-\d{2}$/.test(startDate);
+  const endDateValid = /^\d{4}-\d{2}-\d{2}$/.test(endDate);
+
+  if (!startDateValid || !endDateValid) {
+    return res.status(400).send("Invalid date format. Use YYYY-MM-DD.");
+  }
+
+  const results = {
+    chartData: [],
+    tableData: [],
+  };
+
+  // Initialize overall total shift data across all databases
+  let overallShift1Total = 0;
+  let overallShift2Total = 0;
+  let overallShift3Total = 0;
+  let overallTotalShift = 0;
+
+  for (let db of additionalData) {
+    try {
+      let namedatabase = getDatabaseName(db);
+      let minWeightThreshold;
+
+      // Define weight threshold for each database
+      if (namedatabase === "ck_biscuit_palm_oil_") {
+        minWeightThreshold = 86.5;
+      } else if (namedatabase === "ck_biscuit_mixer_") {
+        minWeightThreshold = 258.7;
+      } else {
+        minWeightThreshold = 0; // Default threshold
+      }
+
+      const query = `
+        SELECT weight, date
+        FROM purwosari."${db}"
+        WHERE date::date BETWEEN $1 AND $2
+        AND (weight > $3 OR weight < 5)
+        ORDER BY date;
+      `;
+
+      const result = await pool.query(query, [
+        startDate,
+        endDate,
+        minWeightThreshold,
+      ]);
+      const rawData = result.rows;
+
+      // Process the raw data (detect peaks and group by shift)
+      const peaks = getPeakData(rawData, db);
+      const groupedData = groupDataByDateAndShift(peaks);
+
+      // Prepare chart data and table data
+      const chartData = prepareChartData(groupedData, db, startDate, endDate);
+      const tableData = prepareTableData(groupedData, db);
+
+      // Add this database's chart data to the overall results
+      results.chartData.push({
+        database:`${db.replace(/_/g, " ").toUpperCase()}`,
+        chartData,
+      });
+
+      // Add this database's table data to the overall results
+      results.tableData = results.tableData.concat(tableData);
+
+      // Accumulate total shifts for the overall total (across all databases)
+      overallShift1Total += chartData.shift1Data[0];
+      overallShift2Total += chartData.shift2Data[0];
+      overallShift3Total += chartData.shift3Data[0];
+      overallTotalShift += chartData.totalShiftData[0];
+
+      // Sort the table data by date
+      results.tableData.sort((a, b) => {
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        return dateA - dateB;
+      });
+    } catch (error) {
+      console.error("Error executing query", error);
+      return res.status(500).send("Error executing query.");
+    }
+  }
+
+  // After all databases are processed, add a final entry for overall totals
+  results.chartData.push({
+    database: "TOTAL SHIFTS",
+    chartData: {
+      labels: ["TOTAL SHIFTS"],
+      shift1Data: [overallShift1Total],
+      shift2Data: [overallShift2Total],
+      shift3Data: [overallShift3Total],
+      totalShiftData: [overallTotalShift],
+    },
+  });
+
+  results.tableData.push({
+    database: "TOTAL SHIFTS",
+    date: "TOTAL",
+    "Shift 1": overallShift1Total,
+    "Shift 2": overallShift2Total,
+    "Shift 3": overallShift3Total,
+    total: overallTotalShift,
+  });
+   console.log(JSON.stringify(results, null, 2)); 
+  // Send the processed results to the client
+  res.json({ results });
+});
+
+// Function to prepare chart data from grouped data
+function prepareChartData(groupedData, db, startDate, endDate) {
+  const chartData = {
+    labels: [
+      `${db.replace(/_/g, " ").toUpperCase()} ${startDate} - ${endDate}`,
+    ], // Combined label for the database and date range
+    shift1Data: [0],
+    shift2Data: [0],
+    shift3Data: [0],
+    totalShiftData: [0], // Total shift data for all shifts combined
+  };
+
+  // Total for each shift type across all dates
+  let totalShift1 = 0;
+  let totalShift2 = 0;
+  let totalShift3 = 0;
+  groupedData.forEach((item) => {
+    // Sum all shifts for each shift type
+    totalShift1 += item["Shift 1"];
+    totalShift2 += item["Shift 2"];
+    totalShift3 += item["Shift 3"];
+  });
+
+  // Assign the total shift values to their respective arrays
+  chartData.shift1Data[0] = totalShift1;
+  chartData.shift2Data[0] = totalShift2;
+  chartData.shift3Data[0] = totalShift3;
+
+  // Total shift data (all shifts combined)
+  chartData.totalShiftData[0] = totalShift1 + totalShift2 + totalShift3;
+
+  return chartData;
+}
+// Function to prepare table data from grouped data
+function prepareTableData(groupedData, db) {
+  return groupedData.map((item) => ({
+    database: db, // Adding database to each table entry
+    date: item.date,
+    "Shift 1": item["Shift 1"],
+    "Shift 2": item["Shift 2"],
+    "Shift 3": item["Shift 3"],
+    total: item.total,
+  }));
+}
+
+// Function to group data by date and shift
+function groupDataByDateAndShift(peaks) {
+  const groupedByDate = {};
+
+  peaks.forEach((item) => {
+    let date;
+    if (typeof item.date === "string") {
+      date = item.date.split("T")[0]; // Extract date in YYYY-MM-DD format
+    } else if (item.date instanceof Date) {
+      date = item.date.toISOString().split("T")[0]; // Convert Date object to string
+    } else {
+      console.error("Invalid date format:", item.date);
+      return;
+    }
+
+    if (!groupedByDate[date]) {
+      groupedByDate[date] = {
+        "Shift 1": 0,
+        "Shift 2": 0,
+        "Shift 3": 0,
+        total: 0,
+      };
+    }
+
+    const shift = getShift(item.date);
+
+    // Increment shift counts based on shift value
+    if (shift === 1) groupedByDate[date]["Shift 1"]++;
+    else if (shift === 2) groupedByDate[date]["Shift 2"]++;
+    else if (shift === 3) groupedByDate[date]["Shift 3"]++;
+
+    groupedByDate[date].total++;
+  });
+
+  return Object.keys(groupedByDate).map((date) => ({
+    date,
+    ...groupedByDate[date],
+  }));
+}
+
 app.get(
   "/ck_biscuit/loadcell/processed/:database/:startdate/:enddate",
   async (req, res) => {
@@ -53,22 +256,22 @@ app.get(
     if (!startDateValid || !endDateValid) {
       return res.status(400).send("Invalid date format. Use YYYY-MM-DD.");
     }
-   let namedatabase = getDatabaseName(database);
-   let minWeightThreshold;
+    let namedatabase = getDatabaseName(database);
+    let minWeightThreshold;
 
-  // Tentukan ambang batas (threshold) berat berdasarkan database
-  if (namedatabase === "ck_biscuit_palm_oil_") {
-    minWeightThreshold = 86.5;
-  } else if (namedatabase === "ck_biscuit_mixer_") {
-    minWeightThreshold = 258.7;
-  } else {
-    minWeightThreshold = 0; // Ambang batas default
-  }
-  // console.log(minWeightThreshold)
+    // Tentukan ambang batas (threshold) berat berdasarkan database
+    if (namedatabase === "ck_biscuit_palm_oil_") {
+      minWeightThreshold = 86.5;
+    } else if (namedatabase === "ck_biscuit_mixer_") {
+      minWeightThreshold = 258.7;
+    } else {
+      minWeightThreshold = 0; // Ambang batas default
+    }
+    // console.log(minWeightThreshold)
 
     try {
       // Membuat query SQL dengan menggunakan parameter yang disanitasi
-        const query = `
+      const query = `
         SELECT weight, date
         FROM purwosari."${database}"
         WHERE date::date BETWEEN $1 AND $2
@@ -77,7 +280,11 @@ app.get(
       `;
 
       // Menjalankan query dengan parameter binding startdate dan enddate
-      const result = await pool.query(query, [startdate, enddate, minWeightThreshold]);
+      const result = await pool.query(query, [
+        startdate,
+        enddate,
+        minWeightThreshold,
+      ]);
       // Menyimpan data yang didapat
       const rawData = result.rows;
       // console.log(rawData)
@@ -95,68 +302,36 @@ app.get(
       console.error("Error executing query", error);
       res.status(500).send("Error executing query.");
     }
-      console.timeEnd("queryTime"); 
+    console.timeEnd("queryTime");
   }
 );
 
-function getlowerhighdata(data, database) {
-    const namedatabase = getDatabaseName(database);
-    let minWeightThreshold;
+// Fungsi untuk mendapatkan nama database tanpa angka
+function getDatabaseName(database) {
+  const result = database.replace(/\d+/g, ""); // Menghapus angka
+  return result;
+}
 
-    // Menentukan ambang batas berdasarkan nama database
-    if (namedatabase === "ck_biscuit_palm_oil_") {
-        minWeightThreshold = 86.5;
-    } else if (namedatabase === "ck_biscuit_mixer_") {
-        minWeightThreshold = 258.7;
-    } else {
-        minWeightThreshold = 0; // Ambang batas default
-    }
+// Fungsi untuk mengelompokkan data berdasarkan shift
+function groupDataByShift(peaks) {
+  const grouped = {
+    "Shift 1": [],
+    "Shift 2": [],
+    "Shift 3": [],
+  };
 
-    let groupedData = [];
-    let currentGroup = [];
-    
-    // Pengelompokan data berdasarkan kriteria
-    for (const current of data) {
-        if (current.weight <= 0) continue; // Melewati data tidak valid
-        
-        if (current.weight >= minWeightThreshold) {
-            if (currentGroup.length === 0 || currentGroup[0].weight >= minWeightThreshold) {
-                currentGroup.push(current);
-            } else {
-                groupedData.push(currentGroup);
-                currentGroup = [current]; // Mulai grup baru
-            }
-        } else if (current.weight < 5) { // Grup rendah
-            if (currentGroup.length === 0 || currentGroup[0].weight < 5) {
-                currentGroup.push(current);
-            } else {
-                groupedData.push(currentGroup);
-                currentGroup = [current]; // Mulai grup baru
-            }
-        }
-    }
-    
-    // Tambah grup yang tersisa
-    if (currentGroup.length > 0) {
-        groupedData.push(currentGroup);
-    }
+  peaks.forEach((item) => {
+    const shift = getShift(item.date);
+    if (shift === 1) grouped["Shift 1"].push(item);
+    else if (shift === 2) grouped["Shift 2"].push(item);
+    else grouped["Shift 3"].push(item);
+  });
 
-    const peaks = [];
-    let isTakingHighest = true; // Awali dengan mengambil tertinggi
-
-    for (const group of groupedData) {
-        if (isTakingHighest) {
-            const highest = group.reduce((max, item) => (item.weight > max.weight ? item : max), group[0]);
-            peaks.push({ type: 'highest', data: highest });
-        } else {
-            const lowest = group.reduce((min, item) => (item.weight < min.weight ? item : min), group[0]);
-            peaks.push({ type: 'lowest', data: lowest });
-        }
-        isTakingHighest = !isTakingHighest; // Toggle antara mengambil tertinggi dan terendah
-    }
-
-    // Urutkan peaks berdasarkan tanggal
-    return peaks.sort((a, b) => new Date(a.data.date) - new Date(b.data.date));
+  return Object.entries(grouped).map(([shift, details]) => ({
+    shift,
+    operation_count: details.length,
+    details,
+  }));
 }
 
 // Fungsi untuk mendeteksi puncak (peak detection)
@@ -238,35 +413,6 @@ function getPeakData(data, database) {
   // Urutkan peaks berdasarkan tanggal
   return peaks.sort((a, b) => new Date(a.date) - new Date(b.date));
 }
-
-// Fungsi untuk mendapatkan nama database tanpa angka
-function getDatabaseName(database) {
-  const result = database.replace(/\d+/g, ""); // Menghapus angka
-  return result;
-}
-
-// Fungsi untuk mengelompokkan data berdasarkan shift
-function groupDataByShift(peaks) {
-  const grouped = {
-    "Shift 1": [],
-    "Shift 2": [],
-    "Shift 3": [],
-  };
-
-  peaks.forEach((item) => {
-    const shift = getShift(item.date);
-    if (shift === 1) grouped["Shift 1"].push(item);
-    else if (shift === 2) grouped["Shift 2"].push(item);
-    else grouped["Shift 3"].push(item);
-  });
-
-  return Object.entries(grouped).map(([shift, details]) => ({
-    shift,
-    operation_count: details.length,
-    details,
-  }));
-}
-
 // Fungsi untuk menentukan shift berdasarkan jam
 function getShift(dateStr) {
   const date = new Date(dateStr);
@@ -274,6 +420,76 @@ function getShift(dateStr) {
   if (hour >= 7 && hour < 15) return 1;
   if (hour >= 15 && hour < 23) return 2;
   return 3;
+}
+
+function getlowerhighdata(data, database) {
+  const namedatabase = getDatabaseName(database);
+  let minWeightThreshold;
+
+  // Menentukan ambang batas berdasarkan nama database
+  if (namedatabase === "ck_biscuit_palm_oil_") {
+    minWeightThreshold = 86.5;
+  } else if (namedatabase === "ck_biscuit_mixer_") {
+    minWeightThreshold = 258.7;
+  } else {
+    minWeightThreshold = 0; // Ambang batas default
+  }
+
+  let groupedData = [];
+  let currentGroup = [];
+
+  // Pengelompokan data berdasarkan kriteria
+  for (const current of data) {
+    if (current.weight <= 0) continue; // Melewati data tidak valid
+
+    if (current.weight >= minWeightThreshold) {
+      if (
+        currentGroup.length === 0 ||
+        currentGroup[0].weight >= minWeightThreshold
+      ) {
+        currentGroup.push(current);
+      } else {
+        groupedData.push(currentGroup);
+        currentGroup = [current]; // Mulai grup baru
+      }
+    } else if (current.weight < 5) {
+      // Grup rendah
+      if (currentGroup.length === 0 || currentGroup[0].weight < 5) {
+        currentGroup.push(current);
+      } else {
+        groupedData.push(currentGroup);
+        currentGroup = [current]; // Mulai grup baru
+      }
+    }
+  }
+
+  // Tambah grup yang tersisa
+  if (currentGroup.length > 0) {
+    groupedData.push(currentGroup);
+  }
+
+  const peaks = [];
+  let isTakingHighest = true; // Awali dengan mengambil tertinggi
+
+  for (const group of groupedData) {
+    if (isTakingHighest) {
+      const highest = group.reduce(
+        (max, item) => (item.weight > max.weight ? item : max),
+        group[0]
+      );
+      peaks.push({ type: "highest", data: highest });
+    } else {
+      const lowest = group.reduce(
+        (min, item) => (item.weight < min.weight ? item : min),
+        group[0]
+      );
+      peaks.push({ type: "lowest", data: lowest });
+    }
+    isTakingHighest = !isTakingHighest; // Toggle antara mengambil tertinggi dan terendah
+  }
+
+  // Urutkan peaks berdasarkan tanggal
+  return peaks.sort((a, b) => new Date(a.data.date) - new Date(b.data.date));
 }
 
 export default app;

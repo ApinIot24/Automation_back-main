@@ -31,6 +31,7 @@ import central_kitchen from "./routes/central_kitchen.js";
 import importRoutesWafer from "./routes/wafer/pm/import.js";
 import importRoutesBiscuit from "./routes/biscuit/import/import.js";
 import importRoutesAstor from "./routes/astor/import/import.js";
+import importRoutesUtility from "./routes/utility/import/import.js";
 import utility from "./routes/utility/utility.js";
 // CK
 import biscuitck3 from "./routes/biscuit/line5/Biscuitck3.js";
@@ -215,6 +216,7 @@ app.use("/api", utility);
 app.use("/api", importRoutesWafer);
 app.use("/api", importRoutesBiscuit);
 app.use("/api", importRoutesAstor);
+app.use("/api", importRoutesUtility);
 app.use("/api/auth", authRoutes);
 app.use("/api", users);
 app.use("/api/setting", roleRoutes);
