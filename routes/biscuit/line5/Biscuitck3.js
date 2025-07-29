@@ -104,7 +104,7 @@ app.post("/ck_biscuit/loadcell/processed", async (req, res) => {
 
       // Add this database's chart data to the overall results
       results.chartData.push({
-        database:`${db.replace(/_/g, " ").toUpperCase()}`,
+        database: `${db.replace(/_/g, " ").toUpperCase()}`,
         chartData,
       });
 
@@ -149,7 +149,7 @@ app.post("/ck_biscuit/loadcell/processed", async (req, res) => {
     "Shift 3": overallShift3Total,
     total: overallTotalShift,
   });
-   console.log(JSON.stringify(results, null, 2)); 
+  // console.log(JSON.stringify(results, null, 2));
   // Send the processed results to the client
   res.json({ results });
 });
@@ -417,9 +417,20 @@ function getPeakData(data, database) {
 function getShift(dateStr) {
   const date = new Date(dateStr);
   const hour = date.getHours();
+  const day = date.getDay(); // untuk mengecek hari
+
+  // Cek apakah hari ini Sabtu (day 6 adalah Sabtu)
+  if (day === 6) {
+    if (hour >= 7 && hour < 12) return 1; // shift 1: 7:00 - 11:59
+    if (hour >= 12 && hour < 17) return 2; // shift 2: 12:00 - 16:59
+    if (hour >= 17 && hour < 22) return 3; // shift 3: 17:00 - 21:59
+    return 4; // setelah jam 22, tidak ada shift
+  }
+
+  // Jika bukan hari Sabtu, gunakan logika default
   if (hour >= 7 && hour < 15) return 1;
   if (hour >= 15 && hour < 23) return 2;
-  return 3;
+  return 3; // shift malam
 }
 
 function getlowerhighdata(data, database) {
