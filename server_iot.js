@@ -35,6 +35,7 @@ import importRoutesUtility from "./routes/utility/import/import.js";
 import utility from "./routes/utility/utility.js";
 // CK
 import biscuitck3 from "./routes/biscuit/line5/Biscuitck3.js";
+import Biscuitpompack3 from "./routes/biscuit/line5/Biscuitpompack3.js";
 
 // checklist
 import qrchecklist from "./routes/checklist.js";
@@ -46,6 +47,8 @@ import formtiket from "./routes/ticket.js";
 
 // setting_pm
 import settingpm from "./routes/setting_pm/index.js";
+// sync_database
+import syncDatabase from "./sync_database/syncdatabase.js";
 
 const app = express();
 const httpPort = process.env.HTTP_PORT || 3000;
@@ -210,6 +213,7 @@ app.use("/", lhp_biscuit);
 
 // ck3
 app.use("/api", biscuitck3);
+app.use("/api", Biscuitpompack3);
 
 // Protected routes - use validateUser middleware
 app.use("/api", utility);
@@ -224,7 +228,8 @@ app.use("/api", qrchecklist);
 
 app.use("/api", formtiket);
 app.use("/api", settingpm);
-
+// Sync database routes
+app.use("/api", syncDatabase);
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });
