@@ -153,7 +153,7 @@ function getTotalWeeksInYear(year) {
 
 router.get("/pm_biscuit/select/:group", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
 
     // Query untuk mendapatkan machine_name yang unik
     const result = await req.db.query(
@@ -171,17 +171,13 @@ router.get("/pm_biscuit/select/:group", async (req, res) => {
 
 router.get("/pm_biscuit/qrcode/:group", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10); // Get the group parameter from the route
-    if (isNaN(group)) {
-      return res.status(400).send("Invalid group parameter");
-    }
-
+    const group = req.params.group; 
     // Modified SQL query to fetch distinct QR codes for the given group
     const result = await req.db.query(
       "SELECT DISTINCT ON (qrcode) machine_name, qrcode FROM automation.pm_biscuit WHERE grup = $1 ORDER BY qrcode",
       [group] // The value of group will replace $1 in the query
     );
-
+    console.log(result.rows)
     res.json(result.rows); // Return the unique result rows as JSON
   } catch (error) {
     res.status(500).send("Gagal ambil data: " + error.message);
@@ -190,7 +186,7 @@ router.get("/pm_biscuit/qrcode/:group", async (req, res) => {
 
 router.get("/pm_biscuit/:group/:year", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const year = parseInt(req.params.year, 10); // Tahun target
 
     // Ambil query parameter, jika tidak ada maka beri nilai null
@@ -257,7 +253,7 @@ router.post("/pm_biscuit/machine", async (req, res) => {
 
 // router.get("/pm_biscuit/:group/:year", async (req, res) => {
 //   try {
-//     const group = parseInt(req.params.group, 10);
+//     const group = req.params.group;
 //     const year = parseInt(req.params.year, 10); // Tahun target (misalnya, 2024)
 
 //     // Mengambil parameter 'start' dan 'end' dari query string
@@ -300,7 +296,7 @@ router.get(
   "/pm_biscuit/filter/checklist/data/:group/:year/:week",
   async (req, res) => {
     try {
-      const group = parseInt(req.params.group, 10);
+      const group = req.params.group;
       const year = parseInt(req.params.year, 10);
       const currentWeek = parseInt(req.params.week, 10);
 
@@ -364,7 +360,7 @@ router.get(
   "/pm_biscuit/filter/checklist/:group/:year/:week",
   async (req, res) => {
     try {
-      const group = parseInt(req.params.group, 10);
+      const group = req.params.group;
       const year = parseInt(req.params.year, 10);
       const currentWeek = parseInt(req.params.week, 10);
 
@@ -474,7 +470,7 @@ router.get(
 
 router.get("/pm_biscuit/filter/:group/:year/:week", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
 
@@ -549,7 +545,7 @@ router.get("/pm_biscuit/filter/:group/:year/:week", async (req, res) => {
 
 router.get("/pm_biscuit/filter/all/:group/:year/:week", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
 
@@ -607,7 +603,7 @@ router.get("/pm_biscuit/filter/all/:group/:year/:week", async (req, res) => {
 
 router.get("/pm_biscuit/filter/length/:group/:year/:week", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
 
@@ -1129,7 +1125,7 @@ router.post(
 router.delete("/deleted/biscuit/:group", async (req, res) => {
   try {
     // Menghapus data di database berdasarkan group
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const result = await req.db.query(
       "DELETE FROM automation.pm_biscuit WHERE grup = $1 RETURNING *",
       [group]

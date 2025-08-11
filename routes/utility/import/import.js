@@ -153,7 +153,7 @@ function getTotalWeeksInYear(year) {
 
 router.get("/pm_utility/select/:group", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
 
     // Query untuk mendapatkan machine_name yang unik
     const result = await req.db.query(
@@ -171,10 +171,8 @@ router.get("/pm_utility/select/:group", async (req, res) => {
 
 router.get("/pm_utility/qrcode/:group", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10); // Get the group parameter from the route
-    if (isNaN(group)) {
-      return res.status(400).send("Invalid group parameter");
-    }
+    const group = req.params.group; // Get the group parameter from the route
+  
 
     // Modified SQL query to fetch distinct QR codes for the given group
     const result = await req.db.query(
@@ -190,7 +188,7 @@ router.get("/pm_utility/qrcode/:group", async (req, res) => {
 
 router.get("/pm_utility/:group/:year", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const year = parseInt(req.params.year, 10); // Tahun target
 
     // Ambil query parameter, jika tidak ada maka beri nilai null
@@ -257,7 +255,7 @@ router.post("/pm_utility/machine", async (req, res) => {
 
 // router.get("/pm_utility/:group/:year", async (req, res) => {
 //   try {
-//     const group = parseInt(req.params.group, 10);
+//     const group = req.params.group;
 //     const year = parseInt(req.params.year, 10); // Tahun target (misalnya, 2024)
 
 //     // Mengambil parameter 'start' dan 'end' dari query string
@@ -300,7 +298,7 @@ router.get(
   "/pm_utility/filter/checklist/data/:group/:year/:week",
   async (req, res) => {
     try {
-      const group = parseInt(req.params.group, 10);
+      const group = req.params.group;
       const year = parseInt(req.params.year, 10);
       const currentWeek = parseInt(req.params.week, 10);
 
@@ -364,7 +362,7 @@ router.get(
   "/pm_utility/filter/checklist/:group/:year/:week",
   async (req, res) => {
     try {
-      const group = parseInt(req.params.group, 10);
+      const group = req.params.group;
       const year = parseInt(req.params.year, 10);
       const currentWeek = parseInt(req.params.week, 10);
 
@@ -472,7 +470,7 @@ router.get(
 
 router.get("/pm_utility/filter/:group/:year/:week", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
     let totalweeksetting = await req.db.query(
@@ -549,7 +547,7 @@ router.get("/pm_utility/filter/:group/:year/:week", async (req, res) => {
 
 router.get("/pm_utility/filter/all/:group/:year/:week", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
 
@@ -607,7 +605,7 @@ router.get("/pm_utility/filter/all/:group/:year/:week", async (req, res) => {
 
 router.get("/pm_utility/filter/length/:group/:year/:week", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
 
@@ -1125,7 +1123,7 @@ router.post("/import/utility/:grup", upload.single("file"), async (req, res) => 
 router.delete("/deleted/utility/:group", async (req, res) => {
   try {
     // Menghapus data di database berdasarkan group
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const result = await req.db.query(
       "DELETE FROM automation.pm_utility WHERE grup = $1 RETURNING *",
       [group]
