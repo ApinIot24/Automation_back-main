@@ -48,7 +48,7 @@ import formtiket from "./routes/ticket.js";
 // setting_pm
 import settingpm from "./routes/setting_pm/index.js";
 // sync_database
-import syncDatabase from "./sync_database/syncdatabase.js";
+import syncDatabase, { transferDataCron } from "./sync_database/syncdatabase.js";
 
 const app = express();
 const httpPort = process.env.HTTP_PORT || 3000;
@@ -235,6 +235,7 @@ app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });
 });
 
+
 // Test endpoint
 app.get("/test", async (req, res) => {
   try {
@@ -276,13 +277,14 @@ if (localHttpServer) {
     );
   });
 }
-
+transferDataCron.start();
 // Handle process termination
 process.on("SIGTERM", () => {
   console.log("SIGTERM received, shutting down gracefully");
   httpServer?.close();
   httpsServer?.close();
   localHttpServer?.close();
+  transferDataCron.close();
   process.exit(0);
 });
 
@@ -291,6 +293,7 @@ process.on("SIGINT", () => {
   httpServer?.close();
   httpsServer?.close();
   localHttpServer?.close();
+  transferDataCron.close();
   process.exit(0);
 });
 

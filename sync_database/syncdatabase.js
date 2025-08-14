@@ -1,5 +1,6 @@
-import pg from 'pg';  // Import Pool dari pg
-import cron from 'node-cron';  // Import node-cron untuk penjadwalan tugas
+// sync_database/syncdatabase.js
+import pg from "pg"; // Import Pool dari pg
+import cron from "node-cron"; // Import node-cron untuk penjadwalan tugas
 import { Router } from "express";
 const { Pool } = pg;
 const app = Router();
@@ -14,20 +15,20 @@ const pool1 = new Pool({
 
 // Koneksi ke PostgreSQL 2 (IoT)
 const pool2 = new Pool({
-  user: 'it_purwosari',
-  password: '3dced9c494bf',
-  host: '10.2.8.70',
+  user: "it_purwosari",
+  password: "3dced9c494bf",
+  host: "10.2.8.70",
   port: 5432,
-  database: 'iot',
+  database: "iot",
 });
 
 // Fungsi untuk memeriksa koneksi
 async function checkConnection(client) {
   try {
-    await client.query('SELECT 1');
+    await client.query("SELECT 1");
     return true;
   } catch (err) {
-    console.error('Connection failed:', err);
+    console.error("Connection failed:", err);
     return false;
   }
 }
@@ -40,8 +41,10 @@ async function retryConnection(client, retries = 3, delay = 5000) {
       return true;
     }
     attempt++;
-    console.log(`Attempt ${attempt} failed. Retrying in ${delay / 1000} seconds...`);
-    await new Promise(resolve => setTimeout(resolve, delay));
+    console.log(
+      `Attempt ${attempt} failed. Retrying in ${delay / 1000} seconds...`
+    );
+    await new Promise((resolve) => setTimeout(resolve, delay));
   }
   return false;
 }
@@ -55,16 +58,22 @@ async function transferData() {
     // Cek koneksi ke PostgreSQL 2 (client2) sebelum memulai transaksi
     const isConnected2 = await retryConnection(client2);
     if (!isConnected2) {
-      throw new Error('Unable to connect to PostgreSQL 2');
+      throw new Error("Unable to connect to PostgreSQL 2");
     }
 
     // Mulai transaksi di PostgreSQL 1
-    await client1.query('BEGIN');
+    await client1.query("BEGIN");
 
     // Ambil semua data dari PostgreSQL 1 (skema automation)
-    const resPompa = await client1.query('SELECT * FROM automation.ck_biscuit_pompa');
-    const resMachineStatus = await client1.query('SELECT * FROM automation.l2a_machine_status');
-    const resMachineStatusl5 = await client1.query('SELECT * FROM automation.l5_machine_status');
+    const resPompa = await client1.query(
+      "SELECT * FROM automation.ck_biscuit_pompa"
+    );
+    const resMachineStatus = await client1.query(
+      "SELECT * FROM automation.l2a_machine_status"
+    );
+    const resMachineStatusl5 = await client1.query(
+      "SELECT * FROM automation.l5_machine_status"
+    );
 
     if (resPompa.rows.length > 0) {
       // Coba untuk mengirim data ke PostgreSQL 2 (tabel ck_biscuit_pompa)
@@ -72,14 +81,27 @@ async function transferData() {
         try {
           // Insert data yang diambil ke PostgreSQL 2 (tabel ck_biscuit_pompa)
           await client2.query(
-            'INSERT INTO purwosari.ck_biscuit_pompa (pompa, status, jam_aktif, jam_non_aktif, durasi, tanggal) VALUES ($1, $2, $3, $4, $5, $6)',
-            [row.pompa, row.status, row.jam_aktif, row.jam_non_aktif, row.durasi, row.tanggal]
+            "INSERT INTO purwosari.ck_biscuit_pompa (pompa, status, jam_aktif, jam_non_aktif, durasi, tanggal) VALUES ($1, $2, $3, $4, $5, $6)",
+            [
+              row.pompa,
+              row.status,
+              row.jam_aktif,
+              row.jam_non_aktif,
+              row.durasi,
+              row.tanggal,
+            ]
           );
-          
+
           // Hapus data yang sudah dipindahkan dari PostgreSQL 1 (tabel ck_biscuit_pompa)
-          await client1.query('DELETE FROM automation.ck_biscuit_pompa WHERE id = $1', [row.id]);
+          await client1.query(
+            "DELETE FROM automation.ck_biscuit_pompa WHERE id = $1",
+            [row.id]
+          );
         } catch (err) {
-          console.error(`Gagal mengirim data ID ${row.id} ke PostgreSQL 2 (ck_biscuit_pompa):`, err);
+          console.error(
+            `Gagal mengirim data ID ${row.id} ke PostgreSQL 2 (ck_biscuit_pompa):`,
+            err
+          );
           continue;
         }
       }
@@ -91,14 +113,27 @@ async function transferData() {
         try {
           // Insert data yang diambil ke PostgreSQL 2 (tabel l2a_machine_status)
           await client2.query(
-            'INSERT INTO purwosari.l2a_machine_status (machine, status, jam_aktif, jam_non_aktif, durasi, tanggal) VALUES ($1, $2, $3, $4, $5, $6)',
-            [row.machine, row.status, row.jam_aktif, row.jam_non_aktif, row.durasi, row.tanggal]
+            "INSERT INTO purwosari.l2a_machine_status (machine, status, jam_aktif, jam_non_aktif, durasi, tanggal) VALUES ($1, $2, $3, $4, $5, $6)",
+            [
+              row.machine,
+              row.status,
+              row.jam_aktif,
+              row.jam_non_aktif,
+              row.durasi,
+              row.tanggal,
+            ]
           );
-          
+
           // Hapus data yang sudah dipindahkan dari PostgreSQL 1 (tabel l2a_machine_status)
-          await client1.query('DELETE FROM automation.l2a_machine_status WHERE id = $1', [row.id]);
+          await client1.query(
+            "DELETE FROM automation.l2a_machine_status WHERE id = $1",
+            [row.id]
+          );
         } catch (err) {
-          console.error(`Gagal mengirim data ID ${row.id} ke PostgreSQL 2 (l2a_machine_status):`, err);
+          console.error(
+            `Gagal mengirim data ID ${row.id} ke PostgreSQL 2 (l2a_machine_status):`,
+            err
+          );
           continue;
         }
       }
@@ -110,26 +145,41 @@ async function transferData() {
         try {
           // Insert data yang diambil ke PostgreSQL 2 (tabel l5_machine_status)
           await client2.query(
-            'INSERT INTO purwosari.l5_machine_status (machine, status, jam_aktif, jam_non_aktif, durasi, tanggal) VALUES ($1, $2, $3, $4, $5, $6)',
-            [row.machine, row.status, row.jam_aktif, row.jam_non_aktif, row.durasi, row.tanggal]
+            "INSERT INTO purwosari.l5_machine_status (machine, status, jam_aktif, jam_non_aktif, durasi, tanggal) VALUES ($1, $2, $3, $4, $5, $6)",
+            [
+              row.machine,
+              row.status,
+              row.jam_aktif,
+              row.jam_non_aktif,
+              row.durasi,
+              row.tanggal,
+            ]
           );
-          
+
           // Hapus data yang sudah dipindahkan dari PostgreSQL 1 (tabel l5_machine_status)
-          await client1.query('DELETE FROM automation.l5_machine_status WHERE id = $1', [row.id]);
+          await client1.query(
+            "DELETE FROM automation.l5_machine_status WHERE id = $1",
+            [row.id]
+          );
         } catch (err) {
-          console.error(`Gagal mengirim data ID ${row.id} ke PostgreSQL 2 (l5_machine_status):`, err);
+          console.error(
+            `Gagal mengirim data ID ${row.id} ke PostgreSQL 2 (l5_machine_status):`,
+            err
+          );
           continue;
         }
       }
     }
 
     // Commit transaksi di PostgreSQL 1
-    await client1.query('COMMIT');
-    console.log('Data berhasil dipindahkan ke PostgreSQL 2 dan dihapus dari PostgreSQL 1.');
+    await client1.query("COMMIT");
+    console.log(
+      "Data berhasil dipindahkan ke PostgreSQL 2 dan dihapus dari PostgreSQL 1."
+    );
   } catch (err) {
     // Rollback jika ada error
-    await client1.query('ROLLBACK');
-    console.error('Error terjadi:', err);
+    await client1.query("ROLLBACK");
+    console.error("Error terjadi:", err);
   } finally {
     // Tutup koneksi
     client1.release();
@@ -138,19 +188,28 @@ async function transferData() {
 }
 
 //buat test api untuk memicu transferData
-app.get('/sync/transfer', async (req, res) => {
+app.get("/sync/transfer", async (req, res) => {
   try {
     await transferData();
-    res.status(200).json({ message: 'Transfer data berhasil dijalankan.' });
+    res.status(200).json({ message: "Transfer data berhasil dijalankan." });
   } catch (err) {
-    res.status(500).json({ message: 'Terjadi error saat transfer data.', error: err.message });
+    res
+      .status(500)
+      .json({
+        message: "Terjadi error saat transfer data.",
+        error: err.message,
+      });
   }
 });
 
 // Menjadwalkan transferData untuk dijalankan setiap Minggu pukul 11 malam
-cron.schedule('0 23 * * 0', () => {
-  console.log('Menjalankan transfer data...');
-  transferData();
-});
+export const transferDataCron = cron.schedule(
+  "0 12 * * 0",
+  () => {
+    console.log("Menjalankan transfer data dari CRON...");
+    transferData();
+  },
+  { timezone: "Asia/Jakarta" }
+);
 
 export default app;
