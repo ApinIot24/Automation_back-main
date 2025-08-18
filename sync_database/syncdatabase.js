@@ -68,6 +68,9 @@ async function transferData() {
     const resPompa = await client1.query(
       "SELECT * FROM automation.ck_biscuit_pompa"
     );
+    const resValve = await client1.query(
+      "SELECT * FROM automation.ck_biscuit_pompa"
+    );
     const resMachineStatus = await client1.query(
       "SELECT * FROM automation.l2a_machine_status"
     );
@@ -100,6 +103,38 @@ async function transferData() {
         } catch (err) {
           console.error(
             `Gagal mengirim data ID ${row.id} ke PostgreSQL 2 (ck_biscuit_pompa):`,
+            err
+          );
+          continue;
+        }
+      }
+    }
+    
+    if (resValve.rows.length > 0) {
+      // Coba untuk mengirim data ke PostgreSQL 2 (tabel ck_biscuit_valve)
+      for (const row of resValve.rows) {
+        try {
+          // Insert data yang diambil ke PostgreSQL 2 (tabel ck_biscuit_valve)
+          await client2.query(
+            "INSERT INTO purwosari.ck_biscuit_valve (valve, status, jam_aktif, jam_non_aktif, durasi, tanggal) VALUES ($1, $2, $3, $4, $5, $6)",
+            [
+              row.valve,
+              row.status,
+              row.jam_aktif,
+              row.jam_non_aktif,
+              row.durasi,
+              row.tanggal,
+            ]
+          );
+
+          // Hapus data yang sudah dipindahkan dari PostgreSQL 1 (tabel ck_biscuit_valve)
+          await client1.query(
+            "DELETE FROM automation.ck_biscuit_valve WHERE id = $1",
+            [row.id]
+          );
+        } catch (err) {
+          console.error(
+            `Gagal mengirim data ID ${row.id} ke PostgreSQL 2 (ck_biscuit_valve):`,
             err
           );
           continue;
