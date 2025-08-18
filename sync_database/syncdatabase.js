@@ -69,7 +69,7 @@ async function transferData() {
       "SELECT * FROM automation.ck_biscuit_pompa"
     );
     const resValve = await client1.query(
-      "SELECT * FROM automation.ck_biscuit_pompa"
+      "SELECT * FROM automation.ck_biscuit_valve"
     );
     const resMachineStatus = await client1.query(
       "SELECT * FROM automation.l2a_machine_status"
@@ -109,7 +109,7 @@ async function transferData() {
         }
       }
     }
-    
+
     if (resValve.rows.length > 0) {
       // Coba untuk mengirim data ke PostgreSQL 2 (tabel ck_biscuit_valve)
       for (const row of resValve.rows) {
