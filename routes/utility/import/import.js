@@ -172,7 +172,6 @@ router.get("/pm_utility/select/:group", async (req, res) => {
 router.get("/pm_utility/qrcode/:group", async (req, res) => {
   try {
     const group = req.params.group; // Get the group parameter from the route
-  
 
     // Modified SQL query to fetch distinct QR codes for the given group
     const result = await req.db.query(
@@ -484,7 +483,7 @@ router.get("/pm_utility/filter/:group/:year/:week", async (req, res) => {
     }
 
     // Hitung total minggu dari setting
-      const totalWeeksSettingValue = totalweeksetting.rows[0].week;
+    const totalWeeksSettingValue = totalweeksetting.rows[0].week;
 
     const result = await req.db.query(
       "SELECT * FROM automation.pm_utility WHERE grup = $1 ORDER BY no ASC",
@@ -550,15 +549,31 @@ router.get("/pm_utility/filter/all/:group/:year/:week", async (req, res) => {
     const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
+    let totalweeksetting = await req.db.query(
+      "SELECT week FROM automation.setting_pm WHERE grup = $1 AND pmtablename = 'pm_utility'",
+      [group]
+    );
+
+    // Pastikan hasil query valid
+    if (!totalweeksetting || !totalweeksetting.rows) {
+      return res.status(500).json({ error: "Failed to fetch week settings" });
+    }
+
+    // Hitung total minggu dari setting
+    const totalWeeksSettingValue = totalweeksetting?.rows?.[0]?.week ?? 1;
 
     const result = await req.db.query(
       "SELECT * FROM automation.pm_utility WHERE grup = $1 ORDER BY no ASC",
       [group]
     );
-
     const totalWeeks = getTotalWeeksInYear(year);
+
+    // Hitung range minggu (4 minggu ke depan)
     const startWeek = currentWeek;
-    const endWeek = Math.min(currentWeek + 3, totalWeeks);
+    const endWeek = Math.min(
+      currentWeek + totalWeeksSettingValue - 1,
+      totalWeeks
+    );
 
     const modifiedData = result.rows
       .map((row) => {
@@ -596,7 +611,10 @@ router.get("/pm_utility/filter/all/:group/:year/:week", async (req, res) => {
       })
       .filter((item) => item !== null);
 
-    res.json(modifiedData);
+    res.json({
+      modifiedData,
+      weeksetting: totalWeeksSettingValue,
+    });
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).json({ error: "Error fetching data" });
@@ -608,6 +626,18 @@ router.get("/pm_utility/filter/length/:group/:year/:week", async (req, res) => {
     const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
+    let totalweeksetting = await req.db.query(
+      "SELECT week FROM automation.setting_pm WHERE grup = $1 AND pmtablename = 'pm_utility'",
+      [group]
+    );
+
+    // Pastikan hasil query valid
+    if (!totalweeksetting || !totalweeksetting.rows) {
+      return res.status(500).json({ error: "Failed to fetch week settings" });
+    }
+
+    // Hitung total minggu dari setting
+    const totalWeeksSettingValue = totalweeksetting?.rows?.[0]?.week ?? 1;
 
     const result = await req.db.query(
       "SELECT * FROM automation.pm_utility WHERE grup = $1 ORDER BY no ASC",
@@ -617,8 +647,10 @@ router.get("/pm_utility/filter/length/:group/:year/:week", async (req, res) => {
 
     // Hitung range minggu (4 minggu ke depan)
     const startWeek = currentWeek;
-    const endWeek = Math.min(currentWeek + 4, totalWeeks);
-
+    const endWeek = Math.min(
+      currentWeek + totalWeeksSettingValue - 1,
+      totalWeeks
+    );
     // Variabel untuk menghitung jumlah data yang valid
     let totalData = 0;
 
@@ -1104,21 +1136,25 @@ router.post("/import/utility", upload.single("file"), async (req, res) => {
   }
 });
 
-router.post("/import/utility/:grup", upload.single("file"), async (req, res) => {
-  const filePath = req.file.path;
-  const grup = req.params.grup; // Mengambil parameter grup dari URL
-  try {
-    // Anda dapat meneruskan `grup` ke fungsi `importExcelUtility` jika diperlukan
-    await importExcelUtility(filePath, grup);
-    res
-      .status(200)
-      .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
-  } catch (error) {
-    res
-      .status(500)
-      .send(`Gagal mengimpor data untuk grup ${grup}: ` + error.message);
+router.post(
+  "/import/utility/:grup",
+  upload.single("file"),
+  async (req, res) => {
+    const filePath = req.file.path;
+    const grup = req.params.grup; // Mengambil parameter grup dari URL
+    try {
+      // Anda dapat meneruskan `grup` ke fungsi `importExcelUtility` jika diperlukan
+      await importExcelUtility(filePath, grup);
+      res
+        .status(200)
+        .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
+    } catch (error) {
+      res
+        .status(500)
+        .send(`Gagal mengimpor data untuk grup ${grup}: ` + error.message);
+    }
   }
-});
+);
 
 router.delete("/deleted/utility/:group", async (req, res) => {
   try {

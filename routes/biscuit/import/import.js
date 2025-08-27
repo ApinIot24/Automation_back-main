@@ -171,13 +171,13 @@ router.get("/pm_biscuit/select/:group", async (req, res) => {
 
 router.get("/pm_biscuit/qrcode/:group", async (req, res) => {
   try {
-    const group = req.params.group; 
+    const group = req.params.group;
     // Modified SQL query to fetch distinct QR codes for the given group
     const result = await req.db.query(
       "SELECT DISTINCT ON (qrcode) machine_name, qrcode FROM automation.pm_biscuit WHERE grup = $1 ORDER BY qrcode",
       [group] // The value of group will replace $1 in the query
     );
-    console.log(result.rows)
+    console.log(result.rows);
     res.json(result.rows); // Return the unique result rows as JSON
   } catch (error) {
     res.status(500).send("Gagal ambil data: " + error.message);
@@ -457,8 +457,6 @@ router.get(
         })
         .filter((item) => item !== null); // Hapus semua item null
 
-  
-
       // Kirimkan data hasil query dan modifikasi
       res.json(modifiedData); // Kirim hasil data yang sudah difilter
     } catch (error) {
@@ -475,13 +473,13 @@ router.get("/pm_biscuit/filter/:group/:year/:week", async (req, res) => {
     const currentWeek = parseInt(req.params.week, 10);
 
     let totalweeksetting = await req.db.query(
-        "SELECT week FROM automation.setting_pm WHERE grup = $1 AND pmtablename = 'pm_biscuit'",
-        [group]
+      "SELECT week FROM automation.setting_pm WHERE grup = $1 AND pmtablename = 'pm_biscuit'",
+      [group]
     );
 
     // Pastikan hasil query valid
     if (!totalweeksetting || !totalweeksetting.rows) {
-        return res.status(500).json({ error: "Failed to fetch week settings" });
+      return res.status(500).json({ error: "Failed to fetch week settings" });
     }
 
     // Hitung total minggu dari setting
@@ -495,7 +493,10 @@ router.get("/pm_biscuit/filter/:group/:year/:week", async (req, res) => {
 
     // Hitung range minggu (4 minggu ke depan)
     const startWeek = currentWeek;
-    const endWeek = Math.min(currentWeek + totalWeeksSettingValue - 1, totalWeeks);
+    const endWeek = Math.min(
+      currentWeek + totalWeeksSettingValue - 1,
+      totalWeeks
+    );
 
     const modifiedData = result.rows
       .map((row) => {
@@ -548,15 +549,31 @@ router.get("/pm_biscuit/filter/all/:group/:year/:week", async (req, res) => {
     const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
+    let totalweeksetting = await req.db.query(
+      "SELECT week FROM automation.setting_pm WHERE grup = $1 AND pmtablename = 'pm_biscuit'",
+      [group]
+    );
+
+    // Pastikan hasil query valid
+    if (!totalweeksetting || !totalweeksetting.rows) {
+      return res.status(500).json({ error: "Failed to fetch week settings" });
+    }
+
+    // Hitung total minggu dari setting
+    const totalWeeksSettingValue = totalweeksetting?.rows?.[0]?.week ?? 1;
 
     const result = await req.db.query(
       "SELECT * FROM automation.pm_biscuit WHERE grup = $1 ORDER BY no ASC",
       [group]
     );
-
     const totalWeeks = getTotalWeeksInYear(year);
+
+    // Hitung range minggu (4 minggu ke depan)
     const startWeek = currentWeek;
-    const endWeek = Math.min(currentWeek + 3, totalWeeks);
+    const endWeek = Math.min(
+      currentWeek + totalWeeksSettingValue - 1,
+      totalWeeks
+    );
 
     const modifiedData = result.rows
       .map((row) => {
@@ -594,7 +611,10 @@ router.get("/pm_biscuit/filter/all/:group/:year/:week", async (req, res) => {
       })
       .filter((item) => item !== null);
 
-    res.json(modifiedData);
+    res.json({
+      modifiedData,
+      weeksetting: totalWeeksSettingValue,
+    });
   } catch (error) {
     console.error("Error fetching data:", error);
     res.status(500).json({ error: "Error fetching data" });
@@ -606,6 +626,18 @@ router.get("/pm_biscuit/filter/length/:group/:year/:week", async (req, res) => {
     const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
+    let totalweeksetting = await req.db.query(
+      "SELECT week FROM automation.setting_pm WHERE grup = $1 AND pmtablename = 'pm_biscuit'",
+      [group]
+    );
+
+    // Pastikan hasil query valid
+    if (!totalweeksetting || !totalweeksetting.rows) {
+      return res.status(500).json({ error: "Failed to fetch week settings" });
+    }
+
+    // Hitung total minggu dari setting
+    const totalWeeksSettingValue = totalweeksetting?.rows?.[0]?.week ?? 1;
 
     const result = await req.db.query(
       "SELECT * FROM automation.pm_biscuit WHERE grup = $1 ORDER BY no ASC",
@@ -615,7 +647,10 @@ router.get("/pm_biscuit/filter/length/:group/:year/:week", async (req, res) => {
 
     // Hitung range minggu (4 minggu ke depan)
     const startWeek = currentWeek;
-    const endWeek = Math.min(currentWeek + 4, totalWeeks);
+    const endWeek = Math.min(
+      currentWeek + totalWeeksSettingValue - 1,
+      totalWeeks
+    );
 
     // Variabel untuk menghitung jumlah data yang valid
     let totalData = 0;
