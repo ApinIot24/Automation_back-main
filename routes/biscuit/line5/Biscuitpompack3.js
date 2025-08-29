@@ -1,5 +1,5 @@
 import { Router } from "express";
-import pool from "../../../config/util.js";
+import pool from "../../../config/users.js";
 import { body, param, validationResult } from "express-validator";
 
 const app = Router();
@@ -49,7 +49,7 @@ app.get(
           durasi,
           status,
           tanggal
-        FROM automation.ck_biscuit_pompa
+        FROM purwosari.ck_biscuit_pompa
         WHERE 
           pompa = $1 AND
           tanggal BETWEEN $2 AND $3
@@ -96,7 +96,7 @@ app.get(
           COUNT(*) AS total_kejadian,
           MIN(jam_aktif) AS waktu_pertama,
           MAX(jam_non_aktif) AS waktu_terakhir
-        FROM automation.ck_biscuit_pompa
+        FROM purwosari.ck_biscuit_pompa
         WHERE 
           pompa = $1 AND
           tanggal BETWEEN $2 AND $3;
@@ -144,7 +144,7 @@ app.get(
           COALESCE(SUM(CASE WHEN status = FALSE THEN EXTRACT(EPOCH FROM durasi) ELSE 0 END), 0) / 3600 AS durasi_non_aktif,
           COUNT(CASE WHEN status = TRUE THEN 1 END) AS total_kejadian_aktif,
           COUNT(CASE WHEN status = FALSE THEN 1 END) AS total_kejadian_non_aktif
-        FROM automation.ck_biscuit_pompa
+        FROM purwosari.ck_biscuit_pompa
         WHERE 
           pompa = $1 AND
           tanggal BETWEEN $2 AND $3;
