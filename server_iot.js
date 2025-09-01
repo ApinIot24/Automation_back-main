@@ -36,6 +36,7 @@ import utility from "./routes/utility/utility.js";
 // CK
 import biscuitck3 from "./routes/biscuit/line5/Biscuitck3.js";
 import Biscuitpompack3 from "./routes/biscuit/line5/Biscuitpompack3.js";
+import Biscuitagitatorck3 from "./routes/biscuit/line5/Biscuitagitatorck3.js";
 
 // checklist
 import qrchecklist from "./routes/checklist.js";
@@ -214,6 +215,7 @@ app.use("/", lhp_biscuit);
 // ck3
 app.use("/api", biscuitck3);
 app.use("/api", Biscuitpompack3);
+app.use("/api", Biscuitagitatorck3);
 
 // Protected routes - use validateUser middleware
 app.use("/api", utility);
