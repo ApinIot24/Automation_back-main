@@ -1,0 +1,491 @@
+import { Router } from 'express';
+import moment from 'moment';
+const app = Router();
+
+function format(date) {
+    if (!(date instanceof Date)) {
+        throw new Error('Invalid "date" argument. You must pass a date instance');
+    }
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+function getMonthWeek(year, month, week) {
+    // Set date to 4th of month
+    let d = new Date(year, month - 1, 4);
+    // Get day number, set Sunday to 7
+    let day = d.getDay() || 7;
+    // Set to prior Monday
+    d.setDate(d.getDate() - day + 1);
+    // Set to required week
+    d.setDate(d.getDate() + 7 * (week - 1));
+    return d;
+}
+function getWeek(date) {
+    let monthStart = new Date(date);
+    monthStart.setDate(0);
+    let offset = (monthStart.getDay() + 1) % 7 - 1; // -1 is for a week starting on Monday
+    return Math.ceil((date.getDate() + offset) / 7);
+}
+// Return array of dates for specified week of month of year
+function getWeekDates(year, month, week) {
+    let d = getMonthWeek(year, month, week);
+    for (var i = 0, arr = []; i < 7; i++) {
+
+        // Array of date strings
+        arr.push(d.toLocaleDateString());
+
+        // For array of Date objects, replace above with
+        // arr.push(new Date(d));
+
+        // Increment date
+        d.setDate(d.getDate() + 1);
+    }
+    return arr;
+}
+// variance line 5 tilting
+app.get('/tilting_l5_variance', async (req, res) => {
+    try {
+        // Query data terakhir dari tabel tilting_l5 dan packing_l5
+        const Jumlah_batch = await req.db.query('SELECT * FROM automation.tilting_l5 ORDER BY id DESC LIMIT 1');
+        const jumlah_karton = await req.db.query('SELECT * FROM automation.packing_l5 ORDER BY id DESC LIMIT 1');
+        
+        // Cek jika data ada
+        if (Jumlah_batch.rows.length === 0 || jumlah_karton.rows.length === 0) {
+            return res.status(404).json({ message: 'Data tidak ditemukan' });
+        }
+
+        // Ambil nilai dari hasil query
+        // Periksa struktur data
+        console.log("Jumlah_batch.rows[0]:", Jumlah_batch.rows[0]);
+        // Asumsikan cntr_tilting berada langsung di dalam objek Jumlah_batch.rows[0]
+        const batch_value = Number(Jumlah_batch.rows[0]?.cntr_tilting);
+        const karton_value = Number(jumlah_karton.rows[0]?.cntr_carton);
+
+        // Tambahkan console.log untuk memeriksa nilai dan tipe data
+        console.log("batch_value:", batch_value, typeof batch_value);
+        console.log("karton_value:", karton_value, typeof karton_value);
+
+        // Cek jika nilai batch_value dan karton_value valid
+        if (isNaN(batch_value) || isNaN(karton_value) || batch_value === 0 || karton_value === 0) {
+            return res.status(400).json({ message: 'Nilai data tidak valid atau nol' });
+        }
+
+        // Standar
+        const bubuk_kering = 700;
+        const standar_carton = 8.4;
+
+        // Periksa tipe data bubuk_kering dan standar_carton
+        console.log("bubuk_kering:", bubuk_kering, typeof bubuk_kering);
+        console.log("standar_carton:", standar_carton, typeof standar_carton);
+
+        // Menghitung variance
+        const isi_variance = (karton_value * standar_carton) / (batch_value * bubuk_kering);
+        console.log("isi_variance:", isi_variance);
+        const result = 100 - isi_variance; // Persentase selisih
+        console.log("result:", result);
+
+        // Kirimkan hasil dalam response
+        res.json({
+            karton_value: karton_value,
+            batch_value: batch_value,
+            isi_variance: isi_variance,
+            Jumlah_batch: Jumlah_batch.rows[0],  // Menampilkan seluruh data dari query
+            jumlah_karton: jumlah_karton.rows[0],  // Menampilkan seluruh data dari query
+            bubuk_kering: bubuk_kering, 
+            standar_carton: standar_carton, 
+            variance_percentage: result.toFixed(2) // Format dua angka di belakang koma
+        });
+    } catch (error) {
+        console.error(error); // Log error untuk debugging
+        res.status(500).json({ message: 'Terjadi kesalahan pada server', error: error.message });
+    }
+});
+
+app.get('/tilting_l5_variance_per_shift', async (req, res) => {
+    var thisdaytime = format(new Date());
+    try {
+        // Query data dari database
+        const Jumlah_batch_result = await req.db.query(`SELECT shift1, shift2, shift3 FROM automation.counter_shift_l5_tilting where tanggal = '${thisdaytime}' ORDER BY id DESC LIMIT 1`);
+        const jumlah_karton_result = await req.db.query(`SELECT shift1, shift2, shift3 FROM automation.counter_shift_l5 where tanggal = '${thisdaytime}' ORDER BY id DESC LIMIT 1`);
+
+        // Ambil data dari hasil query
+        const Jumlah_batch = Jumlah_batch_result.rows[0] || { shift1: 0, shift2: 0, shift3: 0 };
+        const jumlah_karton = jumlah_karton_result.rows[0] || { shift1: 0, shift2: 0, shift3: 0 };
+
+        // Konstanta
+        const bubuk_kering = 700;
+        const standar_carton = 8.4;
+
+        // Fungsi untuk menghitung variance per shift
+        const hitungVariance = (tilting, karton) => {
+            if (tilting === 0 || karton === 0) {
+                return 0; // Atau nilai default lain yang sesuai
+            }
+            const isi_variance = (karton * standar_carton) / (tilting * bubuk_kering);
+            const result = 100 - isi_variance;  // Koreksi di sini
+            return result.toFixed(2);
+        };
+
+        // Hitung variance untuk setiap shift
+        const variance_shift1 = hitungVariance(Jumlah_batch.shift1, jumlah_karton.shift1);
+        const variance_shift2 = hitungVariance(Jumlah_batch.shift2, jumlah_karton.shift2);
+        const variance_shift3 = hitungVariance(Jumlah_batch.shift3, jumlah_karton.shift3);
+
+        // Kirimkan hasil dalam response
+        res.json({
+            Jumlah_batch: Jumlah_batch,
+            jumlah_karton: jumlah_karton,
+            variance_shift1: variance_shift1,
+            variance_shift2: variance_shift2,
+            variance_shift3: variance_shift3
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Terjadi kesalahan pada server', error: error.message });
+    }
+});
+
+//Line 5
+app.get('/tilting_l5', async (req, res) => {
+    const result = await req.db.query('SELECT * FROM automation.tilting_l5 ORDER BY id DESC LIMIT 1');
+    // console.log("DATA" ,result)
+    var datalast = result.rows;
+    res.send(datalast);
+});
+
+app.get('/shift_l5_tilting', async (req, res) => {
+    var thisdaytime = format(new Date());
+    const result = await req.db.query(`SELECT shift1, shift2, shift3 FROM automation.counter_shift_l5_tilting where tanggal = '${thisdaytime}' ORDER BY id DESC LIMIT 1`);
+    //console.log("DATA" ,result)
+    var datalast = result.rows;
+    res.send(datalast);
+});
+
+// Shift l5
+app.get('/shift1_l5_tilting', async (req, res) => {
+    var thisdaytime = format(new Date());
+    const result = await req.db.query(`SELECT cntr_bandet, cntr_tilting , jam FROM automation.tilting_l5 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+        AND jam in ('6.48', '7.0', '7.30', '8.0', '8.30', '9.0', '9.30', '10.0', '10.30', '11.0', '11.30', '12.0', '12.30', '13.0', '13.30', '14.0', '14.30', '14.45') ORDER BY id ASC`);
+    //console.log("DATA" ,result)
+    var datalast = result.rows;
+    res.send(datalast);
+});
+app.get('/shift2_l5_tilting', async (req, res) => {
+    var thisdaytime = format(new Date());
+    const result = await req.db.query(`SELECT cntr_bandet, cntr_tilting , jam FROM automation.tilting_l5 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+        AND jam in ('15.0','15.31','16.0','16.31','17.0','17.31','18.0','18.31','19.0','19.31','20.0','20.31','21.0','21.31','22.0','22.31','22.58') ORDER BY id ASC`);
+    //console.log("DATA" ,result)
+    var datalast = result.rows;
+    res.send(datalast);
+});
+app.get('/shift3_l5_tilting', async (req, res) => {
+    var thisdaytime = format(new Date());
+    console.log(thisdaytime)
+    var thisdate = new Date();
+    thisdate.setDate(thisdate.getDate() + 1)
+    var thisyestertime = format(thisdate)
+    const resultone = await req.db.query(`SELECT cntr_bandet, cntr_tilting , jam FROM automation.tilting_l5 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+        AND jam = '23.0' ORDER BY id ASC`);
+    var datalastone = resultone.rows;
+    let element = {};
+    var cart = [];
+    for (let index = 0; index < datalastone.length; index++) {
+        element.jam = "0." + 23
+        element.counter = datalastone[index].counter
+        cart.push(element)
+    }
+    const resulttwo = await req.db.query(`SELECT cntr_bandet, cntr_tilting , jam FROM automation.tilting_l5 where graph = 'Y' AND tanggal = '${thisyestertime}' 
+        AND jam in ('0.30', '1.0','1.31','2.0','2.31','3.0','3.31','4.0','4.31','5.0','5.31','6.0','6.31','6.59') ORDER BY id ASC`);
+    var datalasttwo = resulttwo.rows;
+    var twoarray = cart.concat(datalasttwo)
+    res.send(twoarray);
+});
+
+// Shift l5 Hourly
+app.get('/shift1_l5_tilting_hourly', async (req, res) => {
+    const today = new Date();
+    const isSaturday = today.getDay() === 6; // 6 = Sabtu
+    var thisdaytime = format(today);
+
+    // Jam shift 1 untuk Sabtu (5 jam saja)
+    const hours = isSaturday
+        ? ['7.45', '8.45', '9.45', '10.45', '11.45'] // 5 jam Sabtu
+        : ['7.45', '8.45', '9.45', '10.45', '11.45', '12.45', '13.45', '14.44']; // Hari biasa
+
+    const result = await req.db.query(`
+        SELECT * FROM (
+            SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_tilting, jam
+            FROM automation.tilting_l5
+            WHERE graph = 'Y' AND tanggal = '${thisdaytime}' 
+            AND jam IN (${hours.map(h => `'${h}'`).join(',')})
+            ORDER BY jam, id ASC
+        ) AS distinct_data
+        ORDER BY id ASC
+    `);
+
+    var datalast = result.rows;
+    res.send(datalast);
+});
+
+
+app.get('/shift2_l5_tilting_hourly', async (req, res) => {
+    const today = new Date();
+    const isSaturday = today.getDay() === 6;
+    var thisdaytime = format(today);
+
+    // Jam shift 2 untuk Sabtu (5 jam saja)
+    const hours = isSaturday
+        ? ['12.45', '13.45', '14.45', '15.45', '16.45'] // 5 jam Sabtu
+        : ['15.45', '16.45', '17.45', '18.45', '19.45', '20.45', '21.45', '22.45']; // Hari biasa
+
+    const result = await req.db.query(`
+        SELECT * FROM (
+            SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_tilting, jam
+            FROM automation.tilting_l5
+            WHERE graph = 'Y' AND tanggal = '${thisdaytime}' 
+            AND jam IN (${hours.map(h => `'${h}'`).join(',')})
+            ORDER BY jam, id ASC
+        ) AS distinct_data
+        ORDER BY id ASC
+    `);
+
+    var datalast = result.rows;
+    res.send(datalast);
+});
+
+
+app.get('/shift3_l5_tilting_hourly', async (req, res) => {
+    const today = moment();
+    const isSaturday = today.day() === 6; // 6 = Sabtu
+    const thisdaytime = today.format('YYYY-MM-DD'); // Tanggal hari ini
+    const nextDate = today.add(1, 'days').format('YYYY-MM-DD'); // Tanggal berikutnya
+
+    let resultone, datalastone, cart = [];
+
+    // Jika hari Sabtu, gunakan jam shift 3 khusus Sabtu
+    if (isSaturday) {
+        resultone = await req.db.query(`
+            SELECT * FROM (
+                SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_tilting, jam
+                FROM automation.tilting_l5
+                WHERE graph = 'Y' AND tanggal = '${thisdaytime}' 
+                AND jam IN ('17.45', '18.45', '19.45', '20.45', '21.45')
+                ORDER BY jam, id ASC
+            ) AS distinct_data_one
+            ORDER BY id ASC
+        `);
+
+        datalastone = resultone.rows;
+        cart = datalastone.map(row => ({
+            jam: row.jam,
+            cntr_bandet: row.cntr_bandet,
+            cntr_tilting: row.cntr_tilting
+        }));
+
+        // Kirim respons untuk Sabtu (tidak perlu data hari berikutnya)
+        res.send(cart);
+    } else {
+        // Hari biasa: Ambil data '23.45' pada tanggal hari ini
+        resultone = await req.db.query(`
+            SELECT * FROM (
+                SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_tilting, jam
+                FROM automation.tilting_l5
+                WHERE graph = 'Y' AND tanggal = '${thisdaytime}' 
+                AND jam = '23.45'
+                ORDER BY jam, id ASC
+            ) AS distinct_data_one
+            ORDER BY id ASC
+        `);
+        datalastone = resultone.rows;
+
+        // Sesuaikan data untuk jam '0.45' dari '23.45'
+        cart = datalastone.map(row => ({
+            jam: "23.45",
+            cntr_bandet: row.cntr_bandet,
+            cntr_tilting: row.cntr_tilting
+        }));
+
+        // Ambil data untuk jam '0.45' hingga '6.45' pada tanggal berikutnya
+        const resulttwo = await req.db.query(`
+            SELECT * FROM (
+                SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_tilting, jam
+                FROM automation.tilting_l5
+                WHERE graph = 'Y' AND tanggal = '${nextDate}' 
+                AND jam IN ('0.45','1.45','2.45','3.45','4.45','5.45','6.45')
+                ORDER BY jam, id ASC
+            ) AS distinct_data_two
+            ORDER BY id ASC
+        `);
+
+        const datalasttwo = resulttwo.rows;
+
+        // Gabungkan data '23.45' hari ini dengan data jam hari berikutnya
+        const twoarray = cart.concat(datalasttwo);
+        res.send(twoarray);
+    }
+});
+
+
+app.get('/shift3_l5_tilting_hourly/:date', async (req, res) => {
+    const thisdaytime = req.params.date;  // Ambil tanggal dari parameter
+    const thisdate = moment(thisdaytime, 'YYYY-MM-DD').toDate();  // Konversi ke objek Date
+    const nextDate = moment(thisdate).add(1, 'days').format('YYYY-MM-DD');  // Tanggal berikutnya dalam format 'YYYY-MM-DD'
+
+    // Ambil data jam '23.45' pada tanggal hari ini
+    const resultone = await req.db.query(`
+        SELECT * FROM (
+            SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_tilting, jam 
+            FROM automation.tilting_l5 
+            WHERE graph = 'Y' AND tanggal = '${thisdaytime}' 
+            AND jam = '23.45'
+            ORDER BY jam, id ASC
+        ) AS distinct_data_one
+        ORDER BY id ASC
+    `);
+    const datalastone = resultone.rows;
+
+    // Sesuaikan data untuk jam '0.45' pada tanggal berikutnya
+    const cart = [];
+    for (let index = 0; index < datalastone.length; index++) {
+        let element = {};
+        element.jam = "23.45";
+        element.cntr_bandet = datalastone[index].cntr_bandet; // Asumsikan 'counter' mengacu ke 'cntr_bandet'
+        element.cntr_tilting = datalastone[index].cntr_tilting;
+        cart.push(element);
+    }
+
+    // Ambil data untuk jam '0.45' hingga '6.45' pada tanggal berikutnya
+    const resulttwo = await req.db.query(`
+        SELECT * FROM (
+            SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_tilting, jam 
+            FROM automation.tilting_l5 
+            WHERE graph = 'Y' AND tanggal = '${nextDate}' 
+            AND jam IN ('0.45','1.45','2.45','3.45','4.45','5.45','6.45')
+            ORDER BY jam, id ASC
+        ) AS distinct_data_two
+        ORDER BY id ASC
+    `);
+
+    const datalasttwo = resulttwo.rows;
+    const twoarray = cart.concat(datalasttwo);
+    res.send(twoarray);
+});
+
+
+app.get('/tilting_l5_tilting_all', async (req, res) => {
+    const result = await req.db.query(`SELECT *  FROM automation.tilting_l5 where graph = 'Y' ORDER BY id DESC`);
+    // console.log("DATA" ,result)
+    var datalast = result.rows;
+    res.send(datalast);
+});
+app.get('/tilting_l5_tilting_hourly', async (req, res) => {
+    var thisdaytime = format(new Date());
+    const result = await req.db.query(`SELECT id ,cntr_bandet, cntr_tilting , jam FROM automation.tilting_l5 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+    AND jam in ('8.0','9.0','10.0','11.0','12.0','13.0','14.0','14.58','16.0','17.0','18.0','19.0','20.0','21.0','22.0','22.58','23.58') ORDER BY id ASC`);
+    //console.log("DATA" ,result)
+    var datalast = result.rows;
+    // var thisdate = new Date(datethis);
+    // thisdate.setDate(thisdate.getDate() + 1)
+    // var thisyestertime = format(thisdate)
+    // const resulttwo = await req.db.query(`SELECT id ,cntr_bandet, cntr_tilting , jam FROM automation.packing_l2 where graph = 'Y' AND tanggal = '${thisyestertime}' 
+    // AND jam in ('1.0','2.0','3.0','4.0','5.0','6.0','6.59') ORDER BY id ASC`);
+    // var datalasttwo = resulttwo.rows;
+    // var twoarray = datalast.concat(datalasttwo)
+    res.send(datalast);
+});
+app.get('/tilting_l5_tilting_hourly/date/:date', async (req, res) => {
+    var datethis = req.params.date
+    console.log(datethis)
+    const result = await req.db.query(`SELECT id ,cntr_bandet, cntr_tilting , jam FROM automation.tilting_l5 where graph = 'Y' AND tanggal = '${datethis}' 
+    AND jam in ('8.0','9.0','10.0','11.0','12.0','13.0','14.0','14.58','16.0','17.0','18.0','19.0','20.0','21.0','22.0','22.58','23.58') ORDER BY id ASC`);
+    //console.log("DATA" ,result)
+    var datalast = result.rows;
+    var thisdate = new Date(datethis);
+    thisdate.setDate(thisdate.getDate() + 1)
+    var thisyestertime = format(thisdate)
+    const resulttwo = await req.db.query(`SELECT id ,cntr_bandet, cntr_tilting , jam FROM automation.tilting_l5 where graph = 'Y' AND tanggal = '${thisyestertime}' 
+    AND jam in ('1.0','2.0','3.0','4.0','5.0','6.0','6.59') ORDER BY id ASC`);
+    var datalasttwo = resulttwo.rows;
+    var twoarray = datalast.concat(datalasttwo)
+    res.send(twoarray);
+});
+app.get('/tilting_l5_tilting_daily', async (req, res) => {
+    var thisdaytime = format(new Date());
+    const result = await req.db.query(`SELECT id ,cntr_bandet, cntr_tilting , jam FROM automation.tilting_l5 where graph = 'Y' AND tanggal = '${thisdaytime}' 
+    AND jam in ('14.58','22.58') ORDER BY id ASC`);
+    //console.log("DATA" ,result)
+    var datalast = result.rows;
+    // var thisdate = new Date(datethis);
+    // thisdate.setDate(thisdate.getDate() + 1)
+    // var thisyestertime = format(thisdate)
+    // const resulttwo = await req.db.query(`SELECT id ,cntr_bandet, cntr_tilting , jam FROM automation.packing_l2 where graph = 'Y' AND tanggal = '${thisyestertime}' 
+    // AND jam in ('1.0','2.0','3.0','4.0','5.0','6.0','6.59') ORDER BY id ASC`);
+    // var datalasttwo = resulttwo.rows;
+    // var twoarray = datalast.concat(datalasttwo)
+    res.send(datalast);
+});
+
+app.get('/tilting_l5_tilting_daily/date/:date', async (req, res) => {
+    var datethis = req.params.date
+    console.log(datethis)
+    const result = await req.db.query(`SELECT id ,cntr_bandet, cntr_tilting , jam FROM automation.tilting_l5 where graph = 'Y' AND tanggal = '${datethis}' 
+    AND jam in ('14.45','22.45') ORDER BY id ASC`);
+    //console.log("DATA" ,result)
+    var datalast = result.rows;
+    var thisdate = new Date(datethis);
+    thisdate.setDate(thisdate.getDate() + 1)
+    var thisyestertime = format(thisdate)
+    const resulttwo = await req.db.query(`SELECT id ,cntr_bandet, cntr_tilting , jam FROM automation.tilting_l5 where graph = 'Y' AND tanggal = '${thisyestertime}' 
+    AND jam in ('6.45') ORDER BY id ASC`);
+    var datalasttwo = resulttwo.rows;
+    var twoarray = datalast.concat(datalasttwo)
+    res.send(twoarray);
+});
+
+app.get('/tilting_l5_tilting_weekly', async (req, res) => {
+    let dates = [];
+    var date = new Date();
+    var year = date.getFullYear()
+    var month = String(date.getMonth() + 1).padStart(2)
+    var weeklofmonth = getWeek(date);
+    dates = getWeekDates(year, month, weeklofmonth)
+
+    var startweekdate = new Date(dates[0]);
+    var startdate = format(startweekdate)
+    console.log("Real Star Date", startdate)
+    var endweekdate = new Date(dates[6]);
+    var enddate = format(endweekdate)
+    console.log("Real End Date", enddate)
+    // console.log(datethis)
+    const result = await req.db.query(`SELECT id ,cntr_bandet, cntr_tilting , jam , realdatetime  FROM automation.tilting_l5 where graph = 'Y' AND tanggal BETWEEN '${startdate}' AND '${enddate}'
+    AND jam in ('14.58','22.58','6.59') ORDER BY id ASC`);
+    var datalast = result.rows;
+    res.send(datalast);
+});
+
+app.get('/tilting_l5_tilting_weekly/date/:date', async (req, res) => {
+    var datethis = req.params.date
+    let dates = [];
+    var date = new Date();
+    var year = date.getFullYear()
+    var month = String(date.getMonth() + 1).padStart(2)
+    // var weeklofmonth = getWeek(date);
+    dates = getWeekDates(year, month, datethis)
+
+    var startweekdate = new Date(dates[0]);
+    var startdate = format(startweekdate)
+    console.log("Real Star Date", startdate)
+    var endweekdate = new Date(dates[6]);
+    var enddate = format(endweekdate)
+    console.log("Real End Date", enddate)
+    // console.log(datethis)
+    const result = await req.db.query(`SELECT id ,cntr_bandet, cntr_tilting , jam , realdatetime  FROM automation.tilting_l5 where graph = 'Y' AND tanggal BETWEEN '${startdate}' AND '${enddate}'
+    AND jam in ('14.58','22.58','6.59') ORDER BY id ASC`);
+    var datalast = result.rows;
+    res.send(datalast);
+});
+
+export default app;
