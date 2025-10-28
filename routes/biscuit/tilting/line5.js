@@ -73,7 +73,8 @@ app.get('/tilting_l5_variance', async (req, res) => {
         }
 
         // Standar
-        const bubuk_kering = 700;
+        const batch_value_hasil = batch_value
+        const bubuk_kering = 672.6;
         const standar_carton = 8.4;
 
         // Periksa tipe data bubuk_kering dan standar_carton
@@ -81,9 +82,9 @@ app.get('/tilting_l5_variance', async (req, res) => {
         console.log("standar_carton:", standar_carton, typeof standar_carton);
 
         // Menghitung variance
-        const isi_variance = (karton_value * standar_carton) / (batch_value * bubuk_kering);
+        const isi_variance = (karton_value * standar_carton) / (batch_value_hasil * bubuk_kering);
         console.log("isi_variance:", isi_variance);
-        const result = 100 - isi_variance; // Persentase selisih
+        const result = 100 - (isi_variance * 100); // Persentase selisih
         console.log("result:", result);
 
         // Kirimkan hasil dalam response
@@ -115,7 +116,7 @@ app.get('/tilting_l5_variance_per_shift', async (req, res) => {
         const jumlah_karton = jumlah_karton_result.rows[0] || { shift1: 0, shift2: 0, shift3: 0 };
 
         // Konstanta
-        const bubuk_kering = 700;
+        const bubuk_kering = 672.6;
         const standar_carton = 8.4;
 
         // Fungsi untuk menghitung variance per shift
@@ -123,8 +124,9 @@ app.get('/tilting_l5_variance_per_shift', async (req, res) => {
             if (tilting === 0 || karton === 0) {
                 return 0; // Atau nilai default lain yang sesuai
             }
-            const isi_variance = (karton * standar_carton) / (tilting * bubuk_kering);
-            const result = 100 - isi_variance;  // Koreksi di sini
+            const total_batch_tilting = tilting
+            const isi_variance = (karton * standar_carton) / (total_batch_tilting * bubuk_kering);
+            const result = 100 - (isi_variance * 100);  // Koreksi di sini
             return result.toFixed(2);
         };
 
