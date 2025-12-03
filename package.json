@@ -13,6 +13,7 @@
   "author": "Mayora.Indah.Tbk PSR",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^7.0.1",
     "axios": "^1.9.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",
@@ -42,6 +43,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "nodemon": "^2.0.22"
+    "nodemon": "^2.0.22",
+    "prisma": "^7.0.1"
   }
 }
