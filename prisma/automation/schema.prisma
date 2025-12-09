@@ -5,60 +5,58 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas = ["automation"]
+  schemas  = ["automation"]
 }
 
 model permissions {
-  id              Int    @id @default(autoincrement())
-  permission_name String @unique @db.VarChar(100)
-
+  id               Int                @id @default(autoincrement())
+  permission_name  String             @unique @db.VarChar(100)
   role_permissions role_permissions[]
+
   @@schema("automation")
 }
 
 model role_permissions {
   role_id       Int
   permission_id Int
-
-  role       roles       @relation(fields: [role_id], references: [id], onDelete: Cascade)
-  permission permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+  permission    permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+  role          roles       @relation(fields: [role_id], references: [id], onDelete: Cascade)
 
   @@id([role_id, permission_id])
   @@schema("automation")
 }
 
 model roles {
-  id        Int    @id @default(autoincrement())
-  role_name String @unique @db.VarChar(50)
-
-  user_roles       user_roles[]
+  id               Int                @id @default(autoincrement())
+  role_name        String             @unique @db.VarChar(50)
   role_permissions role_permissions[]
+  user_roles       user_roles[]
+
   @@schema("automation")
 }
 
 model user_roles {
   user_id Int
   role_id Int
-
-  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  role roles @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  role    roles @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  user    users @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@id([user_id, role_id])
   @@schema("automation")
 }
 
 model users {
-  id            Int       @id @default(autoincrement())
-  username      String    @db.VarChar(50)
-  password      String?   @db.VarChar(255)
-  status        String?   @db.VarChar(20)
-  as_password   String?   @db.VarChar(255)
-  role          String?   @db.VarChar(10)
-  email         String?   @db.VarChar(100)
+  id            Int          @id @default(autoincrement())
+  username      String       @db.VarChar(50)
+  password      String?      @db.VarChar(255)
+  status        String?      @db.VarChar(20)
+  as_password   String?      @db.VarChar(255)
+  role          String?      @db.VarChar(10)
+  email         String?      @db.VarChar(100)
   password_hash String?
-  created_at    DateTime? @default(now()) @db.Timestamp(6)
-
+  created_at    DateTime?    @default(now()) @db.Timestamp(6)
   user_roles    user_roles[]
+
   @@schema("automation")
 }
 
@@ -72,6 +70,7 @@ model cenkit_l1 {
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
   status_mesin String    @db.VarChar(10)
+
   @@schema("automation")
 }
 
@@ -85,6 +84,7 @@ model cenkit_l2 {
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
   status_mesin String    @db.VarChar(10)
+
   @@schema("automation")
 }
 
@@ -93,6 +93,7 @@ model checkweigher_l5 {
   weight     Decimal?  @db.Decimal
   created_at DateTime? @default(now()) @db.Timestamptz(6)
   leg        Int?
+
   @@schema("automation")
 }
 
@@ -124,7 +125,7 @@ model ck_biscuit_valve {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model control_lhp {
-  id               Int  @id   @default(autoincrement())
+  id               Int     @id @default(autoincrement())
   grup             String? @db.VarChar(5)
   custom_control_1 Json?
   custom_control_2 Json?
@@ -142,6 +143,7 @@ model counter_shift_l1 {
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
+
   @@schema("automation")
 }
 
@@ -154,6 +156,7 @@ model counter_shift_l2 {
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
+
   @@schema("automation")
 }
 
@@ -166,12 +169,13 @@ model counter_shift_l5 {
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
+
   @@schema("automation")
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model counter_shift_l5_tilting {
-  id           Int    @id   @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   shift1       Int
   shift2       Int
   shift3       Int
@@ -185,7 +189,7 @@ model counter_shift_l5_tilting {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model counter_shift_l6 {
-  id           Int    @id   @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   shift1       Int
   shift2       Int
   shift3       Int
@@ -199,7 +203,7 @@ model counter_shift_l6 {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model counter_shift_l7 {
-  id           Int    @id   @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   shift1       Int
   shift2       Int
   shift3       Int
@@ -227,6 +231,7 @@ model downtime {
   penyebab          String?
   perbaikan         String?
   lhp               lhp?      @relation(fields: [id_lhp], references: [id], onDelete: Cascade, map: "downtime_lhp_fk")
+
   @@schema("automation")
 }
 
@@ -242,6 +247,7 @@ model downtime_l5 {
   penyebab   String?
   perbaikan  String?
   lhp_l5     lhp_l5?   @relation(fields: [id_lhp], references: [id], onDelete: Cascade, map: "downtime_l5_lhp_l5_fk")
+
   @@schema("automation")
 }
 
@@ -256,6 +262,7 @@ model downtime_line2a {
   part_mesin String?   @db.VarChar(50)
   penyebab   String?
   perbaikan  String?
+
   @@schema("automation")
 }
 
@@ -267,6 +274,7 @@ model l2a_machine_status {
   jam_non_aktif DateTime?                @db.Timestamptz(6)
   durasi        Unsupported("interval")?
   tanggal       DateTime?                @db.Date
+
   @@schema("automation")
 }
 
@@ -278,6 +286,7 @@ model l5_machine_status {
   jam_non_aktif DateTime?                @db.Timestamptz(6)
   durasi        Unsupported("interval")?
   tanggal       DateTime?                @db.Date
+
   @@schema("automation")
 }
 
@@ -347,6 +356,7 @@ model lhp {
   sbl_ims        String?    @db.VarChar(50)
   sbl_rs         String?    @db.VarChar(50)
   downtime       downtime[]
+
   @@schema("automation")
 }
 
@@ -420,6 +430,7 @@ model lhp_l5 {
   rejectcoolingconveyor String?       @db.VarChar(10)
   created_at            DateTime?     @default(now()) @db.Timestamp(6)
   downtime_l5           downtime_l5[]
+
   @@schema("automation")
 }
 
@@ -506,6 +517,7 @@ model lhp_malkist_2 {
   weight_bsc_pack_tray  String?   @db.VarChar(50)
   serbuk                String?   @db.VarChar(50)
   tampungan             String?   @db.VarChar(50)
+
   @@schema("automation")
 }
 
@@ -519,6 +531,7 @@ model packing_a1 {
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
+
   @@schema("automation")
 }
 
@@ -532,6 +545,7 @@ model packing_a2 {
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
+
   @@schema("automation")
 }
 
@@ -545,6 +559,7 @@ model packing_a3 {
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
+
   @@schema("automation")
 }
 
@@ -558,6 +573,7 @@ model packing_a4 {
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
+
   @@schema("automation")
 }
 
@@ -571,6 +587,7 @@ model packing_a5 {
   jam          String?   @db.VarChar(50)
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   graph        String?   @db.VarChar(50)
+
   @@schema("automation")
 }
 
@@ -584,6 +601,7 @@ model packing_b1 {
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
+
   @@schema("automation")
 }
 
@@ -597,6 +615,7 @@ model packing_b2 {
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
+
   @@schema("automation")
 }
 
@@ -610,6 +629,7 @@ model packing_b3 {
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(50)
+
   @@schema("automation")
 }
 
@@ -623,6 +643,7 @@ model packing_b4 {
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
+
   @@schema("automation")
 }
 
@@ -636,6 +657,7 @@ model packing_b5 {
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
+
   @@schema("automation")
 }
 
@@ -647,6 +669,7 @@ model packing_l1 {
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
+
   @@schema("automation")
 }
 
@@ -658,12 +681,13 @@ model packing_l2 {
   tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
   jam          String?   @db.VarChar(50)
   graph        String?   @db.VarChar(10)
+
   @@schema("automation")
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model packing_l2a_renceng {
-  id           Int    @id   @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   cntr_bandet  Int
   cntr_carton  Int
   realdatetime DateTime? @default(now()) @db.Timestamp(6)
@@ -676,7 +700,7 @@ model packing_l2a_renceng {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model packing_l2a_tray {
-  id           Int    @id   @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   cntr_bandet  Int
   cntr_carton  Int
   realdatetime DateTime? @default(now()) @db.Timestamp(6)
@@ -689,7 +713,7 @@ model packing_l2a_tray {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model packing_l5 {
-  id           Int    @id   @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   cntr_bandet  Int
   cntr_carton  Int
   realdatetime DateTime? @default(now()) @db.Timestamp(6)
@@ -702,7 +726,7 @@ model packing_l5 {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model packing_l6 {
-  id           Int   @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   cntr_bandet  Int
   cntr_carton  Int
   realdatetime DateTime? @default(now()) @db.Timestamp(6)
@@ -715,7 +739,7 @@ model packing_l6 {
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model packing_l7 {
-  id           Int    @id   @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   cntr_bandet  Int
   cntr_carton  Int
   realdatetime DateTime? @default(now()) @db.Timestamp(6)
@@ -739,6 +763,7 @@ model pm_astor {
   periode_start       String? @db.VarChar(100)
   seri                String? @db.Char(1)
   qrcode              String? @db.VarChar(250)
+
   @@schema("automation")
 }
 
@@ -755,6 +780,7 @@ model pm_biscuit {
   periode_start       String? @db.VarChar(100)
   seri                String? @db.Char(1)
   qrcode              String? @db.VarChar(250)
+
   @@schema("automation")
 }
 
@@ -771,6 +797,7 @@ model pm_utility {
   periode_start       String? @db.VarChar(100)
   seri                String? @db.Char(1)
   qrcode              String? @db.VarChar(250)
+
   @@schema("automation")
 }
 
@@ -787,6 +814,7 @@ model pm_wafer {
   periode_start       String? @db.VarChar(100)
   seri                String? @db.Char(1)
   qrcode              String? @db.VarChar(250)
+
   @@schema("automation")
 }
 
@@ -806,12 +834,13 @@ model storage_data_status_bsc {
   id      Int     @id(map: "machine_status_l5_pkey_3") @default(autoincrement())
   machine String  @db.VarChar(255)
   status  Boolean @default(true)
+
   @@schema("automation")
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model tilting_l5 {
-  id           Int    @id   @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   cntr_bandet  Int
   cntr_tilting Int
   realdatetime DateTime? @default(now()) @db.Timestamp(6)
