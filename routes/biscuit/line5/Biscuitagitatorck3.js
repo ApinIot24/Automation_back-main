@@ -16,17 +16,6 @@ const validate = [
   },
 ];
 
-// Fungsi utilitas untuk query dengan penanganan error
-const safeQuery = async (queryText, params) => {
-  try {
-    const result = await pool.query(queryText, params);
-    return result;
-  } catch (err) {
-    console.error("Database Query Error:", err);
-    throw new Error("Kesalahan dalam mengakses database");
-  }
-};
-
 // Fungsi untuk mengambil status operasional agitator dalam rentang tanggal
 app.get( "/ck_biscuit/agitator/status/:agitator/:startdate/:enddate",
   validate,

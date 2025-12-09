@@ -30,6 +30,11 @@ export const JamListShortShift2 = {
   normal:   ["15.45","16.45","17.45","18.45","19.45","20.45","21.45","22.45"]
 };
 
+export const JamListShortShift3 = {
+  saturday: ['17.45','18.45','19.45','20.45','21.45'],
+  // normal: ['17.45','18.45','19.45','20.45','21.45']
+}
+
 // HOURLY / DAILY / NEXTDAY (opsional)
 export const Hourly = [
   "8.0","9.0","10.0","11.0","12.0","13.0",
