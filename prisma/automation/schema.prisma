@@ -1,0 +1,823 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../src/generated/automation/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas = ["automation"]
+}
+
+model permissions {
+  id              Int    @id @default(autoincrement())
+  permission_name String @unique @db.VarChar(100)
+
+  role_permissions role_permissions[]
+  @@schema("automation")
+}
+
+model role_permissions {
+  role_id       Int
+  permission_id Int
+
+  role       roles       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  permission permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+
+  @@id([role_id, permission_id])
+  @@schema("automation")
+}
+
+model roles {
+  id        Int    @id @default(autoincrement())
+  role_name String @unique @db.VarChar(50)
+
+  user_roles       user_roles[]
+  role_permissions role_permissions[]
+  @@schema("automation")
+}
+
+model user_roles {
+  user_id Int
+  role_id Int
+
+  user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  role roles @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, role_id])
+  @@schema("automation")
+}
+
+model users {
+  id            Int       @id @default(autoincrement())
+  username      String    @db.VarChar(50)
+  password      String?   @db.VarChar(255)
+  status        String?   @db.VarChar(20)
+  as_password   String?   @db.VarChar(255)
+  role          String?   @db.VarChar(10)
+  email         String?   @db.VarChar(100)
+  password_hash String?
+  created_at    DateTime? @default(now()) @db.Timestamp(6)
+
+  user_roles    user_roles[]
+  @@schema("automation")
+}
+
+model cenkit_l1 {
+  id           Int       @id(map: "cenkit_l1_pk") @default(autoincrement())
+  cntr_mixing  Int
+  temp_water   String    @db.VarChar(10)
+  temp_cooling String    @db.VarChar(10)
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  status_mesin String    @db.VarChar(10)
+  @@schema("automation")
+}
+
+model cenkit_l2 {
+  id           Int       @id(map: "cenkit_l2_pk") @default(autoincrement())
+  cntr_mixing  Int
+  temp_water   String    @db.VarChar(10)
+  temp_cooling String    @db.VarChar(10)
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  status_mesin String    @db.VarChar(10)
+  @@schema("automation")
+}
+
+model checkweigher_l5 {
+  id         Int       @id @default(autoincrement())
+  weight     Decimal?  @db.Decimal
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  leg        Int?
+  @@schema("automation")
+}
+
+model ck_biscuit_pompa {
+  id            Int                      @id(map: "machine_status_l5_pkey_2") @default(autoincrement())
+  pompa         String                   @db.VarChar(255)
+  status        Boolean                  @default(true)
+  jam_aktif     DateTime?                @db.Timestamptz(6)
+  jam_non_aktif DateTime?                @db.Timestamptz(6)
+  durasi        Unsupported("interval")?
+  tanggal       DateTime?                @db.Date
+
+  @@index([pompa, tanggal], map: "idx_pompa_tanggal")
+  @@schema("automation")
+}
+
+model ck_biscuit_valve {
+  id            Int                      @id(map: "machine_status_l5_pkey_2_1") @default(autoincrement())
+  valve         String                   @db.VarChar(255)
+  status        Boolean                  @default(true)
+  jam_aktif     DateTime?                @db.Timestamptz(6)
+  jam_non_aktif DateTime?                @db.Timestamptz(6)
+  durasi        Unsupported("interval")?
+  tanggal       DateTime?                @db.Date
+
+  @@index([valve, tanggal], map: "idx_pompa_tanggal_1")
+  @@schema("automation")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model control_lhp {
+  id               Int  @id   @default(autoincrement())
+  grup             String? @db.VarChar(5)
+  custom_control_1 Json?
+  custom_control_2 Json?
+  custom_control_3 Json?
+
+  @@schema("automation")
+}
+
+model counter_shift_l1 {
+  id           Int       @id(map: "packing_l1_pk_1") @default(autoincrement())
+  shift1       Int
+  shift2       Int
+  shift3       Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  @@schema("automation")
+}
+
+model counter_shift_l2 {
+  id           Int       @id(map: "packing_l2_pk_1") @default(autoincrement())
+  shift1       Int
+  shift2       Int
+  shift3       Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  @@schema("automation")
+}
+
+model counter_shift_l5 {
+  id           Int       @id(map: "packing_l1_pk_1_1") @default(autoincrement())
+  shift1       Int
+  shift2       Int
+  shift3       Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  @@schema("automation")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model counter_shift_l5_tilting {
+  id           Int    @id   @default(autoincrement())
+  shift1       Int
+  shift2       Int
+  shift3       Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("automation")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model counter_shift_l6 {
+  id           Int    @id   @default(autoincrement())
+  shift1       Int
+  shift2       Int
+  shift3       Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("automation")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model counter_shift_l7 {
+  id           Int    @id   @default(autoincrement())
+  shift1       Int
+  shift2       Int
+  shift3       Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("automation")
+}
+
+model downtime {
+  id                Int       @id(map: "users_pkey_1") @default(autoincrement())
+  time_start        DateTime? @db.Time(6)
+  time_stop         DateTime? @db.Time(6)
+  total_dt          String?   @db.VarChar(50)
+  kendala           String?
+  id_lhp            Int?
+  unit_mesin        String?   @db.VarChar(50)
+  part_mesin        String?   @db.VarChar(50)
+  kategori_downtime String?   @db.VarChar(100)
+  speed_oven_plan   String?   @db.VarChar(50)
+  speed_oven_reduce String?   @db.VarChar(50)
+  total_sbl         String?   @db.VarChar(50)
+  penyebab          String?
+  perbaikan         String?
+  lhp               lhp?      @relation(fields: [id_lhp], references: [id], onDelete: Cascade, map: "downtime_lhp_fk")
+  @@schema("automation")
+}
+
+model downtime_l5 {
+  id         Int       @id(map: "users_pkey_1_1") @default(autoincrement())
+  time_start DateTime? @db.Time(6)
+  time_stop  DateTime? @db.Time(6)
+  total_dt   String?   @db.VarChar(50)
+  kendala    String?
+  id_lhp     Int?
+  unit_mesin String?   @db.VarChar(50)
+  part_mesin String?   @db.VarChar(50)
+  penyebab   String?
+  perbaikan  String?
+  lhp_l5     lhp_l5?   @relation(fields: [id_lhp], references: [id], onDelete: Cascade, map: "downtime_l5_lhp_l5_fk")
+  @@schema("automation")
+}
+
+model downtime_line2a {
+  id         Int       @id @default(autoincrement())
+  time_start DateTime? @db.Time(6)
+  time_stop  DateTime? @db.Time(6)
+  total_dt   String?   @db.VarChar(50)
+  kendala    String?
+  id_lhp     Int?
+  unit_mesin String?   @db.VarChar(50)
+  part_mesin String?   @db.VarChar(50)
+  penyebab   String?
+  perbaikan  String?
+  @@schema("automation")
+}
+
+model l2a_machine_status {
+  id            Int                      @id(map: "machine_status_l5_pkey_1") @default(autoincrement())
+  machine       String                   @db.VarChar(255)
+  status        Boolean                  @default(true)
+  jam_aktif     DateTime?                @db.Timestamptz(6)
+  jam_non_aktif DateTime?                @db.Timestamptz(6)
+  durasi        Unsupported("interval")?
+  tanggal       DateTime?                @db.Date
+  @@schema("automation")
+}
+
+model l5_machine_status {
+  id            Int                      @id(map: "machine_status_l5_pkey") @default(autoincrement())
+  machine       String                   @db.VarChar(255)
+  status        Boolean                  @default(true)
+  jam_aktif     DateTime?                @db.Timestamptz(6)
+  jam_non_aktif DateTime?                @db.Timestamptz(6)
+  durasi        Unsupported("interval")?
+  tanggal       DateTime?                @db.Date
+  @@schema("automation")
+}
+
+model lhp {
+  id             Int        @id(map: "lhp_pk") @default(autoincrement())
+  grup           String     @db.VarChar(20)
+  shift          String     @db.VarChar(20)
+  sku            String     @db.VarChar(50)
+  plan           String     @db.VarChar(50)
+  real           String     @db.VarChar(50)
+  ach            String     @db.VarChar(50)
+  cello          Json?
+  cellocpp       String?    @db.VarChar(50)
+  ctn_type       Json?
+  cello_used     String?    @db.VarChar(50)
+  adonan_used    String?    @db.VarChar(50)
+  ccbcream_used  String?    @db.VarChar(50)
+  avgsheet       String?    @db.VarChar(50)
+  avgbook        String?    @db.VarChar(50)
+  sheet          String?    @db.VarChar(50)
+  book           String?    @db.VarChar(50)
+  cutkasar       String?    @db.VarChar(50)
+  bubukcutting   String?    @db.VarChar(50)
+  sapuancut      String?    @db.VarChar(50)
+  qcpacking      String?    @db.VarChar(50)
+  qccello        String?    @db.VarChar(50)
+  packing_reject Json?
+  banded         String?    @db.VarChar(50)
+  sapuanpack     String?    @db.VarChar(50)
+  buble          String?    @db.VarChar(50)
+  suppliercello  String?    @db.VarChar(50)
+  speed_mesin    Json?      @db.Json
+  kendala        Json?
+  sample_ctn_qc  String?    @db.VarChar(50)
+  banded_under   String?    @db.VarChar(50)
+  banded_over    String?    @db.VarChar(50)
+  cutoff_jam     String?    @db.VarChar(50)
+  ctn_luar       String?    @db.VarChar(50)
+  realdatetime   DateTime?  @db.Date
+  d_b            String?    @db.VarChar(50)
+  plastik_pof    String?    @db.VarChar(20)
+  coklat_used    String?    @db.VarChar(50)
+  sortir         String?    @db.VarChar(15)
+  pof_kue        String?    @db.VarChar(15)
+  db_type        String?    @db.VarChar(20)
+  pof            String?    @db.VarChar(20)
+  users_input    String?    @db.VarChar(50)
+  created_at     DateTime?  @default(now()) @db.Timestamp(6)
+  uh             String?    @db.VarChar(50)
+  hadir          String?    @db.VarChar(50)
+  jam_kerja      String?    @db.VarChar(50)
+  jenis_adonan   String?    @db.VarChar(50)
+  give_ado       String?    @db.VarChar(50)
+  give_cream     String?    @db.VarChar(50)
+  give_cello     String?    @db.VarChar(50)
+  rej_ado        String?    @db.VarChar(50)
+  rej_cream      String?    @db.VarChar(50)
+  wip_kg         String?    @db.VarChar(50)
+  book_kotor     String?    @db.VarChar(50)
+  bs_cello       String?    @db.VarChar(50)
+  pakai_ctn      String?    @db.VarChar(50)
+  bs_cpp_roll    String?    @db.VarChar(50)
+  mc_quality     String?    @db.VarChar(50)
+  sbl_ls_es      String?    @db.VarChar(50)
+  sbl_tbd        String?    @db.VarChar(50)
+  sbl_sua        String?    @db.VarChar(50)
+  sbl_ims        String?    @db.VarChar(50)
+  sbl_rs         String?    @db.VarChar(50)
+  downtime       downtime[]
+  @@schema("automation")
+}
+
+model lhp_l5 {
+  id                    Int           @id(map: "lhp_l5_pkey1") @default(autoincrement())
+  users_input           String?       @db.VarChar(50)
+  realdatetime          DateTime?     @db.Date
+  grup                  String?       @db.VarChar(50)
+  shift                 String?       @db.VarChar(50)
+  sku                   String?       @db.VarChar(220)
+  reguler               String?       @db.VarChar(50)
+  hold                  String?       @db.VarChar(50)
+  output                String?       @db.VarChar(50)
+  rmd                   String?       @db.VarChar(50)
+  rfeeding              String?       @db.VarChar(50)
+  rmall                 Json?
+  rpacktable            String?       @db.VarChar(50)
+  rmtotal               String?       @db.VarChar(50)
+  roven                 String?       @db.VarChar(50)
+  soven                 String?       @db.VarChar(50)
+  mcbks                 String?       @db.VarChar(50)
+  ptable                String?       @db.VarChar(50)
+  serbuk                String?       @db.VarChar(50)
+  tampungan             String?       @db.VarChar(50)
+  total                 String?       @db.VarChar(50)
+  brtpack               String?       @db.VarChar(50)
+  brtpcs                String?       @db.VarChar(50)
+  wiinner               String?       @db.VarChar(50)
+  wipkulitawal          String?       @db.VarChar(50)
+  wipkulitakhir         String?       @db.VarChar(50)
+  wipselisih            String?       @db.VarChar(50)
+  viawal                String?       @db.VarChar(50)
+  viambil               String?       @db.VarChar(50)
+  viakhir               String?       @db.VarChar(50)
+  vireturn              String?       @db.VarChar(50)
+  viinner               String?       @db.VarChar(50)
+  virainner             String?       @db.VarChar(50)
+  viall                 Json?
+  variance              String?       @db.VarChar(50)
+  krkawal               String?       @db.VarChar(50)
+  krawal                String?       @db.VarChar(50)
+  krakhir               String?       @db.VarChar(50)
+  krpakai               String?       @db.VarChar(50)
+  kreturn               String?       @db.VarChar(50)
+  kreject               String?       @db.VarChar(50)
+  kendalaall            Json?
+  rpackinner            String?       @db.VarChar(50)
+  roll                  String?       @db.VarChar(50)
+  sampahpacking         String?       @db.VarChar(50)
+  planning              String?       @db.VarChar(50)
+  bubuk                 String?       @db.VarChar(50)
+  berat_basah           String?       @db.VarChar(20)
+  berat_kering          String?       @db.VarChar(20)
+  output_kg             String?       @db.VarChar(20)
+  batch_buat            String?       @db.VarChar(20)
+  variance_batch        String?       @db.VarChar(20)
+  variance_fg           String?       @db.VarChar(20)
+  batch_tuang           String?       @db.VarChar(10)
+  batch_cetak           String?       @db.VarChar(10)
+  wip_adonan_awal       String?       @db.VarChar(10)
+  wip_adonan_akhir      String?       @db.VarChar(10)
+  wip_adonan_selisih    String?       @db.VarChar(10)
+  wip_adonan_kulit      String?       @db.VarChar(10)
+  adonan_gagal_kg       String?       @db.VarChar(10)
+  adonan_gagal_kulit    String?       @db.VarChar(10)
+  weight_bsc_pcs        String?       @db.VarChar(10)
+  weight_bsc_pack       String?       @db.VarChar(10)
+  wipkulit              String?       @db.VarChar(50)
+  rejectpacking         String?       @db.VarChar(10)
+  rejectstacking        String?       @db.VarChar(10)
+  rejectcoolingconveyor String?       @db.VarChar(10)
+  created_at            DateTime?     @default(now()) @db.Timestamp(6)
+  downtime_l5           downtime_l5[]
+  @@schema("automation")
+}
+
+model lhp_malkist_2 {
+  id                    Int       @id(map: "lhp_malkist_pkey") @default(autoincrement())
+  users_input           String?   @db.VarChar(50)
+  realdatetime          DateTime? @db.Date
+  grup                  String?   @db.VarChar(50)
+  shift                 String?   @db.VarChar(50)
+  sku                   String?   @db.VarChar(220)
+  reguler               String?   @db.VarChar(50)
+  hold                  String?   @db.VarChar(50)
+  output                String?   @db.VarChar(50)
+  rmd                   String?   @db.VarChar(50)
+  rfeeding              String?   @db.VarChar(50)
+  rmall                 Json?
+  rpacktable            String?   @db.VarChar(50)
+  rmtotal               String?   @db.VarChar(50)
+  roven                 String?   @db.VarChar(50)
+  soven                 String?   @db.VarChar(50)
+  mcbks                 String?   @db.VarChar(50)
+  ptable                String?   @db.VarChar(50)
+  sampah_metal          String?   @db.VarChar(50)
+  sampah_c_convey       String?   @db.VarChar(50)
+  total                 String?   @db.VarChar(50)
+  brtpack               String?   @db.VarChar(50)
+  brtpcs                String?   @db.VarChar(50)
+  wipkulitawal          String?   @db.VarChar(50)
+  wipkulitakhir         String?   @db.VarChar(50)
+  wipselisih            String?   @db.VarChar(50)
+  viawal                String?   @db.VarChar(50)
+  viambil               String?   @db.VarChar(50)
+  viakhir               String?   @db.VarChar(50)
+  vireturn              String?   @db.VarChar(50)
+  viinner               String?   @db.VarChar(50)
+  virainner             String?   @db.VarChar(50)
+  viall                 Json?
+  variance              String?   @db.VarChar(50)
+  krkawal               String?   @db.VarChar(50)
+  krawal                String?   @db.VarChar(50)
+  krakhir               String?   @db.VarChar(50)
+  krpakai               String?   @db.VarChar(50)
+  kreturn               String?   @db.VarChar(50)
+  kreject               String?   @db.VarChar(50)
+  kendalaall            Json?
+  rpackinner            String?   @db.VarChar(50)
+  roll                  String?   @db.VarChar(50)
+  sampahpacking         String?   @db.VarChar(50)
+  planning              String?   @db.VarChar(50)
+  bubuk                 String?   @db.VarChar(50)
+  berat_basah           String?   @db.VarChar(20)
+  berat_kering          String?   @db.VarChar(20)
+  output_kg             String?   @db.VarChar(20)
+  batch_buat            String?   @db.VarChar(20)
+  variance_batch        String?   @db.VarChar(20)
+  variance_fg           String?   @db.VarChar(20)
+  batch_tuang           String?   @db.VarChar(10)
+  batch_cetak           String?   @db.VarChar(10)
+  wip_adonan_awal       String?   @db.VarChar(10)
+  wip_adonan_akhir      String?   @db.VarChar(10)
+  wip_adonan_selisih    String?   @db.VarChar(10)
+  wip_adonan_kulit      String?   @db.VarChar(10)
+  adonan_gagal_kg       String?   @db.VarChar(10)
+  adonan_gagal_kulit    String?   @db.VarChar(10)
+  weight_bsc_pcs        String?   @db.VarChar(10)
+  weight_bsc_pack       String?   @db.VarChar(10)
+  wipkulit              String?   @db.VarChar(50)
+  rejectpacking         String?   @db.VarChar(10)
+  rejectstacking        String?   @db.VarChar(10)
+  rejectcoolingconveyor String?   @db.VarChar(10)
+  created_at            DateTime? @default(now()) @db.Timestamp(6)
+  rpackinner_tray       String?   @db.VarChar(50)
+  rpackinner_renceng    String?   @db.VarChar(50)
+  renceng_output        String?   @db.VarChar(50)
+  renceng_output_kg     String?   @db.VarChar(50)
+  tray_output           String?   @db.VarChar(50)
+  tray_output_kg        String?   @db.VarChar(50)
+  batch_tuang_tray      String?   @db.VarChar(50)
+  batch_cetak_tray      String?   @db.VarChar(50)
+  batch_buat_tray       String?   @db.VarChar(50)
+  brtpcs_tray           String?   @db.VarChar(50)
+  brtpack_tray          String?   @db.VarChar(50)
+  weight_bsc_pcs_tray   String?   @db.VarChar(50)
+  weight_bsc_pack_tray  String?   @db.VarChar(50)
+  serbuk                String?   @db.VarChar(50)
+  tampungan             String?   @db.VarChar(50)
+  @@schema("automation")
+}
+
+model packing_a1 {
+  id           Int       @id(map: "packing_a1_pk") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  speed        Int?
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  @@schema("automation")
+}
+
+model packing_a2 {
+  id           Int       @id(map: "packing_a2_pk") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  speed        Int?
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  @@schema("automation")
+}
+
+model packing_a3 {
+  id           Int       @id(map: "packing_a3_pk") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  speed        Int?
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  @@schema("automation")
+}
+
+model packing_a4 {
+  id           Int       @id(map: "packing_a4_pk") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  speed        Int?
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  @@schema("automation")
+}
+
+model packing_a5 {
+  counter      Int?
+  speed        Int?
+  status_mesin String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  time         String?   @db.VarChar(50)
+  id           Int       @id(map: "packing_a5_pk") @default(autoincrement())
+  jam          String?   @db.VarChar(50)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  graph        String?   @db.VarChar(50)
+  @@schema("automation")
+}
+
+model packing_b1 {
+  id           Int       @id(map: "packing_b1_pk") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  speed        Int?
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  @@schema("automation")
+}
+
+model packing_b2 {
+  id           Int       @id(map: "packing_b2_pk") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  speed        Int?
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  @@schema("automation")
+}
+
+model packing_b3 {
+  id           Int       @id(map: "packing_b3_pk") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  speed        Int?
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(50)
+  @@schema("automation")
+}
+
+model packing_b4 {
+  id           Int       @id(map: "packing_b4_pk") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  speed        Int?
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  @@schema("automation")
+}
+
+model packing_b5 {
+  id           Int       @id(map: "packing_b5_pk") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  speed        Int?
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  @@schema("automation")
+}
+
+model packing_l1 {
+  id           Int       @id(map: "packing_l1_pk") @default(autoincrement())
+  cntr_bandet  Int
+  cntr_carton  Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  @@schema("automation")
+}
+
+model packing_l2 {
+  id           Int       @id(map: "packing_l2_pk") @default(autoincrement())
+  cntr_bandet  Int
+  cntr_carton  Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  @@schema("automation")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model packing_l2a_renceng {
+  id           Int    @id   @default(autoincrement())
+  cntr_bandet  Int
+  cntr_carton  Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("automation")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model packing_l2a_tray {
+  id           Int    @id   @default(autoincrement())
+  cntr_bandet  Int
+  cntr_carton  Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("automation")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model packing_l5 {
+  id           Int    @id   @default(autoincrement())
+  cntr_bandet  Int
+  cntr_carton  Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("automation")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model packing_l6 {
+  id           Int   @id @default(autoincrement())
+  cntr_bandet  Int
+  cntr_carton  Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("automation")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model packing_l7 {
+  id           Int    @id   @default(autoincrement())
+  cntr_bandet  Int
+  cntr_carton  Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("automation")
+}
+
+model pm_astor {
+  id                  Int     @id(map: "machine_pkey_2") @default(autoincrement())
+  no                  Int?
+  machine_name        String? @db.VarChar(225)
+  part_kebutuhan_alat String? @db.VarChar(225)
+  qty                 String? @db.VarChar(20)
+  equipment           String? @db.VarChar(255)
+  periode             String? @db.VarChar(80)
+  grup                String? @db.VarChar(5)
+  kode_barang         String? @db.VarChar(200)
+  periode_start       String? @db.VarChar(100)
+  seri                String? @db.Char(1)
+  qrcode              String? @db.VarChar(250)
+  @@schema("automation")
+}
+
+model pm_biscuit {
+  id                  Int     @id(map: "machine_pkey_1") @default(autoincrement())
+  no                  Int?
+  machine_name        String? @db.VarChar(225)
+  part_kebutuhan_alat String? @db.VarChar(225)
+  qty                 String? @db.VarChar(20)
+  equipment           String? @db.VarChar(255)
+  periode             String? @db.VarChar(80)
+  grup                String? @db.VarChar(5)
+  kode_barang         String? @db.VarChar(200)
+  periode_start       String? @db.VarChar(100)
+  seri                String? @db.Char(1)
+  qrcode              String? @db.VarChar(250)
+  @@schema("automation")
+}
+
+model pm_utility {
+  id                  Int     @id(map: "machine_pkey_3") @default(autoincrement())
+  no                  Int?
+  machine_name        String? @db.VarChar(225)
+  part_kebutuhan_alat String? @db.VarChar(225)
+  qty                 String? @db.VarChar(20)
+  equipment           String? @db.VarChar(255)
+  periode             String? @db.VarChar(80)
+  grup                String? @db.VarChar(15)
+  kode_barang         String? @db.VarChar(200)
+  periode_start       String? @db.VarChar(100)
+  seri                String? @db.Char(1)
+  qrcode              String? @db.VarChar(250)
+  @@schema("automation")
+}
+
+model pm_wafer {
+  id                  Int     @id(map: "machine_pkey") @default(autoincrement())
+  no                  Int?
+  machine_name        String? @db.VarChar(225)
+  part_kebutuhan_alat String? @db.VarChar(225)
+  qty                 String? @db.VarChar(20)
+  equipment           String? @db.VarChar(255)
+  periode             String? @db.VarChar(80)
+  grup                String? @db.VarChar(5)
+  kode_barang         String? @db.VarChar(200)
+  periode_start       String? @db.VarChar(100)
+  seri                String? @db.Char(1)
+  qrcode              String? @db.VarChar(250)
+  @@schema("automation")
+}
+
+model setting_pm {
+  pmtablename String    @db.VarChar(55)
+  grup        String    @db.VarChar(100)
+  week        Int
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  updated_at  DateTime? @default(now()) @db.Timestamp(6)
+
+  @@id([pmtablename, grup, week])
+  @@unique([pmtablename, grup, week], map: "unique_pmtablename_grup_week")
+  @@schema("automation")
+}
+
+model storage_data_status_bsc {
+  id      Int     @id(map: "machine_status_l5_pkey_3") @default(autoincrement())
+  machine String  @db.VarChar(255)
+  status  Boolean @default(true)
+  @@schema("automation")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tilting_l5 {
+  id           Int    @id   @default(autoincrement())
+  cntr_bandet  Int
+  cntr_tilting Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("automation")
+}

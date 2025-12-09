@@ -1,0 +1,1153 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../src/generated/iot/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["purwosari"]
+}
+
+model absortion_chiller {
+  id           Int       @id(map: "absorption_chiller_pkey") @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  kwhpm3       String?   @db.VarChar
+  teganganl1   String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+
+  @@schema("purwosari")
+}
+
+model ahu_01_zone_1 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm15      String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model ahu_02_zone_5 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm4       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model ahu_03_zone_4_2 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm7       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model ahu_04_zone_4_2 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm10      String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model boiler {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  kwhpm4       String?   @db.VarChar
+  teganganl1   String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+
+  @@schema("purwosari")
+}
+
+model cairan_gula {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm7       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model cenkit_l1 {
+  id           BigInt    @id(map: "cenkit_l1_pk") @default(autoincrement())
+  cntr_mixing  Int
+  tmp_wafer    String    @db.VarChar(10)
+  tmp_cooling  String    @db.VarChar(10)
+  realdatetime DateTime? @default(now()) @db.Timestamptz(6)
+  tanggal      DateTime? @default(dbgenerated("('now'::text)::date")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+  status_mesin String?   @db.VarChar(10)
+
+  @@schema("purwosari")
+}
+
+model checkweigher_l5 {
+  id         Int       @id @default(autoincrement())
+  weight     Decimal?  @db.Decimal
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  leg        Int?
+
+  @@schema("purwosari")
+}
+
+model chiller_ac {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  kwhpm2       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+
+  @@schema("purwosari")
+}
+
+model chiller_proses_outdoor_type {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm5       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model ck_ball_mill {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm2       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model ck_biscuit_agitator {
+  id            Int                      @id(map: "machine_status_l5_pkey_2_2") @default(autoincrement())
+  agitator      String                   @db.VarChar(255)
+  status        Boolean                  @default(true)
+  jam_aktif     DateTime?                @db.Timestamptz(6)
+  jam_non_aktif DateTime?                @db.Timestamptz(6)
+  durasi        Unsupported("interval")?
+  tanggal       DateTime?                @db.Date
+
+  @@index([agitator, tanggal], map: "idx_pompa_tanggal_2")
+  @@schema("purwosari")
+}
+
+model ck_biscuit_mixer_1 {
+  id     Int       @id @default(autoincrement())
+  weight Float?    @db.Real
+  date   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model ck_biscuit_mixer_2 {
+  id     Int       @id @default(autoincrement())
+  weight Float?    @db.Real
+  date   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model ck_biscuit_mixer_3 {
+  id     Int       @id @default(autoincrement())
+  weight Float?    @db.Real
+  date   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model ck_biscuit_palm_oil_1 {
+  id     Int       @id(map: "ck_biscuit_palm_oil_2_pkey_1") @default(autoincrement())
+  weight Float?    @db.Real
+  date   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model ck_biscuit_palm_oil_2 {
+  id     Int       @id @default(autoincrement())
+  weight Float?    @db.Real
+  date   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model ck_biscuit_pompa {
+  id            Int                      @id(map: "machine_status_l5_pkey_2") @default(autoincrement())
+  pompa         String                   @db.VarChar(255)
+  status        Boolean                  @default(true)
+  jam_aktif     DateTime?                @db.Timestamp(6)
+  jam_non_aktif DateTime?                @db.Timestamp(6)
+  durasi        Unsupported("interval")?
+  tanggal       DateTime?                @db.Date
+
+  @@index([pompa, tanggal], map: "idx_pompa_tanggal")
+  @@schema("purwosari")
+}
+
+model ck_biscuit_valve {
+  id            Int                      @id(map: "machine_status_l5_pkey_2_1") @default(autoincrement())
+  valve         String                   @db.VarChar(255)
+  status        Boolean                  @default(true)
+  jam_aktif     DateTime?                @db.Timestamptz(6)
+  jam_non_aktif DateTime?                @db.Timestamptz(6)
+  durasi        Unsupported("interval")?
+  tanggal       DateTime?                @db.Date
+
+  @@index([valve, tanggal], map: "idx_pompa_tanggal_1")
+  @@schema("purwosari")
+}
+
+model ck_wf_zone_1 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm9       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model ck_zone_5 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm10      String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model cooling_tower {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  kwhpm6       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+
+  @@schema("purwosari")
+}
+
+model data_lvmdp {
+  id           Int       @id(map: "data_utility_cu_pkey") @default(autoincrement())
+  teganganl1   String?   @db.VarChar
+  arusl1       String?   @db.VarChar
+  kwhpm1       String?   @db.VarChar
+  power_faktor String?   @db.VarChar
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  arusl2       String?   @db.VarChar
+  arusl3       String?   @db.VarChar
+  arusl4       String?   @db.VarChar
+  kwhpm2       String?   @db.VarChar
+  daya         String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+
+  @@schema("purwosari")
+}
+
+model formulasi {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm12      String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model gdfg {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  kwhpm5       String?   @db.VarChar
+  teganganl1   String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+
+  @@schema("purwosari")
+}
+
+model gudang_rm {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm9       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model hydrant {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  kwhpm12      String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+
+  @@schema("purwosari")
+}
+
+model kompressor {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm6       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model koridor_lt_1 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm16      String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model l2a_machine_status {
+  id            Int                      @id(map: "machine_status_l5_pkey_1") @default(autoincrement())
+  machine       String                   @db.VarChar(255)
+  status        Boolean                  @default(true)
+  jam_aktif     DateTime?                @db.Timestamptz(6)
+  jam_non_aktif DateTime?                @db.Timestamptz(6)
+  durasi        Unsupported("interval")?
+
+  @@schema("purwosari")
+}
+
+model l5_machine_status {
+  id            Int                      @id(map: "machine_status_l5_pkey") @default(autoincrement())
+  machine       String                   @db.VarChar(255)
+  status        Boolean                  @default(true)
+  jam_aktif     DateTime?                @db.Timestamptz(6)
+  jam_non_aktif DateTime?                @db.Timestamptz(6)
+  durasi        Unsupported("interval")?
+
+  @@schema("purwosari")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model log {
+  uuid String? @db.VarChar
+  data String? @db.VarChar
+
+  @@ignore
+  @@schema("purwosari")
+}
+
+model lvmdp_1_1 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm1       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model lvmdp_2_1 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm1       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model lvmdp_utility {
+  id           Int       @id @default(autoincrement())
+  group        String    @db.VarChar(50)
+  tegangan     String    @db.VarChar(10)
+  arus         String    @db.VarChar(10)
+  daya         String    @db.VarChar(10)
+  cost         String    @db.VarChar(10)
+  kw           String    @db.VarChar(10)
+  used         String    @db.VarChar(10)
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("('now'::text)::date")) @db.Date
+  jam          String?   @db.VarChar(10)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("purwosari")
+}
+
+model m_area {
+  areacode String  @id(map: "m_area_pk") @db.VarChar
+  name     String? @db.VarChar
+  group    String? @db.VarChar
+
+  @@schema("purwosari")
+}
+
+model m_machine_line {
+  plant_code String  @db.VarChar
+  machine_no String  @db.VarChar
+  line_no    String  @db.VarChar
+  uom        String? @db.VarChar
+
+  @@id([plant_code, machine_no, line_no], map: "m_machine_line_pk")
+  @@schema("purwosari")
+}
+
+model mc_ck_zone_6 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm4       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model mdpsub1_utility {
+  id          BigInt    @id(map: "mdpsub1_utility_pk") @default(autoincrement())
+  tegangan    String?   @db.VarChar(10)
+  arus        String    @db.VarChar(10)
+  daya        String    @db.VarChar(10)
+  cost        String    @db.VarChar(10)
+  grup        String?   @db.VarChar(15)
+  kw          String    @db.VarChar(10)
+  used        String    @db.VarChar(10)
+  readatetime DateTime? @default(now()) @db.Timestamptz(6)
+  tanggal     DateTime? @default(dbgenerated("('now'::text)::date")) @db.Date
+  jam         String?   @db.VarChar(10)
+  graph       String?   @db.VarChar(10)
+  type        String?   @db.VarChar(10)
+
+  @@schema("purwosari")
+}
+
+model mh {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm3       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model office {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm8       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model packing_a1 {
+  id           BigInt    @id(map: "packing_a11_pk") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamptz(6)
+  speed        Int?
+  tanggal      DateTime? @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@index([realdatetime], map: "packing_a11_realdatetime_idx")
+  @@schema("purwosari")
+}
+
+model packing_a2 {
+  id           BigInt    @id(map: "packing_a2_pk") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamptz(6)
+  speed        Int?
+  tanggal      DateTime? @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("purwosari")
+}
+
+model packing_a3 {
+  id           BigInt    @id(map: "packing_a2_pk_1") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamptz(6)
+  speed        Int?
+  tanggal      DateTime? @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("purwosari")
+}
+
+model packing_a4 {
+  id           BigInt    @id(map: "packing_a2_pk_1_1") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamptz(6)
+  speed        Int?
+  tanggal      DateTime? @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("purwosari")
+}
+
+model packing_a5 {
+  id           BigInt    @id(map: "packing_a2_pk_1_1_2") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamptz(6)
+  speed        Int?
+  tanggal      DateTime? @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("purwosari")
+}
+
+model packing_b1 {
+  id           BigInt    @id(map: "packing_a2_pk_1_1_2_1") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamptz(6)
+  speed        Int?
+  tanggal      DateTime? @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("purwosari")
+}
+
+model packing_b2 {
+  id           BigInt    @id(map: "packing_a2_pk_1_1_2_1_1") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamptz(6)
+  speed        Int?
+  tanggal      DateTime? @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("purwosari")
+}
+
+model packing_b3 {
+  id           BigInt    @id(map: "packing_a2_pk_1_1_2_1_1_1") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamptz(6)
+  speed        Int?
+  tanggal      DateTime? @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("purwosari")
+}
+
+model packing_b4 {
+  id           BigInt    @id(map: "packing_a2_pk_1_1_2_1_1_2") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamptz(6)
+  speed        Int?
+  tanggal      DateTime? @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("purwosari")
+}
+
+model packing_b5 {
+  id           BigInt    @id(map: "packing_a2_pk_1_1_2_1_1_3") @default(autoincrement())
+  counter      Int
+  status_mesin String    @db.VarChar(50)
+  time         String?   @db.VarChar(50)
+  realdatetime DateTime? @default(now()) @db.Timestamptz(6)
+  speed        Int?
+  tanggal      DateTime? @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("purwosari")
+}
+
+model packing_l1 {
+  id             BigInt    @id(map: "packing_l1_pk") @default(autoincrement())
+  counter_banded Int
+  counter_carton Int
+  realdatetime   DateTime? @default(now()) @db.Timestamp(6)
+  tanggal        DateTime? @default(dbgenerated("('now'::text)::date")) @db.Date
+  jam            String?   @db.VarChar(50)
+  graph          String?   @db.VarChar(10)
+
+  @@schema("purwosari")
+}
+
+model packing_l2 {
+  id             BigInt    @id(map: "packing_l1_pk_1") @default(autoincrement())
+  counter_banded Int
+  counter_carton Int
+  realdatetime   DateTime? @default(now()) @db.Timestamp(6)
+  tanggal        DateTime? @default(dbgenerated("('now'::text)::date")) @db.Date
+  jam            String?   @db.VarChar(50)
+  graph          String?   @db.VarChar(10)
+
+  @@schema("purwosari")
+}
+
+model packing_lt_1_zone_4_1 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm8       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model packing_lt_2_zone_4_2 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm5       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model proses_tcw {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm6       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model proses_wafer_zone_1_line_1_2 {
+  id           Int       @id(map: "proses_wafer_z_1_line_1_2_pkey") @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm3       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model proses_wafer_zone_1_line_3_4 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm11      String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model proses_zone_4_1_1 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm2       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model scada_ck_mixer_dough {
+  id     Int       @id(map: "ck_mixer_dough_pkey") @default(autoincrement())
+  weight Int?
+  date   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model spare {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  kwhpm10      String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+
+  @@schema("purwosari")
+}
+
+model spare_1 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm13      String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model spare_2 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm14      String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model spare_lvmdp_2_1 {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm11      String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model stp {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  kwhpm11      String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+
+  @@schema("purwosari")
+}
+
+model t_electricity_usage {
+  datetime     DateTime @default(now()) @db.Timestamptz(6)
+  areacode     String   @db.VarChar
+  arusl1       String?  @db.VarChar(50)
+  arusl2       String?  @db.VarChar(50)
+  arusl3       String?  @db.VarChar(50)
+  arusl4       String?  @db.VarChar(50)
+  daya         String?  @db.VarChar(50)
+  power_faktor String?  @db.VarChar(50)
+  kwhpm1       String?  @db.VarChar(50)
+  teganganl1   String?  @db.VarChar(50)
+  teganganl2   String?  @db.VarChar(50)
+  teganganl3   String?  @db.VarChar(50)
+  teganganl4   String?  @db.VarChar(50)
+
+  @@id([datetime, areacode], map: "t_electricity_usage_pk")
+  @@schema("purwosari")
+}
+
+model t_packing_counter {
+  datetime  DateTime @default(now()) @db.Timestamptz(6)
+  machineno String   @db.VarChar
+  status    String?  @db.VarChar
+  speed     Decimal? @db.Decimal
+  counter   Decimal? @db.Decimal
+
+  @@id([datetime, machineno], map: "t_packing_counter_pk")
+  @@index([datetime(sort: Desc)])
+  @@index([datetime], map: "t_packing_counter_datetime_idx_")
+  @@index([machineno])
+  @@schema("purwosari")
+}
+
+model t_packing_counter_archive {
+  datetime  DateTime @default(now()) @db.Timestamptz(6)
+  machineno String   @db.VarChar
+  status    String?  @db.VarChar
+  speed     Decimal? @db.Decimal
+  counter   Decimal? @db.Decimal
+
+  @@id([datetime, machineno], map: "t_packing_counter_archive_pk")
+  @@schema("purwosari")
+}
+
+model t_packing_counter_n {
+  machineno String   @id(map: "t_packing_counter_n_pk") @db.VarChar
+  status    String?  @db.VarChar
+  speed     Decimal? @db.Decimal
+  counter   Decimal? @db.Decimal
+  datetime  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model tankck3 {
+  id        Int       @id @default(autoincrement())
+  timestamp DateTime? @default(now()) @db.Timestamptz(6)
+  tank      String
+  berat     Decimal?  @db.Decimal
+
+  @@index([tank, timestamp], map: "idx_tank_time")
+  @@schema("purwosari")
+}
+
+model trafo_utility {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  kwhpm8       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+
+  @@schema("purwosari")
+}
+
+model washing_room {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  kwhpm12      String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model wtp {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  kwhpm9       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+
+  @@schema("purwosari")
+}
+
+model wwtp {
+  id           Int       @id @default(autoincrement())
+  arusl1       String?   @db.VarChar(50)
+  arusl2       String?   @db.VarChar(50)
+  arusl3       String?   @db.VarChar(50)
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  kwhpm7       String?   @db.VarChar(50)
+  teganganl1   String?   @db.VarChar(50)
+  daya         String?   @db.VarChar(50)
+  power_faktor String?   @db.VarChar(50)
+  arusl4       String?   @db.VarChar(50)
+  teganganl2   String?   @db.VarChar(50)
+  teganganl3   String?   @db.VarChar(50)
+  teganganl4   String?   @db.VarChar(50)
+
+  @@schema("purwosari")
+}

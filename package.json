@@ -13,6 +13,7 @@
   "author": "Mayora.Indah.Tbk PSR",
   "license": "ISC",
   "dependencies": {
+    "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.0.1",
     "axios": "^1.9.0",
     "bcryptjs": "^2.4.3",
