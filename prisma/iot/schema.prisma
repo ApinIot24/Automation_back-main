@@ -492,13 +492,11 @@ model l5_machine_status {
 
   @@schema("purwosari")
 }
-
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model log {
-  uuid String? @db.VarChar
+  id  String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  uuid String @db.VarChar
   data String? @db.VarChar
 
-  @@ignore
   @@schema("purwosari")
 }
 
@@ -1148,6 +1146,18 @@ model wwtp {
   teganganl2   String?   @db.VarChar(50)
   teganganl3   String?   @db.VarChar(50)
   teganganl4   String?   @db.VarChar(50)
+
+  @@schema("purwosari")
+}
+
+model gasmeter {
+  id         Int       @id @default(autoincrement())
+  line       String    @db.VarChar(50)
+  value1     Float?
+  value2     Float?
+  value3     Float?    @db.Real
+  value4     Float?    @db.Real
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
 
   @@schema("purwosari")
 }
