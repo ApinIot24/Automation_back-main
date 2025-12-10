@@ -850,3 +850,122 @@ model tilting_l5 {
 
   @@schema("automation")
 }
+
+model checklist_pm_astor {
+  id                  String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+
+  pm_astor_id         Int?
+  status_checklist    Int?      @default(0)
+  pic                 String?   @db.VarChar(100)
+  c_i                 Boolean?
+  l                   Boolean?
+  r                   Boolean?
+  keterangan          String?
+  foto                String?   @db.VarChar(255)
+  created_at          DateTime? @default(now()) @db.Timestamp(6)
+  updated_at          DateTime? @default(now()) @db.Timestamp(6)
+  week                Int?
+  year                Int?
+  tanggal             String?   @db.VarChar(20)
+  grup                String?   @db.VarChar(20)
+  machine_name        String?   @db.VarChar(225)
+  part_kebutuhan_alat String?   @db.VarChar(225)
+  equipment           String?   @db.VarChar(255)
+  kode_barang         String?   @db.VarChar(200)
+  seri                String?   @db.Char(1)
+  no                  Int?
+  periode             String?   @db.VarChar(80)
+  periode_start       String?   @db.VarChar(100)
+  qrcode              String?   @db.VarChar(250)
+
+  @@schema("automation")
+}
+
+model checklist_pm_biscuit {
+  id                  String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+
+  pm_biscuit_id       Int?
+  status_checklist    Int?      @default(0)
+  pic                 String?   @db.VarChar(100)
+  c_i                 Boolean?
+  l                   Boolean?
+  r                   Boolean?
+  keterangan          String?
+  foto                String?   @db.VarChar(255)
+  created_at          DateTime? @default(now()) @db.Timestamp(6)
+  updated_at          DateTime? @default(now()) @db.Timestamp(6)
+  week                Int?
+  year                Int?
+  tanggal             String?   @db.VarChar(20)
+  grup                String?   @db.VarChar(20)
+  machine_name        String?   @db.VarChar(225)
+  part_kebutuhan_alat String?   @db.VarChar(225)
+  equipment           String?   @db.VarChar(255)
+  kode_barang         String?   @db.VarChar(200)
+  seri                String?   @db.Char(1)
+  no                  Int?
+  periode             String?   @db.VarChar(80)
+  periode_start       String?   @db.VarChar(100)
+  qrcode              String?   @db.VarChar(250)
+
+  @@schema("automation")
+}
+model checklist_pm_utility {
+  id                  String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+
+  pm_utility_id       Int?
+  status_checklist    Int?      @default(0)
+  pic                 String?   @db.VarChar(100)
+  c_i                 Boolean?
+  l                   Boolean?
+  r                   Boolean?
+  keterangan          String?
+  foto                String?   @db.VarChar(255)
+  created_at          DateTime? @default(now()) @db.Timestamp(6)
+  updated_at          DateTime? @default(now()) @db.Timestamp(6)
+  week                Int?
+  year                Int?
+  tanggal             String?   @db.VarChar(20)
+  grup                String?   @db.VarChar(20)
+  machine_name        String?   @db.VarChar(225)
+  part_kebutuhan_alat String?   @db.VarChar(225)
+  equipment           String?   @db.VarChar(255)
+  kode_barang         String?   @db.VarChar(200)
+  seri                String?   @db.Char(1)
+  no                  Int?
+  periode             String?   @db.VarChar(80)
+  periode_start       String?   @db.VarChar(100)
+  qrcode              String?   @db.VarChar(250)
+
+  @@schema("automation")
+}
+
+model checklist_pm_wafer {
+  id                  String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+
+  pm_wafer_id         Int?
+  status_checklist    Int?      @default(0)
+  pic                 String?   @db.VarChar(100)
+  c_i                 Boolean?
+  l                   Boolean?
+  r                   Boolean?
+  keterangan          String?
+  foto                String?   @db.VarChar(255)
+  created_at          DateTime? @default(now()) @db.Timestamp(6)
+  updated_at          DateTime? @default(now()) @db.Timestamp(6)
+  week                Int?
+  year                Int?
+  tanggal             String?   @db.VarChar(20)
+  grup                String?   @db.VarChar(20)
+  machine_name        String?   @db.VarChar(225)
+  part_kebutuhan_alat String?   @db.VarChar(225)
+  equipment           String?   @db.VarChar(255)
+  kode_barang         String?   @db.VarChar(200)
+  seri                String?   @db.Char(1)
+  no                  Int?
+  periode             String?   @db.VarChar(80)
+  periode_start       String?   @db.VarChar(100)
+  qrcode              String?   @db.VarChar(250)
+
+  @@schema("automation")
+}
