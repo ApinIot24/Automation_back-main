@@ -492,9 +492,10 @@ model l5_machine_status {
 
   @@schema("purwosari")
 }
+
 model log {
-  id  String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  uuid String @db.VarChar
+  id   String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  uuid String  @db.VarChar
   data String? @db.VarChar
 
   @@schema("purwosari")

@@ -49,6 +49,8 @@ import formtiket from "./routes/ticket.js";
 
 // setting_pm
 import settingpm from "./routes/setting_pm/index.js";
+// gas meter
+import gasmeter from "./routes/utility/gasmeter/gasmeter.js";
 // sync_database
 import syncDatabase, { transferDataCron } from "./sync_database/syncdatabase.js";
 
@@ -232,6 +234,9 @@ app.use("/api", qrchecklist);
 
 app.use("/api", formtiket);
 app.use("/api", settingpm);
+
+// Gas meter routes
+app.use("/api", gasmeter);
 // Sync database routes
 app.use("/api", syncDatabase);
 // Health check endpoint
