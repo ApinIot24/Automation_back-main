@@ -126,7 +126,7 @@ export const GetPackingA5Shift3 = async (req, res) => {
             "Y"
         )
 
-        res.json(mapped.concat(nextShift))
+        res.json(serializeBigInt(mapped.concat(nextShift)))
     } catch (error) {
         console.error("Error in GET /shift3_a5:", error.message)
         res.status(500).json({ error: error.message })

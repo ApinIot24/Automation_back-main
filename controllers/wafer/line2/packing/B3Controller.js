@@ -132,7 +132,7 @@ export const GetPackingB3Shift3 = async (req, res) => {
       "Y"
     );
 
-    res.json(mapped.concat(dNext));
+    res.json(serializeBigInt(mapped.concat(dNext)));
   } catch (err) {
     console.error("Error /shift3_b3", err);
     res.status(500).json({ error: "Internal Server Error" });

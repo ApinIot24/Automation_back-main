@@ -18,6 +18,7 @@ export const GetWaferSelect = async (req, res) => {
 
     res.json(rows);
   } catch (e) {
+    console.error("Error in GetWaferSelect:", e)
     res.status(500).json({ error: e.message });
   }
 };
@@ -38,13 +39,14 @@ export const GetWaferQRCode = async (req, res) => {
 
     res.json(rows);
   } catch (e) {
+    console.error("Error in GetWaferQRCode:", e);
     res.status(500).json({ error: e.message });
   }
 };
 
 export const GetWaferListByGroupYear = async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group
     const year = parseInt(req.params.year, 10);
     const start = req.query.start ? parseInt(req.query.start, 10) : null;
     const end = req.query.end ? parseInt(req.query.end, 10) : null;
@@ -74,7 +76,9 @@ export const GetWaferListByGroupYear = async (req, res) => {
       queryArgs.skip = start;
       queryArgs.take = end - start + 1;
     }
-    const result = await req.db.pm_wafer.findMany(queryArgs);
+    const result = await automationDB.pm_wafer.findMany(queryArgs);
+
+    console.log("RAW RESULT:", result[0]);
 
     const totalWeeks = getTotalWeeksInYear(year);
     const modifiedData = result.map((row) => ({
