@@ -1,5 +1,5 @@
 import moment from "moment";
-import { rawAutomation as raw } from "../../../config/sqlRaw.js";
+import { rawAutomation as raw, serializeBigInt } from "../../../config/sqlRaw.js";
 import {
   Hourly,
   HourlyNextDay,
@@ -75,25 +75,30 @@ export const GetShift2L2 = async (req, res) => {
   res.send(data);
 };
 export const GetShift3L2 = async (req, res) => {
-  const today = new Date();
-  const next = moment().add(1, "day").toDate();
-
-  const d23 = await automationDB.packing_l2.findMany({
-    where: { tanggal: today, graph: "Y", jam: "23.0" },
-    orderBy: { id: "asc" }
-  });
-
-  const mapped = d23.map(r => ({
-    jam: "0.23",
-    counter: r.counter
-  }));
-
-  const dNext = await automationDB.packing_l2.findMany({
-    where: { tanggal: next, graph: "Y", jam: { in: JamListNormalShift3 } },
-    orderBy: { id: "asc" }
-  });
-
-  res.send(mapped.concat(dNext));
+  try {
+    const today = new Date();
+    const next = moment().add(1, "day").toDate();
+  
+    const d23 = await automationDB.packing_l2.findMany({
+      where: { tanggal: today, graph: "Y", jam: "23.0" },
+      orderBy: { id: "asc" }
+    });
+  
+    const mapped = d23.map(r => ({
+      jam: "0.23",
+      counter: r.counter
+    }));
+  
+    const dNext = await automationDB.packing_l2.findMany({
+      where: { tanggal: next, graph: "Y", jam: { in: JamListNormalShift3 } },
+      orderBy: { id: "asc" }
+    });
+  
+    res.send(serializeBigInt(mapped.concat(dNext)));
+  } catch (err) {
+    console.error("Error /shift3_l2", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
 // ==== ini SHIFT L2 PACKING PERJAM ====
 export const GetShift1L2Hourly = async (req, res) => {

@@ -1,5 +1,5 @@
 import moment from "moment";
-import { rawAutomation as raw } from "../../../config/sqlRaw.js";
+import { rawAutomation as raw, serializeBigInt } from "../../../config/sqlRaw.js";
 import { Hourly, HourlyNextDay, JamListNormalShift1, JamListNormalShift2, JamListNormalShift3, JamListShortShift1, JamListShortShift2, NextHours } from "../../../src/constant/jamShift.js";
 import { automationDB } from "../../../src/db/automation.js";
 
@@ -84,6 +84,8 @@ export const GetShift2L1 = async (req, res) => {
     res.send(data);
 }
 export const GetShift3L1 = async (req, res) => {
+  try {
+
     const today = format(new Date());
     const todayISO = new Date(today + "T00:00:00.000Z");
     const next = moment().add(1, "day").toDate();
@@ -102,7 +104,11 @@ export const GetShift3L1 = async (req, res) => {
         where: { tanggal: next, graph: "Y", jam: { in: JamListNormalShift3 } },
         orderBy: { id: "asc" }
     })
-    res.send(mapped.concat(dNext));
+    res.send(serializeBigInt(mapped.concat(dNext)));
+  } catch (error) {
+    console.error('Error in GET /shift3_l1:', error.message);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 }
 // ==== ini SHIFT L1 PACKING PERJAM ====
 export const GetShift1L1Hourly = async (req, res) => {

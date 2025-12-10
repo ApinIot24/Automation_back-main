@@ -7,7 +7,7 @@ import {
   JamListNormalShift3
 } from "../../../../src/constant/jamShift.js";
 import { iotDB } from "../../../../src/db/iot.js";
-import { rawIot as raw } from "../../../../config/sqlRaw.js";
+import { rawIot as raw, serializeBigInt } from "../../../../config/sqlRaw.js";
 import { getShiftDataToday, getShiftDataForDate } from "../../../../config/shiftHelper.js";
 
 // Helper functions
@@ -128,7 +128,7 @@ export const GetPackingB4Shift3 = async (req, res) => {
       "Y"
     );
 
-    res.json(mapped.concat(dNext));
+    res.json(serializeBigInt(mapped.concat(dNext)));
   } catch (err) {
     console.error("Error /shift3_b4", err);
     res.status(500).json({ error: "Internal Server Error" });
