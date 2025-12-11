@@ -131,7 +131,7 @@ export const createLhpL5 = async (req, res) => {
         batch_buat,
         variance_batch,
         variance_fg,
-        bubuk,
+        bubuk: String(bubuk),
         berat_kering: beratKering,
         berat_basah: beratBasah,
         rmd,                                       

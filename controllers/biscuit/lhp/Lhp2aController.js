@@ -146,7 +146,7 @@ export const createLine2a = async (req, res) => {
         renceng_output_kg,
         tray_output,
         tray_output_kg,
-        bubuk,
+        bubuk: String(bubuk),
         berat_basah,
         berat_kering,
         rmd,
