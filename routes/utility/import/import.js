@@ -2,6 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import importExcelUtility from "../../../controllers/importExcelUtility.js";
 import fs from "fs";
+import { getPmUtilityGroupingByYear } from "../../../controllers/utility/import/pmUtilityController.js";
 
 const router = Router();
 const upload = multer({ dest: "uploads/" });
@@ -185,56 +186,7 @@ router.get("/pm_utility/qrcode/:group", async (req, res) => {
   }
 });
 
-router.get("/pm_utility/:group/:year", async (req, res) => {
-  try {
-    const group = req.params.group;
-    const year = parseInt(req.params.year, 10); // Tahun target
-
-    // Ambil query parameter, jika tidak ada maka beri nilai null
-    const start = req.query.start ? parseInt(req.query.start, 10) : null;
-    const end = req.query.end ? parseInt(req.query.end, 10) : null;
-    const searchTerm = req.query.searchTerm
-      ? req.query.searchTerm.toLowerCase()
-      : "";
-
-    let result;
-
-    // Jika parameter start dan end valid, gunakan pagination dan pencarian
-    if (start !== null && end !== null && !isNaN(start) && !isNaN(end)) {
-      result = await req.db.query(
-        `SELECT * FROM automation.pm_utility 
-         WHERE grup = $1 
-           AND (machine_name ILIKE $2 OR kode_barang ILIKE $2 OR equipment ILIKE $2 OR part_kebutuhan_alat ILIKE $2)
-         ORDER BY no ASC 
-         LIMIT $3 OFFSET $4`,
-        [group, `%${searchTerm}%`, end - start + 1, start]
-      );
-    } else {
-      // Jika tidak ada parameter start dan end, ambil seluruh data berdasarkan grup
-      result = await req.db.query(
-        "SELECT * FROM automation.pm_utility WHERE grup = $1 ORDER BY no ASC",
-        [group]
-      );
-    }
-
-    // Asumsikan fungsi getTotalWeeksInYear dan generateWeeklyDataForTargetYear sudah didefinisikan
-    const totalWeeks = getTotalWeeksInYear(year);
-    const modifiedData = result.rows.map((row) => ({
-      ...row,
-      week: generateWeeklyDataForTargetYear(
-        totalWeeks,
-        row.periode,
-        row.periode_start,
-        year
-      ),
-    }));
-
-    res.json(modifiedData);
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    res.status(500).json({ error: "Error fetching data" });
-  }
-});
+router.get("/pm_utility/:group/:year", getPmUtilityGroupingByYear);
 
 router.post("/pm_utility/machine", async (req, res) => {
   try {

@@ -1,3 +1,4 @@
+import { parseTimeToISO, serializeBigInt } from "../../../config/sqlRaw.js";
 import { automationDB } from "../../../src/db/automation.js";
 
 export const createLHP = async (req, res) => {
@@ -144,13 +145,24 @@ export const createLHP = async (req, res) => {
     });
 
     const idLhp = newLhp.id;
+    const todayDate = realdatetime.split("T")[0]; // "2025-12-10"
 
     const kendalaJson = {};
     downtime.forEach((dt, i) => {
-      kendalaJson[`kendala${i + 1}`] =
-        `Time Start: ${dt.time_start}, Time Stop: ${dt.time_stop}, ` +
-        `Total DT: ${dt.total_dt}, Kendala: ${dt.kendala}, ` +
-        `Unit Mesin: ${dt.unit_mesin}, Part Mesin: ${dt.part_mesin}`;
+      // kendalaJson[`kendala${i + 1}`] =
+      //   `Time Start: ${dt.time_start}, Time Stop: ${dt.time_stop}, ` +
+      //   `Total DT: ${dt.total_dt}, Kendala: ${dt.kendala}, ` +
+      //   `Unit Mesin: ${dt.unit_mesin}, Part Mesin: ${dt.part_mesin}`;
+      kendalaJson[`kendala${i + 1}`] = {
+        time_start: parseTimeToISO(todayDate, dt.time_start),
+        time_stop: parseTimeToISO(todayDate, dt.time_stop),
+        total_dt: dt.total_dt && dt.total_dt.toString().trim() !== "" 
+                  ? String(dt.total_dt) 
+                  : "0",
+        kendala: dt.kendala,
+        unit_mesin: dt.unit_mesin,
+        part_mesin: dt.part_mesin,
+      };
     });
 
     await automationDB.lhp.update({
@@ -158,13 +170,23 @@ export const createLHP = async (req, res) => {
       data: { kendala: kendalaJson },
     });
 
-    if (downtime.length > 0) {
+    const validDowntime = downtime.filter(
+      (dt) =>
+        (dt.time_start && dt.time_start.toString().trim() !== "") ||
+        (dt.time_stop && dt.time_stop.toString().trim() !== "") ||
+        (dt.total_dt && dt.total_dt.toString().trim() !== "") ||
+        (dt.kendala && dt.kendala.toString().trim() !== "")
+    );
+
+    if (validDowntime.length > 0) {
       await automationDB.downtime.createMany({
-        data: downtime.map((dt) => ({
+        data: validDowntime.map((dt) => ({
           id_lhp: idLhp,
-          time_start: dt.time_start,
-          time_stop: dt.time_stop,
-          total_dt: dt.total_dt,
+          time_start: parseTimeToISO(todayDate, dt.time_start),
+          time_stop: parseTimeToISO(todayDate, dt.time_stop),
+          total_dt: dt.total_dt && dt.total_dt.toString().trim() !== "" 
+                    ? String(dt.total_dt) 
+                    : "0",
           kategori_downtime: dt.kategori_downtime,
           unit_mesin: dt.unit_mesin,
           part_mesin: dt.part_mesin,
@@ -358,7 +380,7 @@ ORDER BY ac.realdatetime, ac.shift;
 
         const result = await automationDB.$queryRawUnsafe(query, formattedDate, line);
 
-        return res.json(result);
+        return res.json(serializeBigInt(result));
     } catch (error) {
         console.error("Error executing getDailyLHPByDate:", error);
         return res.status(500).json({
