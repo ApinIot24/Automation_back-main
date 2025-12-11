@@ -1,3 +1,4 @@
+import { parseTimeToISO } from "../../../config/sqlRaw.js";
 import { automationDB } from "../../../src/db/automation.js";
 function format(date) {
   if (!(date instanceof Date)) {
@@ -86,6 +87,8 @@ export const createLhpL5 = async (req, res) => {
         return res.status(400).json({ message: "Missing required fields" })
     }
     const dateFormat = new Date(realdatetime.slice(0, 10))
+    const todayDate = realdatetime.split("T")[0];
+    
     const existing = await automationDB.lhp_l5.findFirst({
       where: {
         realdatetime: dateFormat,
@@ -98,15 +101,19 @@ export const createLhpL5 = async (req, res) => {
         message: `Data already exists for ${realdatetime} shift ${shift} grup ${grup}`
       });
     }
+
     const kendalaJson = {};
     downtime?.forEach((item, index) => {
-      kendalaJson[`kendala${index + 1}`] =
-        `Time Start: ${item.time_start}, ` +
-        `Time Stop: ${item.time_stop}, ` +
-        `Total DT: ${item.total_dt}, ` +
-        `Kendala: ${item.kendala}, ` +
-        `Unit Mesin: ${item.unit_mesin}, ` +
-        `Part Mesin: ${item.part_mesin}`;
+      kendalaJson[`kendala${index + 1}`] = {
+        time_start: parseTimeToISO(todayDate, item.time_start),
+        time_stop: parseTimeToISO(todayDate, item.time_stop),
+        total_dt: item.total_dt && item.total_dt.toString().trim() !== "" 
+                  ? String(item.total_dt) 
+                  : "0",
+        kendala: item.kendala,
+        unit_mesin: item.unit_mesin,
+        part_mesin: item.part_mesin,
+      };
     });
 
     const newLhp = await automationDB.lhp_l5.create({
@@ -186,9 +193,11 @@ export const createLhpL5 = async (req, res) => {
           automationDB.downtime_l5.create({
             data: {
               id_lhp: newLhp.id,
-              time_start: d.time_start,
-              time_stop: d.time_stop,
-              total_dt: d.total_dt,
+              time_start: parseTimeToISO(todayDate, d.time_start),
+              time_stop: parseTimeToISO(todayDate, d.time_stop),
+              total_dt: d.total_dt && d.total_dt.toString().trim() !== ""
+                    ? String(d.total_dt)
+                    : "0",
               kendala: d.kendala,
               unit_mesin: d.unit_mesin,
               part_mesin: d.part_mesin,

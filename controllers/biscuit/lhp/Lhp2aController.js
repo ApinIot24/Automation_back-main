@@ -1,5 +1,5 @@
+import { parseTimeToISO } from "../../../config/sqlRaw.js";
 import { automationDB } from "../../../src/db/automation.js";
-
 
 export const createLine2a = async (req, res) => {
   const body = req.body;
@@ -94,12 +94,12 @@ export const createLine2a = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const dateformat = realdatetime.slice(0, 10);
+    const dateformat = new Date(realdatetime.slice(0, 10));
 
     // CEK DUPLICATE
     const existing = await automationDB.lhp_malkist_2.findFirst({
       where: {
-        realdatetime: new Date(dateformat),
+        realdatetime: dateformat,
         shift,
         grup,
       },
@@ -110,20 +110,30 @@ export const createLine2a = async (req, res) => {
         message: `Data already exists for ${dateformat} shift ${shift}`
       });
     }
+    const todayDate = realdatetime.split("T")[0];
 
     // ===== BUILD JSON KENDALA =====
     const kendalaJson = {};
     (downtime || []).forEach((d, idx) => {
-      kendalaJson[`kendala${idx + 1}`] =
-        `Start: ${d.time_start}, Stop: ${d.time_stop}, Total: ${d.total_dt}, ` +
-        `Kendala: ${d.kendala}, Unit: ${d.unit_mesin}, Part: ${d.part_mesin}`;
+      // kendalaJson[`kendala${idx + 1}`] =
+      //   `Start: ${d.time_start}, Stop: ${d.time_stop}, Total: ${d.total_dt}, ` +
+      //   `Kendala: ${d.kendala}, Unit: ${d.unit_mesin}, Part: ${d.part_mesin}`;
+      kendalaJson[`kendala${idx + 1}`] ={
+        time_start: parseTimeToISO(todayDate, d.time_start),
+        time_stop: parseTimeToISO(todayDate, d.time_stop),
+        total_d: d.total_d && d.total_d.toString().trim() !== "" 
+                ? String(d.total_d) 
+                : "0",
+        kendala: d.kendala,
+        unit_mesin: d.unit_mesin,
+        part_mesin: d.part_mesin,}
     });
 
     // ===== CREATE LHP (ALL 80 FIELDS) =====
     const lhp = await automationDB.lhp_malkist_2.create({
       data: {
         users_input,
-        realdatetime: new Date(realdatetime),
+        realdatetime: dateformat,
         grup,
         shift,
         sku,
@@ -206,15 +216,25 @@ export const createLine2a = async (req, res) => {
     });
 
     // ===== INSERT DOWNTIME RELATION =====
-    if (downtime?.length > 0) {
+    const validDowntime = downtime.filter(
+      (dt) =>
+        (dt.time_start && dt.time_start.toString().trim() !== "") ||
+        (dt.time_stop && dt.time_stop.toString().trim() !== "") ||
+        (dt.total_dt && dt.total_dt.toString().trim() !== "") ||
+        (dt.kendala && dt.kendala.toString().trim() !== "")
+    );
+
+    if (validDowntime.length > 0) {
       await automationDB.$transaction(
-        downtime.map((d) =>
+        validDowntime.map((d) =>
           automationDB.downtime_line2a.create({
             data: {
               id_lhp: lhp.id,
-              time_start: d.time_start,
-              time_stop: d.time_stop,
-              total_dt: d.total_dt,
+              time_start: parseTimeToISO(todayDate, d.time_start),
+              time_stop: parseTimeToISO(todayDate, d.time_stop),
+              total_dt: d.total_dt && d.total_dt.toString().trim() !== "" 
+                    ? String(d.total_dt) 
+                    : "0",
               kendala: d.kendala,
               unit_mesin: d.unit_mesin,
               part_mesin: d.part_mesin,

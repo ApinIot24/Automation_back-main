@@ -1,5 +1,29 @@
 import { generateWeeklyDataForTargetYear, getTotalWeeksInYear } from "../../../config/dateUtils.js";
 import { automationDB } from "../../../src/db/automation.js";
+import { rawAutomation as raw } from "../../../config/sqlRaw.js";
+
+export async function getMachinePMListByGroup(req, res) {
+  try {
+    const { group } = req.params;
+    // const { group } = req.params.group;
+
+    const result = await raw(`
+      SELECT machine_name, no
+      FROM (
+        SELECT DISTINCT ON (machine_name) machine_name, no
+        FROM automation.pm_utility
+        WHERE grup = '${group}'
+        ORDER BY machine_name, no ASC
+      ) AS unique_machines
+      ORDER BY no ASC;
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching data:", err);
+    res.status(500).json({ error: "Error fetching data" });
+  }
+}
 
 export async function getPmUtilityGroupingByYear(req, res) {
   try {

@@ -435,9 +435,11 @@ export const createLHPL7 = async (req, res) => {
       downtime = [],
     } = req.body;
 
+    const dateFormat = new Date(realdatetime.slice(0, 10))
+
     const existing = await automationDB.lhp.findFirst({
       where: {
-        realdatetime,
+        realdatetime: dateFormat,
         shift,
         grup,
       },
@@ -451,7 +453,7 @@ export const createLHPL7 = async (req, res) => {
 
     const newLhp = await automationDB.lhp.create({
       data: {
-        realdatetime,
+        realdatetime: dateFormat,
         grup,
         shift,
         sku,
@@ -484,7 +486,7 @@ export const createLHPL7 = async (req, res) => {
         banded_over,
         cutoff_jam,
         ctn_luar,
-        d_b,
+        d_b: Number(d_b),
         plastik_pof,
         coklat_used,
         sortir,
@@ -494,13 +496,20 @@ export const createLHPL7 = async (req, res) => {
     });
 
     const idLhp = newLhp.id;
+    const todayDate = realdatetime.split("T")[0];
 
     const kendalaJson = {};
     downtime.forEach((dt, i) => {
-      kendalaJson[`kendala${i + 1}`] =
-        `Time Start: ${dt.time_start}, Time Stop: ${dt.time_stop}, ` +
-        `Total DT: ${dt.total_dt}, Kendala: ${dt.kendala}, ` +
-        `Unit Mesin: ${dt.unit_mesin}, Part Mesin: ${dt.part_mesin}`;
+      kendalaJson[`kendala${i + 1}`] = {
+        time_start: parseTimeToISO(todayDate, dt.time_start),
+        time_stop: parseTimeToISO(todayDate, dt.time_stop),
+        total_dt: dt.total_dt && dt.total_dt.toString().trim() !== "" 
+                  ? String(dt.total_dt) 
+                  : "0",
+        kendala: dt.kendala,
+        unit_mesin: dt.unit_mesin,
+        part_mesin: dt.part_mesin,
+      };
     });
 
     // Update kendala JSONB
@@ -509,13 +518,23 @@ export const createLHPL7 = async (req, res) => {
       data: { kendala: kendalaJson },
     });
 
-    if (downtime.length > 0) {
+    const validDowntime = downtime.filter(
+      (dt) =>
+        (dt.time_start && dt.time_start.toString().trim() !== "") ||
+        (dt.time_stop && dt.time_stop.toString().trim() !== "") ||
+        (dt.total_dt && dt.total_dt.toString().trim() !== "") ||
+        (dt.kendala && dt.kendala.toString().trim() !== "")
+    );
+
+    if (validDowntime.length > 0) {
       await automationDB.downtime.createMany({
-        data: downtime.map((dt) => ({
+        data: validDowntime.map((dt) => ({
           id_lhp: idLhp,
-          time_start: dt.time_start,
-          time_stop: dt.time_stop,
-          total_dt: dt.total_dt,
+          time_start: parseTimeToISO(todayDate, dt.time_start),
+          time_stop: parseTimeToISO(todayDate, dt.time_stop),
+          total_dt: dt.total_dt && dt.total_dt.toString().trim() !== "" 
+                    ? String(dt.total_dt) 
+                    : "0",
           kategori_downtime: dt.kategori_downtime,
           unit_mesin: dt.unit_mesin,
           part_mesin: dt.part_mesin,
