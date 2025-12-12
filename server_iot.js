@@ -25,6 +25,7 @@ import line6 from "./routes/wafer/line6/line6.js";
 import line7 from "./routes/wafer/line7/line7.js";
 import line5 from "./routes/biscuit/line5/line5.js";
 import line2a from "./routes/biscuit/lhp/lhp_2a.js";
+import line2b from "./routes/biscuit/line2/line2.js"
 import downtime_biscuit from "./routes/biscuit/downtime/downtime.js";
 import lhp_biscuit from "./routes/biscuit/lhp/lhp.js";
 import central_kitchen from "./routes/central_kitchen.js";
@@ -212,6 +213,7 @@ app.use("/", lhp_wafer);
 app.use("/", control_wafer);
 app.use("/malkist", line2a); // Assuming line2a is a duplicate of line5, adjust as needed
 app.use("/", line5);
+app.use("/", line2b)
 app.use("/", downtime_biscuit);
 app.use("/", lhp_biscuit);
 
