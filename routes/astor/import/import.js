@@ -153,7 +153,7 @@ function getTotalWeeksInYear(year) {
 
 router.get("/pm_astor/select/:group", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
 
     // Query untuk mendapatkan machine_name yang unik
     const result = await req.db.query(
@@ -171,7 +171,7 @@ router.get("/pm_astor/select/:group", async (req, res) => {
 
 router.get("/pm_astor/qrcode/:group", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10); // Get the group parameter from the route
+    const group = req.params.group; // Get the group parameter from the route
     if (isNaN(group)) {
       return res.status(400).send("Invalid group parameter");
     }
@@ -190,7 +190,7 @@ router.get("/pm_astor/qrcode/:group", async (req, res) => {
 
 router.get("/pm_astor/:group/:year", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const year = parseInt(req.params.year, 10); // Tahun target
 
     // Ambil query parameter, jika tidak ada maka beri nilai null
@@ -257,7 +257,7 @@ router.post("/pm_astor/machine", async (req, res) => {
 
 // router.get("/pm_astor/:group/:year", async (req, res) => {
 //   try {
-//     const group = parseInt(req.params.group, 10);
+//     const group = req.params.group;
 //     const year = parseInt(req.params.year, 10); // Tahun target (misalnya, 2024)
 
 //     // Mengambil parameter 'start' dan 'end' dari query string
@@ -300,7 +300,7 @@ router.get(
   "/pm_astor/filter/checklist/data/:group/:year/:week",
   async (req, res) => {
     try {
-      const group = parseInt(req.params.group, 10);
+      const group = req.params.group;
       const year = parseInt(req.params.year, 10);
       const currentWeek = parseInt(req.params.week, 10);
 
@@ -364,7 +364,7 @@ router.get(
   "/pm_astor/filter/checklist/:group/:year/:week",
   async (req, res) => {
     try {
-      const group = parseInt(req.params.group, 10);
+      const group = req.params.group;
       const year = parseInt(req.params.year, 10);
       const currentWeek = parseInt(req.params.week, 10);
 
@@ -472,7 +472,7 @@ router.get(
 
 router.get("/pm_astor/filter/:group/:year/:week", async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
     let totalweeksetting = await req.db.query(
@@ -1159,7 +1159,7 @@ router.post("/import/astor/:grup", upload.single("file"), async (req, res) => {
 router.delete("/deleted/astor/:group", async (req, res) => {
   try {
     // Menghapus data di database berdasarkan group
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const result = await req.db.query(
       "DELETE FROM automation.pm_astor WHERE grup = $1 RETURNING *",
       [group]

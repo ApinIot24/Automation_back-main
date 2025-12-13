@@ -17,7 +17,7 @@ router.get("/pm_wafer/filter/all/:group/:year/:week", GetWaferFilterAll);
 
 // router.get("/pm_wafer/:group/:year", async (req, res) => {
 //   try {
-//     const group = parseInt(req.params.group, 10);
+//     const group = req.params.group;
 //     const year = parseInt(req.params.year, 10); // Tahun target (misalnya, 2024)
 
 //     // Mengambil parameter 'start' dan 'end' dari query string

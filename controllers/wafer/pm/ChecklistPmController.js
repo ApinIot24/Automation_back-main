@@ -3,7 +3,7 @@ import { generateWeeklyDataForTargetYear, getTotalWeeksInYear } from "./utilsPm.
 
 export const GetChecklistFilteredData = async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const week = parseInt(req.params.week, 10);
 
@@ -60,7 +60,7 @@ export const GetChecklistFilteredData = async (req, res) => {
 
 export const GetChecklistDataFull = async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
 

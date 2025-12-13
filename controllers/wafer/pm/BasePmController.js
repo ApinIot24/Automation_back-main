@@ -3,7 +3,7 @@ import { generateWeeklyDataForTargetYear,getTotalWeeksInYear } from "./utilsPm.j
 
 export const GetWaferSelect = async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
 
     const rows = await automationDB.$queryRaw`
       SELECT machine_name, no
@@ -25,7 +25,7 @@ export const GetWaferSelect = async (req, res) => {
 
 export const GetWaferQRCode = async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     if (isNaN(group)) {
       return res.status(400).send("Invalid group parameter");
     }
@@ -114,7 +114,7 @@ export const GetMachineByNameAndGroup = async (req, res) => {
 
 export const GetWaferFiltered = async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
 
@@ -177,7 +177,7 @@ export const GetWaferFiltered = async (req, res) => {
 
 export const GetWaferFilterAll = async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const week = parseInt(req.params.week, 10);
 

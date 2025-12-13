@@ -181,7 +181,7 @@ export const UpdateWaferField = async (req, res) => {
 
 export const DeleteWaferByGroup = async (req, res) => {
   try {
-    const group = parseInt(req.params.group, 10);
+    const group = req.params.group;
     const result = await automationDB.$queryRaw`
       DELETE FROM automation.pm_wafer
       WHERE grup = ${group}
