@@ -1,23 +1,23 @@
-import importExcelUtility from "../../importExcelUtility.js";
+import importExcelBiscuit from "../../../controllers/importExcelBiscuit.js";
 
-export async function importUtility(req, res) {
+export async function importBiscuit(req, res) {
   try {
     const filePath = req.file.path;
 
-    await importExcelUtility(filePath);
+    await importExcelBiscuit(filePath);
 
-    res.status(200).send({ message: "Data berhasil diimpor ke PostgreSQL" });
+    res.json({ message: "Data berhasil diimpor ke PostgreSQL" });
   } catch (error) {
     res.status(500).send("Gagal mengimpor data: " + error.message);
   }
 }
 
-export async function importUtilityByGroup(req, res) {
+export async function importBiscuitByGroup(req, res) {
   try {
     const filePath = req.file.path;
     const grup = req.params.grup;
 
-    await importExcelUtility(filePath, grup);
+    await importExcelBiscuit(filePath, grup);
 
     res.status(200).send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
     } catch (error) {

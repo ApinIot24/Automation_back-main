@@ -1,7 +1,8 @@
-import { generateWeeklyDataForTargetYear, getTotalWeeksInYear } from "../../../config/dateUtils.js";
+// controllers/pmBiscuit/pmChecklist.controller.js
 import { automationDB } from "../../../src/db/automation.js";
-
-export async function submitChecklistWeekUtilityByGroup(req, res) {
+import { generateWeeklyDataForTargetYear, getTotalWeeksInYear } from "../../../config/dateUtils.js";
+// ========================== SUBMIT CHECKLIST ==========================
+export async function submitChecklistWeekByGroup(req, res) {
   try {
     const { year, week, data } = req.body;
     const grup = req.params.grup;
@@ -12,7 +13,7 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
     }
 
     // Check duplicate submission for same week/year/group
-    const exists = await automationDB.checklist_pm_utility.findFirst({
+    const exists = await automationDB.checklist_pm_biscuit.findFirst({
       where: { week, year, grup: grupString }
     });
 
@@ -22,8 +23,8 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
       });
     }
 
-    // Get PM Utility original data
-    const pmRows = await automationDB.pm_utility.findMany({
+    // Get PM Biscuit original data
+    const pmRows = await automationDB.pm_biscuit.findMany({
       where: { id: { in: data }, grup: grupString },
       select: {
         id: true, machine_name: true, part_kebutuhan_alat: true, equipment: true, kode_barang: true,
@@ -32,13 +33,13 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
     });
 
     if (pmRows.length === 0) {
-      return res.status(404).json({ error: "Data tidak ditemukan pada PM Utility" });
+      return res.status(404).json({ error: "Data tidak ditemukan pada PM Biscuit" });
     }
 
     // Create many
-    await automationDB.checklist_pm_utility.createMany({
+    await automationDB.checklist_pm_biscuit.createMany({
       data: pmRows.map(r => ({
-        pm_utility_id: r.id,
+        pm_biscuit_id: r.id,
         week,
         year,
         grup,
@@ -53,7 +54,7 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
       }))
     });
 
-    const insertedRows = await automationDB.checklist_pm_utility.findMany({
+    const insertedRows = await automationDB.checklist_pm_biscuit.findMany({
       where: { week, year, grup: grupString },
       orderBy: { id: "asc" }
     })
@@ -68,13 +69,14 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
     res.status(500).json({ error: "Terjadi kesalahan pada server" });
   }
 }
+
 // ========================== UPDATE CHECKLIST ==========================
-export async function updateChecklistUtility(req, res) {
+export async function updateChecklist(req, res) {
   try {
     const { id } = req.params;
     const { pic, c_i, l, r, keterangan, tanggal } = req.body;
 
-    const updated = await automationDB.checklist_pm_utility.update({
+    const updated = await automationDB.checklist_pm_biscuit.update({
       where: { id: id },
       data: {
         pic,
@@ -96,17 +98,19 @@ export async function updateChecklistUtility(req, res) {
       data: updated
     });
   } catch (err) {
-    console.error("Error updating machine checklist:", err)
-    res.status(500).json({ error: "Failed to update checklist", details: err.message });
+    // if (err.code === "P2025") {
+    //   return res.status(404).json({ error: "Data not found for the given ID" });
+    // }
+    res.status(500).json({ error: err.message });
   }
 }
 
 // ========================== DELETE CHECKLIST (BY WEEK) ==========================
-export async function deleteChecklistUtilityByWeek(req, res) {
+export async function deleteChecklistByWeek(req, res) {
   try {
     const { week, grup } = req.params;
 
-    const deleted = await automationDB.checklist_pm_utility.deleteMany({
+    const deleted = await automationDB.checklist_pm_biscuit.deleteMany({
       where: { week: week, grup }
     });
 
@@ -122,14 +126,15 @@ export async function deleteChecklistUtilityByWeek(req, res) {
     res.status(500).json({ error: "Failed to delete checklist", details: err.message });
   }
 }
+
 // ========================== GET CHECKLIST (FILTERED) ==========================
-export async function getChecklistUtilityData(req, res) {
+export async function getChecklistData(req, res) {
   try {
     const { group, year, week } = req.params;
     const currentWeek = parseInt(week, 10);
     const totalWeeks = getTotalWeeksInYear(parseInt(year, 10));
 
-    const pmRows = await automationDB.pm_utility.findMany({
+    const pmRows = await automationDB.pm_biscuit.findMany({
       where: { grup: group },
       orderBy: { no: "asc" }
     });
@@ -178,18 +183,19 @@ export async function getChecklistUtilityData(req, res) {
     res.status(500).json({ error: "Error fetching data" });
   }
 }
-export async function getChecklistUtilitySubmitted(req, res) {
+
+export async function getChecklistSubmitted(req, res) {
   try {
     const { group, year, week } = req.params;
     const currentWeek = parseInt(week, 10);
     const totalWeeks = getTotalWeeksInYear(parseInt(year, 10));
     const parsedYear = parseInt(year, 10);
 
-    const rows = await automationDB.checklist_pm_utility.findMany({
+    const rows = await automationDB.checklist_pm_biscuit.findMany({
       where: { grup: group, year: parsedYear, week: currentWeek },
       select: {
         id: true,
-        pm_utility_id: true,
+        pm_biscuit_id: true,
         status_checklist: true,
         pic: true,
         c_i: true,
@@ -252,14 +258,15 @@ export async function getChecklistUtilitySubmitted(req, res) {
     res.status(500).json({ error: "Error fetching data" });
   }
 }
-export async function getChecklistUtilityRange(req, res) {
+
+export async function getChecklistRange(req, res) {
   try {
     const { group, year, week } = req.params;
     const currentWeek = parseInt(week, 10);
     const parsedYear = parseInt(year, 10);
 
     const setting = await automationDB.setting_pm.findFirst({
-      where: { grup: group, pmtablename: "pm_utility" },
+      where: { grup: group, pmtablename: "pm_biscuit" },
       select: { week: true }
     });
 
@@ -270,7 +277,7 @@ export async function getChecklistUtilityRange(req, res) {
     const totalWeeksSetting = setting?.week;
     const totalWeeks = getTotalWeeksInYear(parsedYear);
 
-    const pmRows = await automationDB.pm_utility.findMany({
+    const pmRows = await automationDB.pm_biscuit.findMany({
       where: { grup: group },
       orderBy: { no: "asc" }
     });
@@ -318,14 +325,15 @@ export async function getChecklistUtilityRange(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
-export async function getChecklistUtilityAll(req, res) {
+
+export async function getChecklistAll(req, res) {
   try {
     const { group, year, week } = req.params;
     const parsedYear = parseInt(year, 10)
     const currentWeek = parseInt(week, 10);
 
     const setting = await automationDB.setting_pm.findFirst({
-      where: { grup: group, pmtablename: "pm_utility" },
+      where: { grup: group, pmtablename: "pm_biscuit" },
       select: { week: true }
     });
     if (!setting) {
@@ -335,7 +343,7 @@ export async function getChecklistUtilityAll(req, res) {
     const totalWeeksSettingVal = setting?.week ?? 1;
     const totalWeeks = getTotalWeeksInYear(parsedYear);
 
-    const pmRows = await automationDB.pm_utility.findMany({
+    const pmRows = await automationDB.pm_biscuit.findMany({
       where: { grup: group },
       orderBy: { no: "asc" }
     });
@@ -386,14 +394,15 @@ export async function getChecklistUtilityAll(req, res) {
     res.status(500).json({ error: "Error fetching data" });
   }
 }
-export async function getChecklistUtilityCount(req, res) {
+
+export async function getChecklistCount(req, res) {
   try {
     const { group, year, week } = req.params;
     const parsedYear = parseInt(year, 10)
     const currentWeek = parseInt(week, 10);
 
     const setting = await automationDB.setting_pm.findFirst({
-      where: { grup: group, pmtablename: "pm_utility" },
+      where: { grup: group, pmtablename: "pm_biscuit" },
       select: { week: true }
     });
     if (!setting) {
@@ -403,7 +412,7 @@ export async function getChecklistUtilityCount(req, res) {
     const totalWeeksSetting = setting?.week ?? 1;
     const totalWeeks = getTotalWeeksInYear(parsedYear);
 
-    const pmRows = await automationDB.pm_utility.findMany({
+    const pmRows = await automationDB.pm_biscuit.findMany({
       where: { grup: group },
       orderBy: { no: "asc" }
     });

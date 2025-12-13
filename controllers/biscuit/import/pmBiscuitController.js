@@ -1,12 +1,13 @@
-import { generateWeeklyDataForTargetYear, getTotalWeeksInYear } from "../../../config/dateUtils.js";
+// controllers/pmBiscuit/pmBiscuit.controller.js
 import { automationDB } from "../../../src/db/automation.js";
 import { rawAutomation as raw } from "../../../config/sqlRaw.js";
+import { generateWeeklyDataForTargetYear, getTotalWeeksInYear } from "../../../config/dateUtils.js";
 
-export async function getMachineUtilityByName(req, res) {
+export async function getMachineByName(req, res) {
   try {
     const { machineName, group } = req.body;
 
-    const machines = await automationDB.pm_utility.findMany({
+    const machines = await automationDB.pm_biscuit.findMany({
       where: {
         machine_name: machineName,
         grup: group
@@ -21,67 +22,70 @@ export async function getMachineUtilityByName(req, res) {
   }
 }
 
-export async function getMachinePMListUtilityByGroup(req, res) {
+export async function getMachineListByGroup(req, res) {
   try {
     const { group } = req.params;
     // const { group } = req.params.group;
 
-    const result = await raw(`
+    const result = await automationDB.$queryRaw`
       SELECT machine_name, no
       FROM (
-        SELECT DISTINCT ON (machine_name) machine_name, no
-        FROM automation.pm_utility
-        WHERE grup = '${group}'
+        SELECT DISTINCT ON (machine_name) 
+          machine_name, 
+          no
+        FROM automation.pm_biscuit
+        WHERE grup = ${group}
         ORDER BY machine_name, no ASC
-      ) AS unique_machines
-      ORDER BY no ASC;
-    `);
+      ) AS t
+      ORDER BY no ASC
+    `;
 
-    res.json(result.rows);
+    res.json(result);
   } catch (err) {
     console.error("Error fetching data:", err);
     res.status(500).json({ error: "Error fetching data" });
   }
 }
 
-export const getQrCodeUtilityListByGroup = async (req, res) => {
-    try {
-        const group = parseInt(req.params.group, 10)
-        if (isNaN(group)) {
-            return res.status(400).json({ error: "Invalid group parameter" });
-        }
+export async function getQrCodeListByGroup(req, res) {
+  try {
+    const { group } = req.params;
+    // const { group } = req.params.group;
 
-        const result = await automationDB.$queryRaw
-            `SELECT DISTINCT ON (qrcode) machine_name, qrcode FROM automation.pm_utility WHERE grup = ${group} ORDER BY qrcode`
+    const result = await raw(`
+      SELECT DISTINCT ON (qrcode) machine_name, qrcode
+      FROM automation.pm_biscuit
+      WHERE grup = ${group}
+      ORDER BY qrcode;
+    `);
 
-        res.json(result);
-    } catch (err) {
-        res.status(500).send("Gagal mengambildata:" + err.message);
-    }
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 }
 
-export async function getPmUtilityWithWeeklyByYear(req, res) {
+// ====================== GET PM BISCuit WITH WEEKLY DATA ======================
+export async function getPmBiscuitWithWeeklyByYear(req, res) {
   try {
     const { group, year } = req.params;
+    const yearNum = parseInt(year, 10);
 
     const start = req.query.start ? parseInt(req.query.start, 10) : null;
     const end = req.query.end ? parseInt(req.query.end, 10) : null;
-    const searchTerm = req.query.searchTerm
-      ? req.query.searchTerm.toLowerCase()
-      : "";
+    const search = req.query.searchTerm ? req.query.searchTerm.toLowerCase() : "";
 
-    let data = [];
+    let rows = [];
 
-    // ========== CASE 1: PAKAI PAGINATION + SEARCH ==========
     if (start !== null && end !== null && !isNaN(start) && !isNaN(end)) {
-      data = await automationDB.pm_utility.findMany({
+      rows = await automationDB.pm_biscuit.findMany({
         where: {
           grup: group,
           OR: [
-            { machine_name: { contains: searchTerm, mode: "insensitive" } },
-            { kode_barang: { contains: searchTerm, mode: "insensitive" } },
-            { equipment: { contains: searchTerm, mode: "insensitive" } },
-            { part_kebutuhan_alat: { contains: searchTerm, mode: "insensitive" } },
+            { machine_name: { contains: search, mode: "insensitive" } },
+            { kode_barang: { contains: search, mode: "insensitive" } },
+            { equipment: { contains: search, mode: "insensitive" } },
+            { part_kebutuhan_alat: { contains: search, mode: "insensitive" } },
           ],
         },
         orderBy: { no: "asc" },
@@ -90,35 +94,33 @@ export async function getPmUtilityWithWeeklyByYear(req, res) {
       });
     }
 
-    // ========== CASE 2: TANPA PAGINATION ==========
     else {
-      data = await automationDB.pm_utility.findMany({
+      rows = await automationDB.pm_biscuit.findMany({
         where: { grup: group },
         orderBy: { no: "asc" },
       });
     }
 
-    // ================== WEEK PROCESS =====================
-    const totalWeeks = getTotalWeeksInYear(parseInt(year));
-
-    const modifiedData = data.map((row) => ({
-      ...row,
+    const totalWeeks = getTotalWeeksInYear(yearNum);
+    const modified = rows.map((r) => ({
+      ...r,
       week: generateWeeklyDataForTargetYear(
         totalWeeks,
-        row.periode,
-        row.periode_start,
-        parseInt(year)
+        r.periode,
+        r.periode_start,
+        yearNum
       ),
     }));
 
-    return res.json(modifiedData);
-  } catch (error) {
-    console.error("Error fetching pm_utility:", error);
-    return res.status(500).json({ error: "Error fetching data" });
+    res.json(modified);
+  } catch (err) {
+    console.error("Error fetching data:", err);
+    res.status(500).json({ error: "Error fetching data" });
   }
 }
 
-export async function addPmUtility(req, res) {
+// ====================== ADD NEW BISCuit ======================
+export async function addPmBiscuit(req, res) {
   try {
     const {
       machine_name,
@@ -144,7 +146,7 @@ export async function addPmUtility(req, res) {
       return res.status(400).json({ error: "Semua field harus diisi" });
     }
 
-    const existingMachine = await automationDB.pm_utility.findFirst({
+    const existingMachine = await automationDB.pm_biscuit.findFirst({
       where: { grup: String(grup), machine_name },
       orderBy: { no: "desc" },
       select: { no: true },
@@ -155,17 +157,15 @@ export async function addPmUtility(req, res) {
     if (existingMachine) {
       nextNo = existingMachine.no;
     } else {
-      const lastNum = await automationDB.$queryRaw`
-        SELECT COALESCE(
-          (SELECT MAX(no) FROM automation.pm_utility WHERE grup = ${grup}),
-          0
-        ) + 1 AS last_number
-      `;
+      const maxNo = await automationDB.pm_biscuit.aggregate({
+        where: { grup },
+        _max: { no: true },
+      });
 
-      nextNo = lastNum[0].last_number;
+      nextNo = (maxNo._max.no ?? 0) + 1;
     }
 
-    const created = await automationDB.pm_utility.create({
+    const created = await automationDB.pm_biscuit.create({
       data: {
         machine_name,
         equipment,
@@ -179,13 +179,17 @@ export async function addPmUtility(req, res) {
       },
     });
 
+    if (created.length === 0) {
+        return res.status(500).json({ error: "Gagal menambahkan data" });
+    }
+
     res.status(201).json({
       message: "Data berhasil ditambahkan",
       data: created,
       machineNo: nextNo,
     });
   } catch (err) {
-    console.error("Error adding PM Utility data:", err);
+    console.error("Error adding PM Biscuit data:", err);
     if (err.code === "23505") {
       // Unique violation
       return res.status(400).json({
@@ -200,7 +204,7 @@ export async function addPmUtility(req, res) {
 }
 
 // ====================== UPDATE FIELD (smart update) ======================
-export async function updatePmUtilityField(req, res) {
+export async function updatePmBiscuitField(req, res) {
   try {
     const { id } = req.params;
     const { field, value } = req.body;
@@ -219,7 +223,7 @@ export async function updatePmUtilityField(req, res) {
 
     try {
         if (field === "machine_name") {
-            const existing = await automationDB.pm_utility.findUnique({
+            const existing = await automationDB.pm_biscuit.findUnique({
                 where: { id: id },
                 select: { grup: true, machine_name: true }
             })
@@ -230,7 +234,7 @@ export async function updatePmUtilityField(req, res) {
 
             const { grup } = existing;
 
-            const existingMachine = await automationDB.pm_utility.findFirst({
+            const existingMachine = await automationDB.pm_biscuit.findFirst({
                 where: { machine_name: value, grup},
                 orderBy: { no: "desc" }
             })
@@ -241,13 +245,13 @@ export async function updatePmUtilityField(req, res) {
                 machineNo = existingMachine.no
             } else {
                 const lastNumberQuery = await raw(`
-                    SELECT COALESCE((SELECT MAX(no) FROM automation.pm_utility WHERE grup = ${grup}), 0) + 1 AS last_number
+                    SELECT COALESCE((SELECT MAX(no) FROM automation.pm_biscuit WHERE grup = ${grup}), 0) + 1 AS last_number
                 `);
 
                 machineNo = lastNumberQuery[0].last_number
             }
 
-            const updated = await automationDB.pm_utility.update({
+            const updated = await automationDB.pm_biscuit.update({
                 where: { id: Number(id) },
                 data: {
                     machine_name: value,
@@ -262,7 +266,7 @@ export async function updatePmUtilityField(req, res) {
             })
         }
 
-        const updated = await automationDB.pm_utility.update({
+        const updated = await automationDB.pm_biscuit.update({
             where: { id: Number(id) },
             data: {
                 [field]: value,
@@ -274,15 +278,14 @@ export async function updatePmUtilityField(req, res) {
             data: updated,
         });
     } catch (err) {
-        console.error("Error updating pm_utility:", err);
+        console.error("Error updating pm_biscuit:", err);
         res.status(500).json({ error: "Terjadi kesalahan saat memperbarui data" });
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 }
-
-export async function updateMachineUtilityList(req, res) {
+export async function updateMachineList(req, res) {
   try {
     const { group, machines } = req.body;
 
@@ -305,7 +308,7 @@ export async function updateMachineUtilityList(req, res) {
       }
 
       // ========== UPDATE NOMOR URUTAN ==========
-      await automationDB.pm_utility.updateMany({
+      await automationDB.pm_biscuit.updateMany({
         where: {
           machine_name: machine.name,
           grup: group
@@ -317,7 +320,7 @@ export async function updateMachineUtilityList(req, res) {
 
       // ========== RENAME MESIN (JIKA oldName BERBEDA) ==========
       if (machine.oldName && machine.oldName !== machine.name) {
-        await automationDB.pm_utility.updateMany({
+        await automationDB.pm_biscuit.updateMany({
           where: {
             machine_name: machine.oldName,
             grup: group
@@ -345,21 +348,38 @@ export async function updateMachineUtilityList(req, res) {
   }
 }
 
+export async function deleteAllPmBiscuit(req, res) {
+  try {
+    const result = await automationDB.pm_biscuit.deleteMany({});
+
+    res.json({
+      message: "Semua data telah berhasil dihapus.",
+      affectedRows: result.count,
+    });
+  } catch (err) {
+    console.error("Error deleting all data:", err);
+    res
+      .status(500)
+      .json({ error: "Terjadi kesalahan saat menghapus semua data." });
+  }
+}
+
 // ====================== DELETE BY GROUP ======================
-export async function deleteUtilityByGroup(req, res) {
+export async function deleteByGroup(req, res) {
   try {
     const { group } = req.params;
 
-    const deletedRows = await automationDB.pm_utility.findMany({
+    const deletedRows = await automationDB.pm_biscuit.findMany({
       where: { grup: group },
     });
 
-    await automationDB.pm_utility.deleteMany({
+    const result = await automationDB.pm_biscuit.deleteMany({
       where: { grup: group },
     });
 
     res.json({
       message: "Data deleted successfully",
+      deleted: result.count,
       deletedData: deletedRows,
     });
 
@@ -370,7 +390,7 @@ export async function deleteUtilityByGroup(req, res) {
 }
 
 // ====================== BATCH DELETE ======================
-export async function deleteUtilityBatch(req, res) {
+export async function deleteBatch(req, res) {
   try {
     const { ids } = req.body;
 
@@ -382,7 +402,7 @@ export async function deleteUtilityBatch(req, res) {
       return res.status(400).json({ error: "All IDs must be numbers" });
     }
 
-     const existingRows = await automationDB.pm_utility.findMany({
+     const existingRows = await automationDB.pm_biscuit.findMany({
       where: { id: { in: ids } },
     });
 
@@ -394,7 +414,7 @@ export async function deleteUtilityBatch(req, res) {
       });
     }
 
-    const deleteResult = await automationDB.pm_utility.deleteMany({
+    const deleteResult = await automationDB.pm_biscuit.deleteMany({
       where: { id: { in: ids } },
     });
 
@@ -403,24 +423,8 @@ export async function deleteUtilityBatch(req, res) {
       deletedData: existingRows,
       deletedCount: deleteResult.count,
     });
-  } catch (err) {
-    console.error("Error deleting batch data:", err);
-    res.status(500).json({ error: "Error deleting data", details: err.message });
-  }
-}
 
-export async function deleteAllPmUtility(req, res) {
-  try {
-    const result = await automationDB.pm_utility.deleteMany({});
-
-    res.json({
-      message: "Semua data telah berhasil dihapus.",
-      affectedRows: result.count,
-    });
   } catch (err) {
-    console.error("Error deleting all data:", err);
-    res
-      .status(500)
-      .json({ error: "Terjadi kesalahan saat menghapus semua data." });
+    res.status(500).json({ error: err.message });
   }
 }

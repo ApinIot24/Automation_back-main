@@ -1,7 +1,7 @@
 import { generateWeeklyDataForTargetYear, getTotalWeeksInYear } from "../../../config/dateUtils.js";
 import { automationDB } from "../../../src/db/automation.js";
 
-export async function submitChecklistWeekUtilityByGroup(req, res) {
+export async function submitChecklistWeekAstorByGroup(req, res) {
   try {
     const { year, week, data } = req.body;
     const grup = req.params.grup;
@@ -12,7 +12,7 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
     }
 
     // Check duplicate submission for same week/year/group
-    const exists = await automationDB.checklist_pm_utility.findFirst({
+    const exists = await automationDB.checklist_pm_astor.findFirst({
       where: { week, year, grup: grupString }
     });
 
@@ -22,8 +22,8 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
       });
     }
 
-    // Get PM Utility original data
-    const pmRows = await automationDB.pm_utility.findMany({
+    // Get PM Astor original data
+    const pmRows = await automationDB.pm_astor.findMany({
       where: { id: { in: data }, grup: grupString },
       select: {
         id: true, machine_name: true, part_kebutuhan_alat: true, equipment: true, kode_barang: true,
@@ -32,13 +32,13 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
     });
 
     if (pmRows.length === 0) {
-      return res.status(404).json({ error: "Data tidak ditemukan pada PM Utility" });
+      return res.status(404).json({ error: "Data tidak ditemukan pada PM Astor" });
     }
 
     // Create many
-    await automationDB.checklist_pm_utility.createMany({
+    await automationDB.checklist_pm_astor.createMany({
       data: pmRows.map(r => ({
-        pm_utility_id: r.id,
+        pm_astor_id: r.id,
         week,
         year,
         grup,
@@ -53,7 +53,7 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
       }))
     });
 
-    const insertedRows = await automationDB.checklist_pm_utility.findMany({
+    const insertedRows = await automationDB.checklist_pm_astor.findMany({
       where: { week, year, grup: grupString },
       orderBy: { id: "asc" }
     })
@@ -69,12 +69,12 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
   }
 }
 // ========================== UPDATE CHECKLIST ==========================
-export async function updateChecklistUtility(req, res) {
+export async function updateChecklistAstor(req, res) {
   try {
     const { id } = req.params;
     const { pic, c_i, l, r, keterangan, tanggal } = req.body;
 
-    const updated = await automationDB.checklist_pm_utility.update({
+    const updated = await automationDB.checklist_pm_astor.update({
       where: { id: id },
       data: {
         pic,
@@ -102,11 +102,11 @@ export async function updateChecklistUtility(req, res) {
 }
 
 // ========================== DELETE CHECKLIST (BY WEEK) ==========================
-export async function deleteChecklistUtilityByWeek(req, res) {
+export async function deleteChecklistAstorByWeek(req, res) {
   try {
     const { week, grup } = req.params;
 
-    const deleted = await automationDB.checklist_pm_utility.deleteMany({
+    const deleted = await automationDB.checklist_pm_astor.deleteMany({
       where: { week: week, grup }
     });
 
@@ -123,13 +123,13 @@ export async function deleteChecklistUtilityByWeek(req, res) {
   }
 }
 // ========================== GET CHECKLIST (FILTERED) ==========================
-export async function getChecklistUtilityData(req, res) {
+export async function getChecklistAstorData(req, res) {
   try {
     const { group, year, week } = req.params;
     const currentWeek = parseInt(week, 10);
     const totalWeeks = getTotalWeeksInYear(parseInt(year, 10));
 
-    const pmRows = await automationDB.pm_utility.findMany({
+    const pmRows = await automationDB.pm_astor.findMany({
       where: { grup: group },
       orderBy: { no: "asc" }
     });
@@ -178,18 +178,19 @@ export async function getChecklistUtilityData(req, res) {
     res.status(500).json({ error: "Error fetching data" });
   }
 }
-export async function getChecklistUtilitySubmitted(req, res) {
+
+export async function getChecklistAstorSubmitted(req, res) {
   try {
     const { group, year, week } = req.params;
     const currentWeek = parseInt(week, 10);
     const totalWeeks = getTotalWeeksInYear(parseInt(year, 10));
     const parsedYear = parseInt(year, 10);
 
-    const rows = await automationDB.checklist_pm_utility.findMany({
+    const rows = await automationDB.checklist_pm_astor.findMany({
       where: { grup: group, year: parsedYear, week: currentWeek },
       select: {
         id: true,
-        pm_utility_id: true,
+        pm_astor_id: true,
         status_checklist: true,
         pic: true,
         c_i: true,
@@ -252,14 +253,15 @@ export async function getChecklistUtilitySubmitted(req, res) {
     res.status(500).json({ error: "Error fetching data" });
   }
 }
-export async function getChecklistUtilityRange(req, res) {
+
+export async function getChecklistAstorRange(req, res) {
   try {
     const { group, year, week } = req.params;
     const currentWeek = parseInt(week, 10);
     const parsedYear = parseInt(year, 10);
 
     const setting = await automationDB.setting_pm.findFirst({
-      where: { grup: group, pmtablename: "pm_utility" },
+      where: { grup: group, pmtablename: "pm_astor" },
       select: { week: true }
     });
 
@@ -270,7 +272,7 @@ export async function getChecklistUtilityRange(req, res) {
     const totalWeeksSetting = setting?.week;
     const totalWeeks = getTotalWeeksInYear(parsedYear);
 
-    const pmRows = await automationDB.pm_utility.findMany({
+    const pmRows = await automationDB.pm_astor.findMany({
       where: { grup: group },
       orderBy: { no: "asc" }
     });
@@ -318,14 +320,15 @@ export async function getChecklistUtilityRange(req, res) {
     res.status(500).json({ error: err.message });
   }
 }
-export async function getChecklistUtilityAll(req, res) {
+
+export async function getChecklistAstorAll(req, res) {
   try {
     const { group, year, week } = req.params;
     const parsedYear = parseInt(year, 10)
     const currentWeek = parseInt(week, 10);
 
     const setting = await automationDB.setting_pm.findFirst({
-      where: { grup: group, pmtablename: "pm_utility" },
+      where: { grup: group, pmtablename: "pm_astor" },
       select: { week: true }
     });
     if (!setting) {
@@ -335,7 +338,7 @@ export async function getChecklistUtilityAll(req, res) {
     const totalWeeksSettingVal = setting?.week ?? 1;
     const totalWeeks = getTotalWeeksInYear(parsedYear);
 
-    const pmRows = await automationDB.pm_utility.findMany({
+    const pmRows = await automationDB.pm_astor.findMany({
       where: { grup: group },
       orderBy: { no: "asc" }
     });
@@ -386,14 +389,15 @@ export async function getChecklistUtilityAll(req, res) {
     res.status(500).json({ error: "Error fetching data" });
   }
 }
-export async function getChecklistUtilityCount(req, res) {
+
+export async function getChecklistAstorCount(req, res) {
   try {
     const { group, year, week } = req.params;
     const parsedYear = parseInt(year, 10)
     const currentWeek = parseInt(week, 10);
 
     const setting = await automationDB.setting_pm.findFirst({
-      where: { grup: group, pmtablename: "pm_utility" },
+      where: { grup: group, pmtablename: "pm_astor" },
       select: { week: true }
     });
     if (!setting) {
@@ -403,7 +407,7 @@ export async function getChecklistUtilityCount(req, res) {
     const totalWeeksSetting = setting?.week ?? 1;
     const totalWeeks = getTotalWeeksInYear(parsedYear);
 
-    const pmRows = await automationDB.pm_utility.findMany({
+    const pmRows = await automationDB.pm_astor.findMany({
       where: { grup: group },
       orderBy: { no: "asc" }
     });
