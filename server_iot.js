@@ -39,6 +39,7 @@ import biscuitck3 from "./routes/biscuit/line5/Biscuitck3.js";
 import biscuitck3v2 from "./routes/biscuit/line5/Biscuitck3v2.js";
 import Biscuitpompack3 from "./routes/biscuit/line5/Biscuitpompack3.js";
 import Biscuitagitatorck3 from "./routes/biscuit/line5/Biscuitagitatorck3.js";
+import Biscuitckmalkist from "./routes/biscuit/line5/Biscuitckmalkist.js";
 
 // checklist
 import qrchecklist from "./routes/checklist.js";
