@@ -1,16 +1,23 @@
 import { rawIot as raw} from "../../../config/sqlRaw.js";
 
-// Function to validate table/database name to prevent SQL injection
-function isValidTableName(name) {
-  return /^[a-zA-Z0-9_]+$/.test(name);
+// Function to validate jenis to prevent SQL injection
+function isValidJenis(jenis) {
+  return /^[a-zA-Z0-9_]+$/.test(jenis);
+}
+
+// Function to get min weight threshold based on jenis
+function getMinWeightByJenis(jenis) {
+  // Sesuaikan threshold berdasarkan jenis jika diperlukan
+  // Untuk sekarang, menggunakan threshold default
+  return 0;
 }
 
 // Function to prepare chart data from grouped data
-function prepareChartData(groupedData, db, startDate, endDate) {
+function prepareChartData(groupedData, jenis, startDate, endDate) {
   const chartData = {
     labels: [
-      `${db.replace(/_/g, " ").toUpperCase()} ${startDate} - ${endDate}`,
-    ], // Combined label for the database and date range
+      `${jenis.replace(/_/g, " ").toUpperCase()} ${startDate} - ${endDate}`,
+    ], // Combined label for the jenis and date range
     shift1Data: [0],
     shift2Data: [0],
     shift3Data: [0],
@@ -39,9 +46,9 @@ function prepareChartData(groupedData, db, startDate, endDate) {
   return chartData;
 }
 // Function to prepare table data from grouped data
-function prepareTableData(groupedData, db) {
+function prepareTableData(groupedData, jenis) {
   return groupedData.map((item) => ({
-    database: db, // Adding database to each table entry
+    jenis: jenis, // Adding jenis to each table entry
     date: item.date,
     "Shift 1": item["Shift 1"],
     "Shift 2": item["Shift 2"],
@@ -88,11 +95,7 @@ function groupDataByDateAndShift(peaks) {
     ...groupedByDate[date],
   }));
 }
-// Fungsi untuk mendapatkan nama database tanpa angka
-function getDatabaseName(database) {
-  const result = database.replace(/\d+/g, ""); // Menghapus angka
-  return result;
-}
+// Function removed - tidak diperlukan lagi karena menggunakan jenis langsung
 // Fungsi untuk mengelompokkan data berdasarkan shift
 function groupDataByShift(peaks) {
   const grouped = {
@@ -115,19 +118,10 @@ function groupDataByShift(peaks) {
   }));
 }
 // Fungsi untuk mendeteksi puncak (peak detection)
-function getPeakData(data, database) {
+function getPeakData(data, jenis) {
   const peaks = [];
-  let namedatabase = getDatabaseName(database);
-  let minWeightThreshold;
-
-  // Menentukan ambang batas berdasarkan nama database
-  if (namedatabase === "ck_biscuit_palm_oil_") {
-    minWeightThreshold = 86.5;
-  } else if (namedatabase === "ck_biscuit_mixer_") {
-    minWeightThreshold = 258.7;
-  } else {
-    minWeightThreshold = 0; // Ambang batas default
-  }
+  const isMalkistFlor = jenis.startsWith('malkist_flor_');
+  let minWeightThreshold = isMalkistFlor ? -Infinity : getMinWeightByJenis(jenis);
 
   let currentGroup = []; // Menampung data dalam satu grup
   let isInPeakRegion = false; // Menandakan apakah sedang dalam region puncak
@@ -141,6 +135,7 @@ function getPeakData(data, database) {
     }
 
     // Jika data di atas threshold, masuk ke region puncak
+    // Untuk malkist_flor_, semua data valid akan masuk ke region puncak
     if (current.weight >= minWeightThreshold) {
       if (!isInPeakRegion) {
         // Memulai region puncak baru
@@ -212,23 +207,15 @@ function getShift(dateStr) {
   if (hour >= 15 && hour < 23) return 2;
   return 3; // shift malam
 }
-function getlowerhighdata(data, database) {
-  const namedatabase = getDatabaseName(database);
-  let minWeightThreshold;
-
-  // Menentukan ambang batas berdasarkan nama database
-  if (namedatabase === "ck_biscuit_palm_oil_") {
-    minWeightThreshold = 86.5;
-  } else if (namedatabase === "ck_biscuit_mixer_") {
-    minWeightThreshold = 258.7;
-  } else {
-    minWeightThreshold = 0; // Ambang batas default
-  }
+function getlowerhighdata(data, jenis) {
+  const isMalkistFlor = jenis.startsWith('malkist_flor_');
+  let minWeightThreshold = isMalkistFlor ? -Infinity : getMinWeightByJenis(jenis);
 
   let groupedData = [];
   let currentGroup = [];
 
   // Pengelompokan data berdasarkan kriteria
+  // Untuk malkist_flor_, semua data valid akan masuk ke grup tinggi
   for (const current of data) {
     if (current.weight <= 0) continue; // Melewati data tidak valid
 
@@ -283,35 +270,38 @@ function getlowerhighdata(data, database) {
 }
 
 export const GetCkBiskuitLoadcell = async (req, res) => {
-    const { database, startdate, enddate } = req.params;
+    const { database: jenis, startdate, enddate } = req.params;
 
-    if (!isValidTableName(database)) {
-        return res.status(400).send("Invalid database name.");
+    if (!isValidJenis(jenis)) {
+        return res.status(400).send("Invalid jenis.");
     }
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(startdate) || !/^\d{4}-\d{2}-\d{2}$/.test(enddate)) {
         return res.status(400).send("Invalid date format. Use YYYY-MM-DD.");
     }
 
-    const namedatabase = getDatabaseName(database);
-    let minWeight = 0;
+    const minWeight = getMinWeightByJenis(jenis);
+    const isMalkistFlor = jenis.startsWith('malkist_flor_');
 
-    if (namedatabase === "ck_biscuit_palm_oil_") minWeight = 86.5;
-    else if (namedatabase === "ck_biscuit_mixer_") minWeight = 258.7;
+    // Untuk malkist_flor_ ambil semua data tanpa filter weight
+    const weightFilter = isMalkistFlor 
+        ? '' 
+        : `AND (weight > ${minWeight} OR weight < 5)`;
 
     const sql = `
-        SELECT weight, date
-        FROM purwosari."${database}"
-        WHERE date::date BETWEEN '${startdate}' AND '${enddate}'
-        AND (weight > ${minWeight} OR weight < 5)
-        ORDER BY date;
+        SELECT weight, created_at as date
+        FROM purwosari.ck_malkist
+        WHERE jenis = '${jenis}'
+        AND created_at::date BETWEEN '${startdate}' AND '${enddate}'
+        ${weightFilter}
+        ORDER BY created_at;
     `;
 
     try {
         const rawData = await raw(sql);
 
-        const peaks = getPeakData(rawData, database);
-        const lowerhigh = getlowerhighdata(rawData, database);
+        const peaks = getPeakData(rawData, jenis);
+        const lowerhigh = getlowerhighdata(rawData, jenis);
         const grouped = groupDataByShift(peaks);
 
         res.json({
@@ -344,36 +334,39 @@ export const PostProcessedLoadcell = async (req, res) => {
     let overallShift3 = 0;
     let overallTotal = 0;
 
-    for (let db of additionalData) {
-        if (!isValidTableName(db)) {
-            return res.status(400).send(`Invalid database name: ${db}`);
+    for (let jenis of additionalData) {
+        if (!isValidJenis(jenis)) {
+            return res.status(400).send(`Invalid jenis: ${jenis}`);
         }
 
-        const namedatabase = getDatabaseName(db);
-        let minWeight = 0;
+        const minWeight = getMinWeightByJenis(jenis);
+        const isMalkistFlor = jenis.startsWith('malkist_flor_');
 
-        if (namedatabase === "ck_biscuit_palm_oil_") minWeight = 86.5;
-        else if (namedatabase === "ck_biscuit_mixer_") minWeight = 258.7;
+        // Untuk malkist_flor_ ambil semua data tanpa filter weight
+        const weightFilter = isMalkistFlor 
+            ? '' 
+            : `AND (weight > ${minWeight} OR weight < 5)`;
 
         const sql = `
-            SELECT weight, date
-            FROM purwosari."${db}"
-            WHERE date::date BETWEEN '${startDate}' AND '${endDate}'
-            AND (weight > ${minWeight} OR weight < 5)
-            ORDER BY date;
+            SELECT weight, created_at as date
+            FROM purwosari.ck_malkist
+            WHERE jenis = '${jenis}'
+            AND created_at::date BETWEEN '${startDate}' AND '${endDate}'
+            ${weightFilter}
+            ORDER BY created_at;
         `;
 
         try {
             const rawData = await raw(sql);
 
-            const peaks = getPeakData(rawData, db);
+            const peaks = getPeakData(rawData, jenis);
             const grouped = groupDataByDateAndShift(peaks);
 
-            const chartData = prepareChartData(grouped, db, startDate, endDate);
-            const tableData = prepareTableData(grouped, db);
+            const chartData = prepareChartData(grouped, jenis, startDate, endDate);
+            const tableData = prepareTableData(grouped, jenis);
 
             results.chartData.push({
-                database: db.toUpperCase(),
+                jenis: jenis.toUpperCase(),
                 chartData,
             });
 
@@ -391,7 +384,7 @@ export const PostProcessedLoadcell = async (req, res) => {
 
     // Tambah total akhir
     results.chartData.push({
-        database: "TOTAL SHIFTS",
+        jenis: "TOTAL SHIFTS",
         chartData: {
         labels: ["TOTAL SHIFTS"],
         shift1Data: [overallShift1],
@@ -402,7 +395,7 @@ export const PostProcessedLoadcell = async (req, res) => {
     });
 
     results.tableData.push({
-        database: "TOTAL SHIFTS",
+        jenis: "TOTAL SHIFTS",
         date: "TOTAL",
         "Shift 1": overallShift1,
         "Shift 2": overallShift2,

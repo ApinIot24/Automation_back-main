@@ -28,6 +28,17 @@ npx prisma db pull --config=prisma.config.iot.ts
 
 ---
 
+## 🗄️ push Database Schema
+Use this when the database changes and you want Prisma schema updated accordingly.
+
+# Automation DB
+npx prisma db push --config=prisma.config.automation.ts
+
+# IoT DB
+npx prisma db push --config=prisma.config.iot.ts
+
+---
+
 ## 🧱 Run Migrations
 Use this when you modify the Prisma schema and need to update the database.
 
