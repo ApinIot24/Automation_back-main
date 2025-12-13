@@ -223,6 +223,7 @@ app.use("/api", biscuitck3);
 app.use("/api", biscuitck3v2);
 app.use("/api", Biscuitpompack3);
 app.use("/api", Biscuitagitatorck3);
+app.use("/api", Biscuitckmalkist);
 
 // Protected routes - use validateUser middleware
 app.use("/api", utility);
