@@ -142,3 +142,46 @@ export function getTotalWeeksInYear(year) {
   );
   return Math.floor((lastDay - firstMonday) / (7 * 24 * 60 * 60 * 1000));
 }
+
+export function format(date) {
+    if (!(date instanceof Date)) {
+        throw new Error('Invalid "date" argument. You must pass a date instance');
+    }
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+function getMonthWeek(year, month, week) {
+    // Set date to 4th of month
+    let d = new Date(year, month - 1, 4);
+    // Get day number, set Sunday to 7
+    let day = d.getDay() || 7;
+    // Set to prior Monday
+    d.setDate(d.getDate() - day + 1);
+    // Set to required week
+    d.setDate(d.getDate() + 7 * (week - 1));
+    return d;
+}
+export function getWeek(date) {
+    let monthStart = new Date(date);
+    monthStart.setDate(0);
+    let offset = (monthStart.getDay() + 1) % 7 - 1; // -1 is for a week starting on Monday
+    return Math.ceil((date.getDate() + offset) / 7);
+}
+// Return array of dates for specified week of month of year
+export function getWeekDates(year, month, week) {
+    let d = getMonthWeek(year, month, week);
+    for (var i = 0, arr = []; i < 7; i++) {
+
+        // Array of date strings
+        arr.push(d.toLocaleDateString());
+
+        // For array of Date objects, replace above with
+        // arr.push(new Date(d));
+
+        // Increment date
+        d.setDate(d.getDate() + 1);
+    }
+    return arr;
+}
