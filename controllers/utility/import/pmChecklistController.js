@@ -14,9 +14,13 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
       return res.status(400).json({ error: "Data tidak valid" });
     }
 
+    // Parse year and week to integers
+    const parsedYear = parseInt(year, 10);
+    const parsedWeek = parseInt(week, 10);
+
     // Check duplicate submission for same week/year/group
     const exists = await automationDB.checklist_pm_utility.findFirst({
-      where: { week, year, grup: grupString },
+      where: { week: parsedWeek, year: parsedYear, grup: grupString },
     });
 
     if (exists) {
@@ -51,8 +55,8 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
     await automationDB.checklist_pm_utility.createMany({
       data: pmRows.map((r) => ({
         pm_utility_id: r.id,
-        week,
-        year,
+        week: parsedWeek,
+        year: parsedYear,
         grup,
         machine_name: r.machine_name,
         part_kebutuhan_alat: r.part_kebutuhan_alat,
@@ -66,7 +70,7 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
     });
 
     const insertedRows = await automationDB.checklist_pm_utility.findMany({
-      where: { week, year, grup: grupString },
+      where: { week: parsedWeek, year: parsedYear, grup: grupString },
       orderBy: { id: "asc" },
     });
 
@@ -119,9 +123,10 @@ export async function updateChecklistUtility(req, res) {
 export async function deleteChecklistUtilityByWeek(req, res) {
   try {
     const { week, grup } = req.params;
+    const parsedWeek = parseInt(week, 10);
 
     const deleted = await automationDB.checklist_pm_utility.deleteMany({
-      where: { week: week, grup },
+      where: { week: parsedWeek, grup },
     });
 
     if (deleted.count === 0) {

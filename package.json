@@ -8,7 +8,8 @@
     "dev": "nodemon server_iot.js",
     "start": "pm2 start server_iot.js --name server_iot && cd ../../FUXA-1.2.5/server && pm2 start main.js --name fuxa && pm2 save",
     "restart": "pm2 restart server_iot && pm2 restart fuxa",
-    "stop": "pm2 stop server_iot && pm2 stop fuxa"
+    "stop": "pm2 stop server_iot && pm2 stop fuxa",
+    "database_requipment": "node scripts/database_requipment.js"
   },
   "author": "Mayora.Indah.Tbk PSR",
   "license": "ISC",

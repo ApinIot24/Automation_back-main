@@ -83,8 +83,25 @@ docs/
 
 ---
 
+## 🔧 Database Requirements Setup
+Run this to install required PostgreSQL extensions (e.g., uuid-ossp for UUID generation).
+
+# Install uuid-ossp extension
+npm run database_requipment
+
+This script will:
+- Connect to the automation database using `AUTOMATION_DB_URL` environment variable
+- Check if the `uuid-ossp` extension exists
+- Create the extension if it doesn't exist
+- Verify the extension installation
+
+**Note:** Make sure `AUTOMATION_DB_URL` is set in your `.env` file before running this command.
+
+---
+
 ## ✅ Notes
 - Always run "prisma generate" after migrations or schema updates.
 - "db pull" updates Prisma schema based on the database.
 - "migrate" updates the database based on Prisma schema.
 - "migrate diff" generates SQL scripts without applying anything.
+- Run "database_requipment" when setting up a new database or when UUID functions are needed.
