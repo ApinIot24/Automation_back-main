@@ -1,82 +1,82 @@
-// scripts/database_requipment.js
-// Script untuk menjalankan CREATE EXTENSION IF NOT EXISTS "uuid-ossp" ke database
-import pg from "pg";
-import { env } from "../config/env.js";
-import dotenv from "dotenv";
+import { Pool } from 'pg';
+import { env } from '../config/env.js'; // Pastikan env sudah dikonfigurasi dengan benar
+import dotenv from 'dotenv';
 
 dotenv.config();
 
-const { Pool } = pg;
-
 async function setupUuidExtension() {
   let pool = null;
-  
+  let client = null;
+
   try {
-    // Get connection string from environment
+    // Ambil string koneksi dari environment
     const connectionString = env.automationDb || process.env.AUTOMATION_DB_URL;
     
     if (!connectionString) {
-      throw new Error(
-        "AUTOMATION_DB_URL tidak ditemukan. Pastikan environment variable sudah di-set."
-      );
+      throw new Error('AUTOMATION_DB_URL tidak ditemukan. Pastikan environment variable sudah di-set.');
     }
 
-    console.log("🔌 Menghubungkan ke database...");
-    
-    // Create connection pool
+    console.log('🔌 Menghubungkan ke database...');
+
+    // Membuat pool koneksi
     pool = new Pool({
       connectionString: connectionString,
     });
 
-    // Test connection
-    const client = await pool.connect();
-    console.log("✅ Koneksi database berhasil!");
+    // Menghubungkan ke database
+    client = await pool.connect();
+    console.log('✅ Koneksi database berhasil!');
 
-    try {
-      // Check if extension already exists
-      const checkResult = await client.query(
-        `SELECT EXISTS(
-          SELECT 1 FROM pg_extension WHERE extname = 'uuid-ossp'
-        ) as exists`
-      );
+    // Memeriksa apakah ekstensi uuid-ossp sudah ada
+    console.log('🔍 Memeriksa apakah ekstensi "uuid-ossp" sudah ada di database...');
+    const checkResult = await client.query(`
+      SELECT EXISTS(
+        SELECT 1 FROM pg_extension WHERE extname = 'uuid-ossp'
+      ) as exists
+    `);
 
-      if (checkResult.rows[0].exists) {
-        console.log("ℹ️  Extension 'uuid-ossp' sudah ada di database.");
-      } else {
-        console.log("📦 Membuat extension 'uuid-ossp'...");
-        
-        // Create extension
-        await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
-        
-        console.log("✅ Extension 'uuid-ossp' berhasil dibuat!");
-      }
-
-      // Verify extension
-      const verifyResult = await client.query(
-        `SELECT extname, extversion FROM pg_extension WHERE extname = 'uuid-ossp'`
-      );
+    if (checkResult.rows[0].exists) {
+      console.log('ℹ️  Extension "uuid-ossp" sudah ada di database.');
+    } else {
+      console.log('📦 Membuat ekstensi "uuid-ossp"...');
       
-      if (verifyResult.rows.length > 0) {
-        console.log(
-          `✅ Verifikasi: Extension 'uuid-ossp' versi ${verifyResult.rows[0].extversion} tersedia.`
-        );
-      }
-    } finally {
+      // Menjalankan perintah untuk membuat ekstensi
+      await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
+      console.log('✅ Ekstensi "uuid-ossp" berhasil dibuat!');
+    }
+
+    // Verifikasi ekstensi
+    console.log('🔍 Memverifikasi apakah ekstensi "uuid-ossp" berhasil dibuat...');
+    const verifyResult = await client.query(`
+      SELECT extname, extversion 
+      FROM pg_extension 
+      WHERE extname = 'uuid-ossp'
+    `);
+
+    if (verifyResult.rows.length > 0) {
+      console.log(`✅ Verifikasi: Extension "uuid-ossp" versi ${verifyResult.rows[0].extversion} tersedia.`);
+    } else {
+      throw new Error('❌ Verifikasi gagal: Extension "uuid-ossp" tidak ditemukan setelah pembuatan.');
+    }
+
+    console.log('🎉 Setup ekstensi database selesai!');
+
+  } catch (error) {
+    // Menangani error
+    console.error('❌ Terjadi error:', error.message);
+    console.error(error);
+    process.exit(1); // Keluar dengan kode status 1 (error)
+  } finally {
+    // Pastikan untuk melepaskan koneksi dan menutup pool
+    if (client) {
       client.release();
     }
 
-    console.log("🎉 Setup database extension selesai!");
-    process.exit(0);
-  } catch (error) {
-    console.error("❌ Error:", error.message);
-    console.error(error);
-    process.exit(1);
-  } finally {
     if (pool) {
       await pool.end();
     }
   }
 }
 
-// Run the script
+// Jalankan fungsi setupUuidExtension
 setupUuidExtension();
