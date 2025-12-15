@@ -1,14 +1,16 @@
 import { Router } from "express";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import multer from "multer";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { ticket, updateTicket } from "../controllers/ticket.js";
-
+import { automationDB } from "../src/db/automation.js";
 // Use import.meta.url to get the current directory in ES modules
 const router = Router();
-const __dirname = path.dirname(new URL(import.meta.url).pathname); // Resolve __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename); // Resolve __dirname in ES modules
 
 // Configure multer storage
 const storage = multer.diskStorage({
@@ -63,17 +65,19 @@ router.post("/submit/tiket/form", upload.single("photo"), async (req, res) => {
     const timestamp = new Date();
 
     // Insert record into database
-    const result = await req.db.query(
-      "INSERT INTO ticket.history (category, description, photo_path, created_at) VALUES ($1, $2, $3, $4) RETURNING id",
-      [category, description, photoFilename, timestamp]
-    );
+    const result = await automationDB.$queryRaw`
+      INSERT INTO automation.history (category, description, photo_path, created_at) 
+      VALUES (${category}, ${description}, ${photoFilename}, ${timestamp}) 
+      RETURNING id
+    `;
+    console.log(result);
 
     // Return success response
     res.status(201).json({
       success: true,
       message: "Form submitted successfully",
       data: {
-        id: result.rows[0].id,
+        id: result[0].id,
         category,
         description,
         photoPath: photoFilename,
@@ -108,11 +112,11 @@ router.delete("/ticket/:id", async (req, res) => {
 
   try {
     // Check if the ticket exists
-    const checkTicketQuery =
-      "SELECT photo_path FROM ticket.history WHERE id = $1";
-    const ticketResult = await req.db.query(checkTicketQuery, [id]);
-
-    if (ticketResult.rows.length === 0) {
+    const ticketResult = await automationDB.$queryRaw`
+      SELECT photo_path FROM automation.history WHERE id = ${parseInt(id)}
+    `;
+    console.log(ticketResult);
+    if (ticketResult.length === 0) {
       return res.status(404).json({
         success: false,
         message: "Ticket not found",
@@ -120,16 +124,16 @@ router.delete("/ticket/:id", async (req, res) => {
     }
 
     // Delete the ticket from the database
-    const deleteQuery =
-      "DELETE FROM ticket.history WHERE id = $1 RETURNING id, photo_path";
-    const result = await req.db.query(deleteQuery, [id]);
-
+    const result = await automationDB.$queryRaw`
+      DELETE FROM automation.history WHERE id = ${parseInt(id)} RETURNING id, photo_path
+    `;
+    console.log(result);  
     // If a photo_path exists, delete the associated image from the server
-    if (result.rows[0].photo_path) {
+    if (result[0]?.photo_path) {
       const filePath = path.join(
         __dirname,
         "../uploads",
-        result.rows[0].photo_path
+        result[0].photo_path
       );
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath); // Delete the file from the server
@@ -139,7 +143,7 @@ router.delete("/ticket/:id", async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Ticket deleted successfully",
-      data: result.rows[0],
+      data: result[0],
     });
   } catch (error) {
     console.error("Error deleting ticket:", error);

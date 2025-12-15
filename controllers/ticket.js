@@ -8,7 +8,7 @@ const SORT_MAPPING = {
   created_at: "history.created_at",
 };
 
-const TABLE_SCHEMA = "ticket";
+const TABLE_SCHEMA = "automation";
 const DEFAULT_SORT = "id";
 
 // Function to retrieve tickets with filters, pagination, and sorting
@@ -128,7 +128,7 @@ export const updateTicket = async (req, res) => {
 
   try {
     // Check if the ticket exists in the database
-    const checkTicketQuery = "SELECT * FROM ticket.history WHERE id = $1";
+    const checkTicketQuery = "SELECT * FROM automation.history WHERE id = $1";
     const ticketResult = await db.query(checkTicketQuery, [id]);
 
     if (ticketResult.rows.length === 0) {
@@ -140,7 +140,7 @@ export const updateTicket = async (req, res) => {
 
     // Update only the status field
     const updateQuery = `
-      UPDATE ticket.history
+      UPDATE automation.history
       SET status = $1, updated_at = NOW()
       WHERE id = $2
       RETURNING id, status, updated_at

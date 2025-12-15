@@ -1021,3 +1021,15 @@ model checklist_pm_wafer {
 
   @@schema("automation")
 }
+
+model history {
+  id          Int       @id @default(autoincrement())
+  category    String    @db.VarChar(100)
+  description String?
+  photo_path  String?   @db.VarChar(255)
+  status      String?   @db.VarChar(50)
+  created_at  DateTime? @default(now()) @db.Timestamp(6)
+  updated_at  DateTime? @default(now()) @db.Timestamp(6)
+
+  @@schema("automation")
+}
