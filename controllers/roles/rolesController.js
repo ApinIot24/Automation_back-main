@@ -1,15 +1,5 @@
 // rolesController.js
-import db from "../../config/util.js";
-import { executeQuery, countQuery } from "../../models/pagetable.js";
-
-// Constants
-const SORT_MAPPING = {
-  id: "roles.id",
-  role_name: "roles.role_name",
-};
-
-const TABLE_SCHEMA = "automation";
-const DEFAULT_SORT = "id";
+import { automationDB } from "../../src/db/automation.js";
 
 export const getRoles = async (req, res) => {
   try {
@@ -17,87 +7,95 @@ export const getRoles = async (req, res) => {
       page = 1,
       limit = 10,
       role_name,
-      sortBy = DEFAULT_SORT,
+      sortBy = "id",
       sortOrder = "asc",
     } = req.query;
 
-    // Validasi dan parsing parameter
     const parsedPage = Math.max(1, parseInt(page));
     const parsedLimit = Math.max(1, parseInt(limit));
-    const offset = (parsedPage - 1) * parsedLimit;
+    const skip = (parsedPage - 1) * parsedLimit;
 
-    // Membangun kondisi filter
-    const filterConditions = [];
-    const filterValues = [];
-    let paramCount = 1;
+    const orderBy = {
+      [sortBy === "role_name" ? "role_name" : "id"]:
+        sortOrder.toLowerCase() === "desc" ? "desc" : "asc",
+    };
 
-    if (role_name) {
-      filterConditions.push(`roles.role_name ILIKE $${paramCount}`);
-      filterValues.push(`%${role_name}%`);
-      paramCount++;
-    }
+    const where = role_name
+      ? {
+          role_name: {
+            contains: role_name,
+            mode: "insensitive",
+          },
+        }
+      : {};
 
-    // Validasi urutan sorting
-    const validSortOrder = ["asc", "desc"].includes(sortOrder.toLowerCase())
-      ? sortOrder.toUpperCase()
-      : "ASC";
-
-    const mappedSortColumn = SORT_MAPPING[sortBy] || SORT_MAPPING[DEFAULT_SORT];
-    const orderClause = `ORDER BY ${mappedSortColumn} ${validSortOrder}`;
-
-    // Membangun WHERE clause
-    const whereClause = filterConditions.length
-      ? `WHERE ${filterConditions.join(" AND ")}`
-      : "";
-
-    // Query untuk mengambil data roles dengan permissions
-    const selectQuery = `
-      SELECT 
-        roles.id AS roles_id,
-        roles.role_name,
-        COALESCE(
-          ARRAY_AGG(
-            DISTINCT permissions.permission_name
-          ) FILTER (WHERE permissions.permission_name IS NOT NULL),
-          ARRAY[]::text[]
-        ) as permissions
-      FROM ${TABLE_SCHEMA}.roles
-      LEFT JOIN ${TABLE_SCHEMA}.role_permissions rp ON rp.role_id = roles.id
-      LEFT JOIN ${TABLE_SCHEMA}.permissions permissions ON rp.permission_id = permissions.id
-      ${whereClause}
-      GROUP BY roles.id, roles.role_name
-      ${orderClause}
-      LIMIT $${paramCount} OFFSET $${paramCount + 1}
-    `;
-
-    // Query untuk menghitung total records
-    const countQuery = `
-      SELECT COUNT(DISTINCT roles.id) as total
-      FROM ${TABLE_SCHEMA}.roles
-      LEFT JOIN ${TABLE_SCHEMA}.role_permissions rp ON rp.role_id = roles.id
-      ${whereClause}
-    `;
-
-    // Eksekusi query
-    const [rows, totalResult] = await Promise.all([
-      db.query(selectQuery, [...filterValues, parsedLimit, offset]),
-      db.query(countQuery, filterValues),
+    // 1️⃣ ambil roles dulu
+    const [roles, total] = await Promise.all([
+      automationDB.roles.findMany({
+        where,
+        skip,
+        take: parsedLimit,
+        orderBy,
+        select: {
+          id: true,
+          role_name: true,
+        },
+      }),
+      automationDB.roles.count({ where }),
     ]);
 
-    // Transformasi data untuk mendapatkan struktur yang diinginkan
-    const transformedData = rows.rows.map((row) => ({
-      roles_id: row.roles_id,
-      role_name: row.role_name,
-      permissions: row.permissions,
+    const roleIds = roles.map((r) => r.id);
+
+    // 2️⃣ ambil permissions via table pivot
+    const rolePermissions = await automationDB.role_permissions.findMany({
+      where: {
+        role_id: { in: roleIds },
+      },
+      select: {
+        role_id: true,
+        permission_id: true,
+      },
+    });
+
+    const permissionIds = [
+      ...new Set(rolePermissions.map((rp) => rp.permission_id)),
+    ];
+
+    const permissions = permissionIds.length
+      ? await automationDB.permissions.findMany({
+          where: { id: { in: permissionIds } },
+          select: {
+            id: true,
+            permission_name: true,
+          },
+        })
+      : [];
+
+    // 3️⃣ map SQL-like result
+    const permissionMap = {};
+    permissions.forEach((p) => {
+      permissionMap[p.id] = p.permission_name;
+    });
+
+    const permissionsByRole = {};
+    rolePermissions.forEach((rp) => {
+      if (!permissionsByRole[rp.role_id]) {
+        permissionsByRole[rp.role_id] = [];
+      }
+      permissionsByRole[rp.role_id].push(
+        permissionMap[rp.permission_id]
+      );
+    });
+
+    const data = roles.map((r) => ({
+      roles_id: r.id,
+      role_name: r.role_name,
+      permissions: permissionsByRole[r.id] || [],
     }));
 
-    // Hitung total dan jumlah halaman
-    const total = parseInt(totalResult.rows[0].total);
-
-    // Kirim response
     return res.status(200).json({
       status: "success",
-      data: transformedData,
+      data,
       pagination: {
         currentPage: parsedPage,
         pageSize: parsedLimit,
@@ -109,7 +107,7 @@ export const getRoles = async (req, res) => {
       },
       sorting: {
         sortBy,
-        sortOrder: validSortOrder,
+        sortOrder: sortOrder.toUpperCase(),
       },
     });
   } catch (error) {
@@ -117,17 +115,14 @@ export const getRoles = async (req, res) => {
     return res.status(500).json({
       status: "error",
       message: "Internal Server Error",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
-};
+}
 
 export const addRole = async (req, res) => {
   const { role_name, permissions } = req.body;
-  const client = await db.connect();
 
   try {
-    // Validate input
     if (!role_name?.trim()) {
       return res.status(400).json({
         status: "error",
@@ -142,86 +137,71 @@ export const addRole = async (req, res) => {
       });
     }
 
-    await client.query("BEGIN");
+    const existingRole = await automationDB.roles.findUnique({
+      where: { role_name },
+    });
 
-    // Check if role name already exists
-    const existingRole = await client.query(
-      `SELECT id FROM ${TABLE_SCHEMA}.roles WHERE role_name = $1`,
-      [role_name]
-    );
-
-    if (existingRole.rows.length > 0) {
+    if (existingRole) {
       return res.status(409).json({
         status: "error",
         message: "Role name already exists",
       });
     }
 
-    // Insert new role
-    const roleResult = await client.query(
-      `INSERT INTO ${TABLE_SCHEMA}.roles (role_name) VALUES ($1) RETURNING id`,
-      [role_name]
-    );
+    const validPermissions = await automationDB.permissions.findMany({
+      where: { id: { in: permissions } },
+      select: { id: true },
+    });
 
-    const roleId = roleResult.rows[0].id;
-
-    // Validate all permissions exist
-    const permissionQuery = `
-      SELECT id FROM ${TABLE_SCHEMA}.permissions 
-      WHERE id = ANY($1::int[])
-    `;
-
-    const validPermissions = await client.query(permissionQuery, [permissions]);
-
-    if (validPermissions.rows.length !== permissions.length) {
-      await client.query("ROLLBACK");
+    if (validPermissions.length !== permissions.length) {
       return res.status(400).json({
         status: "error",
         message: "One or more invalid permission IDs provided",
       });
     }
 
-    // Insert role permissions
-    const rolePermissionValues = permissions
-      .map((permissionId) => `(${roleId}, ${permissionId})`)
-      .join(", ");
+    const role = await automationDB.$transaction(async (tx) => {
+      const createdRole = await tx.roles.create({
+        data: { role_name },
+      });
 
-    await client.query(`
-      INSERT INTO ${TABLE_SCHEMA}.role_permissions (role_id, permission_id)
-      VALUES ${rolePermissionValues}
-    `);
+      await tx.role_permissions.createMany({
+        data: permissions.map((permissionId) => ({
+          role_id: createdRole.id,
+          permission_id: permissionId,
+        })),
+      });
 
-    await client.query("COMMIT");
+      return createdRole;
+    });
 
     return res.status(201).json({
       status: "success",
       message: "Role created successfully",
       data: {
-        id: roleId,
+        id: role.id,
         role_name,
-        permissions: validPermissions.rows,
+        permissions: validPermissions,
       },
     });
   } catch (error) {
-    await client.query("ROLLBACK");
     console.error("Error in addRole:", error);
     return res.status(500).json({
       status: "error",
       message: "Failed to create role",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      error:
+      process.env.NODE_ENV === "development"
+        ? error.message
+        : undefined,
     });
-  } finally {
-    client.release();
   }
 };
 
 export const updateRole = async (req, res) => {
   const { id } = req.params;
   const { role_name, permissions } = req.body;
-  const client = await db.connect();
 
   try {
-    // Validate input
     if (!role_name?.trim()) {
       return res.status(400).json({
         status: "error",
@@ -236,91 +216,155 @@ export const updateRole = async (req, res) => {
       });
     }
 
-    await client.query("BEGIN");
+    const role = await automationDB.roles.findUnique({
+      where: { id: Number(id) },
+    });
 
-    // Check if role exists
-    const existingRole = await client.query(
-      `SELECT id FROM ${TABLE_SCHEMA}.roles WHERE id = $1`,
-      [id]
-    );
-
-    if (existingRole.rows.length === 0) {
+    if (!role) {
       return res.status(404).json({
         status: "error",
         message: "Role not found",
       });
     }
 
-    // Check for role name conflict
-    const nameConflict = await client.query(
-      `SELECT id FROM ${TABLE_SCHEMA}.roles WHERE role_name = $1 AND id != $2`,
-      [role_name, id]
-    );
+    const nameConflict = await automationDB.roles.findFirst({
+      where: {
+        role_name,
+        NOT: { id: Number(id) },
+      },
+    });
 
-    if (nameConflict.rows.length > 0) {
+    if (nameConflict) {
       return res.status(409).json({
         status: "error",
         message: "Role name already exists",
       });
     }
 
-    // Validate all permissions exist
-    const permissionQuery = `
-      SELECT id FROM ${TABLE_SCHEMA}.permissions 
-      WHERE id = ANY($1::int[])
-    `;
+    const validPermissions = await automationDB.permissions.findMany({
+      where: { id: { in: permissions } },
+      select: { id: true },
+    });
 
-    const validPermissions = await client.query(permissionQuery, [permissions]);
-
-    if (validPermissions.rows.length !== permissions.length) {
-      await client.query("ROLLBACK");
+    if (validPermissions.length !== permissions.length) {
       return res.status(400).json({
         status: "error",
         message: "One or more invalid permission IDs provided",
       });
     }
 
-    // Update role name
-    await client.query(
-      `UPDATE ${TABLE_SCHEMA}.roles SET role_name = $1 WHERE id = $2`,
-      [role_name, id]
-    );
+    await automationDB.$transaction(async (tx) => {
+      await tx.roles.update({
+        where: { id: Number(id) },
+        data: { role_name },
+      });
 
-    // Update permissions (delete and insert approach)
-    await client.query(
-      `DELETE FROM ${TABLE_SCHEMA}.role_permissions WHERE role_id = $1`,
-      [id]
-    );
+      await tx.role_permissions.deleteMany({
+        where: { role_id: Number(id) },
+      });
 
-    const rolePermissionValues = permissions
-      .map((permissionId) => `(${id}, ${permissionId})`)
-      .join(", ");
-
-    await client.query(`
-      INSERT INTO ${TABLE_SCHEMA}.role_permissions (role_id, permission_id)
-      VALUES ${rolePermissionValues}
-    `);
-
-    await client.query("COMMIT");
+      await tx.role_permissions.createMany({
+        data: permissions.map((permissionId) => ({
+          role_id: Number(id),
+          permission_id: permissionId,
+        })),
+      });
+    });
 
     return res.status(200).json({
       status: "success",
       message: "Role updated successfully",
       data: {
-        id: parseInt(id),
+        id: Number(id),
         role_name,
-        permissions: validPermissions.rows,
+        permissions: validPermissions,
       },
     });
   } catch (error) {
-    await client.query("ROLLBACK");
     console.error("Error in updateRole:", error);
     return res.status(500).json({
       status: "error",
       message: "Failed to update role",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
-  } finally {
-    client.release();
+  }
+};
+
+export const getRoleById = async (req, res) => {
+  const { id } = req.params;
+  const roleId = Number(id);
+
+  try {
+    // 1️⃣ ambil role
+    const role = await automationDB.roles.findUnique({
+      where: { id: roleId },
+      select: {
+        id: true,
+        role_name: true,
+      },
+    });
+
+    if (!role) {
+      return res.status(404).json({
+        message: "Role not found",
+      });
+    }
+
+    // 2️⃣ ambil role_permissions (pivot)
+    const rolePermissions = await automationDB.role_permissions.findMany({
+      where: { role_id: roleId },
+      select: { permission_id: true },
+    });
+
+    return res.status(200).json({
+      message: "Role fetched successfully",
+      data: {
+        id: role.id,
+        role_name: role.role_name,
+        permissions: rolePermissions.map(
+          (rp) => rp.permission_id
+        ),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching role:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+export const deleteRoleById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const role = await automationDB.roles.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!role) {
+      return res.status(404).json({
+        message: "Role not found",
+      });
+    }
+
+    await automationDB.$transaction(async (tx) => {
+      await tx.role_permissions.deleteMany({
+        where: { role_id: Number(id) },
+      });
+
+      await tx.roles.delete({
+        where: { id: Number(id) },
+      });
+    });
+
+    return res.status(200).json({
+      message: "Role deleted successfully",
+      id: Number(id),
+    });
+  } catch (error) {
+    console.error("Error deleting role:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };
