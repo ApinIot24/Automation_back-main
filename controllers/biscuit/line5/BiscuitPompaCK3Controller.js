@@ -65,7 +65,7 @@ export const getPompaDurasiTotal = async (req, res) => {
     res.json({
       pompa,
       total_durasi: dur.toFixed(2),
-      total_kejadian: row.total_kejadian,
+      total_kejadian: Number(row.total_kejadian),
       waktu_pertama: row.waktu_pertama,
       waktu_terakhir: row.waktu_terakhir
     });
@@ -93,7 +93,7 @@ export const getPompaDurasiPeriode = async (req, res) => {
       AND tanggal BETWEEN '${startdate}' AND '${enddate}';
     `;
 
-    const [row] = await rawIot(sql);
+    const [row] = await raw(sql);
 
     const akt = parseFloat(row.durasi_aktif);
     const non = parseFloat(row.durasi_non_aktif);
@@ -109,8 +109,8 @@ export const getPompaDurasiPeriode = async (req, res) => {
       pompa,
       durasi_aktif: akt.toFixed(2),
       durasi_non_aktif: non.toFixed(2),
-      total_kejadian_aktif: row.total_kejadian_aktif,
-      total_kejadian_non_aktif: row.total_kejadian_non_aktif
+      total_kejadian_aktif: Number(row.total_kejadian_aktif),
+      total_kejadian_non_aktif: Number(row.total_kejadian_non_aktif)
     });
 
   } catch (err) {
