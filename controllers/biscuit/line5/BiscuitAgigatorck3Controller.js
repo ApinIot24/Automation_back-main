@@ -4,24 +4,25 @@ export const getStatus = async (req, res) => {
   const { agitator, startdate, enddate } = req.params;
 
   try {
-    const rows = await iotDB.ck_biscuit_agitator.findMany({
-      where: {
+    const rows = await iotDB.$queryRawUnsafe(
+      `
+      SELECT 
+        id,
         agitator,
-        tanggal: {
-          gte: new Date(startdate),
-          lte: new Date(enddate),
-        },
-      },
-      select: {
-        id: true,
-        agitator: true,
-        jam_aktif: true,
-        jam_non_aktif: true,
-        status: true,
-        tanggal: true,
-      },
-      orderBy: { jam_aktif: "asc" },
-    });
+        jam_aktif,
+        jam_non_aktif,
+        durasi::text as durasi,
+        status,
+        tanggal
+      FROM purwosari.ck_biscuit_agitator
+      WHERE agitator = $1
+        AND tanggal BETWEEN $2 AND $3
+      ORDER BY jam_aktif ASC
+      `,
+      agitator,
+      startdate,
+      enddate
+    );
 
     if (!rows.length) {
       return res.status(404).json({
@@ -32,10 +33,12 @@ export const getStatus = async (req, res) => {
 
     // Serialize data to handle BigInt and Date objects
     const serializedRows = rows.map(row => ({
-      ...row,
       id: Number(row.id),
+      agitator: row.agitator,
       jam_aktif: row.jam_aktif ? new Date(row.jam_aktif).toISOString() : null,
       jam_non_aktif: row.jam_non_aktif ? new Date(row.jam_non_aktif).toISOString() : null,
+      durasi: row.durasi || null,
+      status: row.status,
       tanggal: row.tanggal ? new Date(row.tanggal).toISOString() : null,
     }));
 

@@ -5,16 +5,22 @@ export const getPompaStatus = async (req, res) => {
   const { pompa, startdate, enddate } = req.params;
 
   try {
-    const rows = await iotDB.ck_biscuit_pompa.findMany({
-      where: {
+    const sql = `
+      SELECT 
+        id,
         pompa,
-        tanggal: {
-          gte: new Date(startdate),
-          lte: new Date(enddate),
-        }
-      },
-      orderBy: { jam_aktif: "asc" }
-    });
+        jam_aktif,
+        jam_non_aktif,
+        durasi::text as durasi,
+        status,
+        tanggal
+      FROM purwosari.ck_biscuit_pompa
+      WHERE pompa='${pompa}'
+        AND tanggal BETWEEN '${startdate}' AND '${enddate}'
+      ORDER BY jam_aktif ASC
+    `;
+
+    const rows = await raw(sql);
 
     if (!rows.length) {
       return res.status(404).json({
@@ -23,13 +29,25 @@ export const getPompaStatus = async (req, res) => {
       });
     }
 
+    // Serialize data to handle BigInt and Date objects
+    const serializedRows = rows.map(row => ({
+      id: Number(row.id),
+      pompa: row.pompa,
+      jam_aktif: row.jam_aktif ? new Date(row.jam_aktif).toISOString() : null,
+      jam_non_aktif: row.jam_non_aktif ? new Date(row.jam_non_aktif).toISOString() : null,
+      durasi: row.durasi || null,
+      status: row.status,
+      tanggal: row.tanggal ? new Date(row.tanggal).toISOString() : null,
+    }));
+
     res.json({
       pompa,
-      status_history: rows,
-      total_records: rows.length,
+      status_history: serializedRows,
+      total_records: serializedRows.length,
     });
 
   } catch (err) {
+    console.error("getPompaStatus Error:", err);
     res.status(500).json({
       message: "Gagal mengambil status pompa",
       error: err.message,
