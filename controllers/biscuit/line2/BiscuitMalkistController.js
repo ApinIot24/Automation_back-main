@@ -120,8 +120,7 @@ function groupDataByShift(peaks) {
 // Fungsi untuk mendeteksi puncak (peak detection)
 function getPeakData(data, jenis) {
   const peaks = [];
-  const isMalkistFlor = jenis.startsWith('malkist_flor_');
-  let minWeightThreshold = isMalkistFlor ? -Infinity : getMinWeightByJenis(jenis);
+  let minWeightThreshold = getMinWeightByJenis(jenis);
 
   let currentGroup = []; // Menampung data dalam satu grup
   let isInPeakRegion = false; // Menandakan apakah sedang dalam region puncak
@@ -135,7 +134,6 @@ function getPeakData(data, jenis) {
     }
 
     // Jika data di atas threshold, masuk ke region puncak
-    // Untuk malkist_flor_, semua data valid akan masuk ke region puncak
     if (current.weight >= minWeightThreshold) {
       if (!isInPeakRegion) {
         // Memulai region puncak baru
@@ -208,14 +206,12 @@ function getShift(dateStr) {
   return 3; // shift malam
 }
 function getlowerhighdata(data, jenis) {
-  const isMalkistFlor = jenis.startsWith('malkist_flor_');
-  let minWeightThreshold = isMalkistFlor ? -Infinity : getMinWeightByJenis(jenis);
+  let minWeightThreshold = getMinWeightByJenis(jenis);
 
   let groupedData = [];
   let currentGroup = [];
 
   // Pengelompokan data berdasarkan kriteria
-  // Untuk malkist_flor_, semua data valid akan masuk ke grup tinggi
   for (const current of data) {
     if (current.weight <= 0) continue; // Melewati data tidak valid
 
@@ -281,19 +277,13 @@ export const GetCkBiskuitLoadcell = async (req, res) => {
     }
 
     const minWeight = getMinWeightByJenis(jenis);
-    const isMalkistFlor = jenis.startsWith('malkist_flor_');
-
-    // Untuk malkist_flor_ ambil semua data tanpa filter weight
-    const weightFilter = isMalkistFlor 
-        ? '' 
-        : `AND (weight > ${minWeight} OR weight < 5)`;
 
     const sql = `
         SELECT weight, created_at as date
         FROM purwosari.ck_malkist
         WHERE jenis = '${jenis}'
         AND created_at::date BETWEEN '${startdate}' AND '${enddate}'
-        ${weightFilter}
+        AND (weight > ${minWeight} OR weight < 5)
         ORDER BY created_at;
     `;
 
@@ -340,19 +330,13 @@ export const PostProcessedLoadcell = async (req, res) => {
         }
 
         const minWeight = getMinWeightByJenis(jenis);
-        const isMalkistFlor = jenis.startsWith('malkist_flor_');
-
-        // Untuk malkist_flor_ ambil semua data tanpa filter weight
-        const weightFilter = isMalkistFlor 
-            ? '' 
-            : `AND (weight > ${minWeight} OR weight < 5)`;
 
         const sql = `
             SELECT weight, created_at as date
             FROM purwosari.ck_malkist
             WHERE jenis = '${jenis}'
             AND created_at::date BETWEEN '${startDate}' AND '${endDate}'
-            ${weightFilter}
+            AND (weight > ${minWeight} OR weight < 5)
             ORDER BY created_at;
         `;
 

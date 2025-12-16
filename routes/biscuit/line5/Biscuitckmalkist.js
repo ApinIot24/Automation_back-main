@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { GetCkBiskuitLoadcell, PostProcessedLoadcell } from "../../../controllers/biscuit/line5/BiscuitMalkistController.js";
+import { GetCkBiskuitLoadcell, PostProcessedLoadcell } from "../../../controllers/biscuit/line2/BiscuitMalkistController.js";
 const app = Router();
 
 app.post("/ck_malkist/loadcell/processed", PostProcessedLoadcell);
