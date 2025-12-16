@@ -82,6 +82,9 @@ function groupDataByDateAndShift(peaks) {
 
     const shift = getShift(item.date);
 
+    // Skip jika tidak ada shift (misalnya setelah jam 22 di Sabtu)
+    if (shift === null) return;
+
     // Increment shift counts based on shift value
     if (shift === 1) groupedByDate[date]["Shift 1"]++;
     else if (shift === 2) groupedByDate[date]["Shift 2"]++;
@@ -106,9 +109,11 @@ function groupDataByShift(peaks) {
 
   peaks.forEach((item) => {
     const shift = getShift(item.date);
+    // Skip jika tidak ada shift (misalnya setelah jam 22 di Sabtu)
+    if (shift === null) return;
     if (shift === 1) grouped["Shift 1"].push(item);
     else if (shift === 2) grouped["Shift 2"].push(item);
-    else grouped["Shift 3"].push(item);
+    else if (shift === 3) grouped["Shift 3"].push(item);
   });
 
   return Object.entries(grouped).map(([shift, details]) => ({
@@ -194,15 +199,18 @@ function getShift(dateStr) {
 
   // Cek apakah hari ini Sabtu (day 6 adalah Sabtu)
   if (day === 6) {
-    if (hour >= 7 && hour < 12) return 1; // shift 1: 7:00 - 11:59
-    if (hour >= 12 && hour < 17) return 2; // shift 2: 12:00 - 16:59
-    if (hour >= 17 && hour < 22) return 3; // shift 3: 17:00 - 21:59
-    return 4; // setelah jam 22, tidak ada shift
+    // Sabtu: mulai jam 7, per 5 jam kembali
+    if (hour >= 7 && hour < 12) return 1; // shift 1: 7:00 - 11:59 (5 jam)
+    if (hour >= 12 && hour < 17) return 2; // shift 2: 12:00 - 16:59 (5 jam)
+    if (hour >= 17 && hour < 22) return 3; // shift 3: 17:00 - 21:59 (5 jam)
+    // Setelah jam 22 sampai sebelum jam 7, tidak ada shift
+    return null; // tidak ada shift
   }
 
-  // Jika bukan hari Sabtu, gunakan logika default
-  if (hour >= 7 && hour < 15) return 1;
-  if (hour >= 15 && hour < 23) return 2;
+  // Hari biasa: mulai jam 7, per 8 jam kembali
+  if (hour >= 7 && hour < 15) return 1; // shift 1: 7:00 - 14:59 (8 jam)
+  if (hour >= 15 && hour < 23) return 2; // shift 2: 15:00 - 22:59 (8 jam)
+  // Shift 3: 23:00 - 6:59 (8 jam)
   return 3; // shift malam
 }
 function getlowerhighdata(data, jenis) {
