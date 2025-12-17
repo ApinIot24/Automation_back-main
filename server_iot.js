@@ -5,7 +5,7 @@ import cors from "cors";
 import jwt from "jsonwebtoken";
 import http from "http";
 import https from "https";
-import cron from "node-cron";
+import "./jobs/pmWeekly.cron.js"
 import { WebSocketServer } from "ws";
 import db from "./config/util.js";
 import db_iot from "./config/users.js";
@@ -51,6 +51,8 @@ import formtiket from "./routes/ticket.js";
 
 // setting_pm
 import settingpm from "./routes/setting_pm/index.js";
+// replacement_pm
+import replacementpm from "./routes/pm_replacement.js";
 // gas meter
 import gasmeter from "./routes/utility/gasmeter/gasmeter.js";
 // sync_database
@@ -238,6 +240,7 @@ app.use("/api", qrchecklist);
 
 app.use("/api", formtiket);
 app.use("/api", settingpm);
+app.use("/api", replacementpm);
 
 // Gas meter routes
 app.use("/api", gasmeter);
