@@ -264,12 +264,22 @@ export const UpdateChecklistPM = async (req, res) => {
     const { pic, c_i, l, r, keterangan, tanggal } = req.body;
     const { id } = req.params;
 
+    // Validate that id is provided
+    if (!id) {
+      return res.status(400).json({
+        error: "ID is required",
+      });
+    }
+
+    // ID is a UUID string, not a number
+    const itemId = String(id);
+
     const rows = await automationDB.$queryRaw`
       UPDATE automation.checklist_pm_wafer
       SET pic=${pic}, c_i=${c_i}, l=${l}, r=${r},
           keterangan=${keterangan}, tanggal=${tanggal},
           updated_at=NOW()
-      WHERE id=${id}
+      WHERE id=${itemId}
       RETURNING *
     `;
 

@@ -98,7 +98,15 @@ export const updateChecklist = async (req, res) => {
       status_checklist,
     } = req.body;
 
-    const itemId = Number(id);
+    // Validate that id is provided
+    if (!id) {
+      return res.status(400).json({
+        error: "ID is required",
+      });
+    }
+
+    // ID is a UUID string, not a number
+    const itemId = String(id);
 
     // cek biscuit
     const biscuit = await automationDB.checklist_pm_biscuit.findUnique({

@@ -74,8 +74,18 @@ export async function updateChecklistAstor(req, res) {
     const { id } = req.params;
     const { pic, c_i, l, r, keterangan, tanggal } = req.body;
 
+    // Validate that id is provided
+    if (!id) {
+      return res.status(400).json({
+        error: "ID is required",
+      });
+    }
+
+    // ID is a UUID string, not a number
+    const itemId = String(id);
+
     const updated = await automationDB.checklist_pm_astor.update({
-      where: { id: id },
+      where: { id: itemId },
       data: {
         pic,
         c_i,

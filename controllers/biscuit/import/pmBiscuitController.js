@@ -50,17 +50,17 @@ export async function getMachineListByGroup(req, res) {
 export async function getQrCodeListByGroup(req, res) {
   try {
     const { group } = req.params;
-    // const { group } = req.params.group;
 
-    const result = await raw(`
+    const result = await automationDB.$queryRaw`
       SELECT DISTINCT ON (qrcode) machine_name, qrcode
       FROM automation.pm_biscuit
       WHERE grup = ${group}
-      ORDER BY qrcode;
-    `);
+      ORDER BY qrcode
+    `;
 
-    res.json(result.rows);
+    res.json(result);
   } catch (err) {
+    console.error("Error fetching QR code data:", err);
     res.status(500).json({ error: err.message });
   }
 }
