@@ -52,6 +52,8 @@ export const getChecklistByQRCode = async (req, res) => {
       });
     }
 
+    console.log(`Searching checklist for QR: ${scannedData}, Week: ${currentWeek}`);
+
     let data = await automationDB.checklist_pm_biscuit.findMany({
       where: {
         qrcode: scannedData,
@@ -69,8 +71,29 @@ export const getChecklistByQRCode = async (req, res) => {
     }
 
     if (data.length === 0) {
+      data = await automationDB.checklist_pm_astor.findMany({
+        where: {
+          qrcode: scannedData,
+          week: currentWeek,
+        },
+      });
+    }
+
+    if (data.length === 0) {
+      data = await automationDB.checklist_pm_utility.findMany({
+        where: {
+          qrcode: scannedData,
+          week: currentWeek,
+        },
+      });
+    }
+
+    if (data.length === 0) {
+      console.log(`Checklist not found for QR: ${scannedData} in week ${currentWeek}`);
       return res.status(404).json({
         message: "Checklist not found this week",
+        scannedData,
+        currentWeek,
       });
     }
 
@@ -82,6 +105,7 @@ export const getChecklistByQRCode = async (req, res) => {
     console.error("Error fetching data:", error);
     res.status(500).json({
       error: "Error fetching data",
+      details: error.message,
     });
   }
 };

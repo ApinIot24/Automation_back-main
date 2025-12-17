@@ -29,7 +29,7 @@ router.put("/pm_utility/update_field/:id", updatePmUtilityField);
 
 // Endpoint API
 router.post("/import/utility", upload.single("file"), importUtility);
-router.post("/import/utility/:grup", importUtilityByGroup);
+router.post("/import/utility/:grup", upload.single("file"), importUtilityByGroup);
 
 router.delete("/deleted/utility/:group", deleteUtilityByGroup);
 router.delete("/deleted/utility_pm/batch", deleteUtilityBatch);

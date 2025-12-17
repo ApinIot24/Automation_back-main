@@ -258,9 +258,13 @@ export const DeleteWaferAll = async (req, res) => {
 
 export const ImportWafer = async (req, res) => {
     try {
-        const filePath = req.file.path
+        if (!req.file) {
+            return res.status(400).send("File is required");
+        }
 
-        await importExcelWafer(filePath)
+        const filePath = req.file.path;
+
+        await importExcelWafer(filePath);
 
         res.status(200).send("Data berhasil diimpor ke PostgreSQL.");
     } catch (e) {
@@ -269,14 +273,19 @@ export const ImportWafer = async (req, res) => {
 }
 
 export const ImportWaferByGroup = async (req, res) => {
+  const grup = req.params?.grup || 'unknown';
+
   try {
+    if (!req.file) {
+      return res.status(400).send("File is required");
+    }
+
     const filePath = req.file.path;
-    const grup = req.params.grup;
 
     await importExcelWafer(filePath, grup);
 
     res.status(200)
-      .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`)
+      .send(`Data untuk grup ${grup} berhasil diimpor ke PostgreSQL.`);
 
   } catch (error) {
     res
