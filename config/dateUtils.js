@@ -39,27 +39,15 @@ export function generateWeeklyDataForTargetYear(
     const interval = intervalMatch ? parseInt(intervalMatch[0], 10) : null;
 
     if (!interval) continue;
-
-    // console.log(`Period: ${currentPeriod}`);
-    // console.log(`Symbol: ${symbol}, Interval: ${interval}`);
-
     // Ekstrak tahun dan minggu awal dari currentStartPeriod
     const [startYear, startWeekString] = currentStartPeriod.split("w");
     let startWeek = parseInt(startWeekString?.trim(), 10);
     let originalYear = parseInt(startYear, 10);
 
     if (isNaN(startWeek) || isNaN(originalYear)) continue;
-
-    // console.log(`Start Period: ${currentStartPeriod}`);
-    // console.log(`Start Year: ${startYear}, Start Week: ${startWeek}`);
-
     // Jika kita menghasilkan data untuk tahun awal, cukup isi minggu dari minggu awal
     if (targetYear === originalYear) {
-      // console.log(
-      //   `Tahun target sama dengan tahun awal. Mulai dari minggu ${startWeek}`
-      // );
       for (let i = startWeek; i <= totalWeeks; i += interval) {
-        // console.log(`Mengisi minggu: ${i} dengan simbol: ${symbol}`);
         weekData[`w${i}`] =
           weekData[`w${i}`] === "-" ? symbol : `${weekData[`w${i}`]},${symbol}`;
       }
@@ -68,9 +56,6 @@ export function generateWeeklyDataForTargetYear(
 
     // Jika targetYear sebelum tahun awal, tidak ada entri untuk diisi
     if (targetYear < originalYear) {
-      // console.log(
-      //   `Tahun target sebelum tahun awal. Tidak ada entri untuk diisi.`
-      // );
       continue;
     }
 
@@ -79,9 +64,6 @@ export function generateWeeklyDataForTargetYear(
     let weeksInOriginalYear = getTotalWeeksInYear(originalYear);
     let weeksFromStartToEndOfOriginalYear = weeksInOriginalYear - startWeek + 1;
 
-    // console.log(
-    //   `Minggu dari awal hingga akhir tahun awal: ${weeksFromStartToEndOfOriginalYear}`
-    // );
 
     // Hitung total minggu di antara tahun awal dan tahun target
     let totalWeeksInBetween = 0;
@@ -89,14 +71,9 @@ export function generateWeeklyDataForTargetYear(
       totalWeeksInBetween += getTotalWeeksInYear(year);
     }
 
-    // console.log(`Total minggu di tahun-tahun antara: ${totalWeeksInBetween}`);
-
     // Total jumlah minggu dari tanggal mulai hingga awal tahun target
     let totalWeeksPassed =
       weeksFromStartToEndOfOriginalYear + totalWeeksInBetween;
-    // console.log(
-    //   `Total minggu yang berlalu sejak awal pola: ${totalWeeksPassed}`
-    // );
 
     // Hitung minggu pertama di tahun target di mana pola harus muncul
     let remainder = totalWeeksPassed % interval;
@@ -116,10 +93,6 @@ export function generateWeeklyDataForTargetYear(
       Math.min(firstWeekInTargetYear, totalWeeks)
     );
 
-    // console.log(
-    //   `Kemunculan pertama di tahun target pada minggu: ${firstWeekInTargetYear}`
-    // );
-
     // Isi minggu di tahun target berdasarkan pola
     for (let i = firstWeekInTargetYear; i <= totalWeeks; i += interval) {
       // console.log(`Mengisi minggu: ${i} dengan simbol: ${symbol}`);
@@ -130,7 +103,6 @@ export function generateWeeklyDataForTargetYear(
 
   return weekData;
 }
-
 export function getTotalWeeksInYear(year) {
   const lastDay = new Date(year, 11, 31);
   const firstDayOfYear = new Date(year, 0, 1);
@@ -142,7 +114,6 @@ export function getTotalWeeksInYear(year) {
   );
   return Math.floor((lastDay - firstMonday) / (7 * 24 * 60 * 60 * 1000));
 }
-
 export function format(date) {
     if (!(date instanceof Date)) {
         throw new Error('Invalid "date" argument. You must pass a date instance');
@@ -184,4 +155,107 @@ export function getWeekDates(year, month, week) {
         d.setDate(d.getDate() + 1);
     }
     return arr;
+}
+function getCurrentWeekAndYear() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const start = new Date(year, 0, 1);
+  const week =
+    Math.floor((now - start) / (7 * 24 * 60 * 60 * 1000)) + 1;
+
+  return { week, year };
+}
+export function getLastWeekRolling4(count = 4) {
+  const { week, year } = getCurrentWeekAndYear();
+  const weeks = [];
+
+  let w = week;
+  let y = year;
+
+  for (let i = 0; i < count; i++) {
+    const max = getTotalWeeksInYear(y);
+    if (w > max) {
+      w = 1;
+      y++;
+    }
+    weeks.push({ week: w, year: y });
+    w++;
+  }
+
+  return weeks;
+}
+export function hasReplacementInPeriode(periode) {
+  if (!periode) return false;
+
+  return periode
+    .split(",")
+    .map(p => p.trim())
+    .some(p => /^\/?R\d+W$/i.test(p));
+}
+export function isReplacementAtTargetWeek(
+  periode,
+  periode_start,
+  targetWeek,
+  targetYear
+) {
+  if (!periode || !periode_start) return false;
+
+  const rToken = periode
+    .split(",")
+    .map(p => p.trim())
+    .find(p => /^\/?R\d+W$/i.test(p));
+
+  if (!rToken) return false;
+
+  const intervalMatch = rToken.match(/\d+/);
+  const interval = intervalMatch ? parseInt(intervalMatch[0], 10) : NaN;
+  if (!interval || isNaN(interval) || interval <= 0) return false;
+
+  // ===============================
+  // 2) Parse periode_start → list {year, week}
+  // ===============================
+  const starts = periode_start
+    .split(",")
+    .map(s => {
+      const [y, w] = s.trim().split("w");
+      return { year: parseInt(y, 10), week: parseInt(w, 10) };
+    })
+    .filter(s => !isNaN(s.year) && !isNaN(s.week) && s.week > 0);
+
+  if (starts.length === 0) return false;
+
+  // ===============================
+  // 3) RULE: Tahun target harus punya start
+  // ===============================
+  const startsInTargetYear = starts.filter(s => s.year === targetYear);
+  if (startsInTargetYear.length === 0) return false;
+
+  // Ambil start terbaru yang <= targetWeek
+  startsInTargetYear.sort((a, b) => b.week - a.week);
+  const start = startsInTargetYear.find(s => s.week <= targetWeek);
+  if (!start) return false;
+
+  // ===============================
+  // 4) INCLUSIVE RULE (yang kamu mau):
+  //    start week dianggap replacement juga
+  // ===============================
+  if (start.week === targetWeek) return true;
+
+  // ===============================
+  // 5) Kalau bukan start week, cek pattern interval ke depan
+  // ===============================
+  let y = start.year;
+  let w = start.week;
+
+  while (true) {
+    w += interval;
+
+    while (w > getTotalWeeksInYear(y)) {
+      w -= getTotalWeeksInYear(y);
+      y++;
+    }
+
+    if (y > targetYear || (y === targetYear && w > targetWeek)) return false;
+    if (y === targetYear && w === targetWeek) return true;
+  }
 }

@@ -10,14 +10,16 @@ export async function submitChecklistWeekByGroup(req, res) {
     const { year, week, data } = req.body;
     const grup = req.params.grup;
     const grupString = grup.toString();
+    const weekNumber = Number(week);
+    const yearNumber = Number(year);
 
-    if (!year || !week || !Array.isArray(data) || data.length === 0) {
+    if (!yearNumber || !weekNumber || !Array.isArray(data) || data.length === 0) {
       return res.status(400).json({ error: "Data tidak valid" });
     }
 
     // Check duplicate submission for same week/year/group
     const exists = await automationDB.checklist_pm_biscuit.findFirst({
-      where: { week, year, grup: grupString },
+      where: { week: weekNumber, year: yearNumber, grup: grupString },
     });
 
     if (exists) {
@@ -52,9 +54,9 @@ export async function submitChecklistWeekByGroup(req, res) {
     await automationDB.checklist_pm_biscuit.createMany({
       data: pmRows.map((r) => ({
         pm_biscuit_id: r.id,
-        week,
-        year,
-        grup,
+        week: weekNumber,
+        year: yearNumber,
+        grup: grupString,
         machine_name: r.machine_name,
         part_kebutuhan_alat: r.part_kebutuhan_alat,
         equipment: r.equipment,
@@ -67,7 +69,7 @@ export async function submitChecklistWeekByGroup(req, res) {
     });
 
     const insertedRows = await automationDB.checklist_pm_biscuit.findMany({
-      where: { week, year, grup: grupString },
+      where: { week: weekNumber, year: yearNumber, grup: grupString },
       orderBy: { id: "asc" },
     });
 

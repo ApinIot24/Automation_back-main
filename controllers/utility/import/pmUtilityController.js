@@ -37,7 +37,7 @@ export async function getMachinePMListUtilityByGroup(req, res) {
       ORDER BY no ASC;
     `);
 
-    res.json(result.rows);
+    res.json(result);
   } catch (err) {
     console.error("Error fetching data:", err);
     res.status(500).json({ error: "Error fetching data" });

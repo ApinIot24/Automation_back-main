@@ -1,5 +1,6 @@
 import { automationDB } from "../../../src/db/automation.js";
-import { generateWeeklyDataForTargetYear,getTotalWeeksInYear } from "./utilsPm.js";
+// import { generateWeeklyDataForTargetYear,getTotalWeeksInYear } from "./utilsPm.js";
+import { generateWeeklyDataForTargetYear, getTotalWeeksInYear } from "../../../config/dateUtils.js";
 
 export const GetWaferSelect = async (req, res) => {
   try {
