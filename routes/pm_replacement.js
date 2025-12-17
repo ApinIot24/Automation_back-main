@@ -6,7 +6,7 @@ const app = Router();
 
 // app.get("/pm_replacement/select/:group", GetPmReplacementSelect)
 // app.get("/pm_replacement/qrcode/:group", GetPmReplacementQRCode)
-app.get("/pm_replacement/:group/:week", getPmReplaceChecklistSubmitted)
+app.get("/pm_replacement/:group/:year", getPmReplaceChecklistSubmitted)
 
 app.put("/pm_replacement/:id", updatePmReplacementChecklist);
 // // app.post("/pm_replacement/machine", GetMachineByNameAndGroup)
