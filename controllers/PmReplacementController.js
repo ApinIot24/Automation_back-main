@@ -22,7 +22,9 @@ import { generateWeeklyDataForTargetYear, getTotalWeeksInYear } from "../config/
 
 export async function getPmReplaceChecklistSubmitted(req, res) {
   try {
-    const { jenis_pm, group, year } = req.params;
+    const { group, year } = req.params;
+    const { jenis_pm } = req.query;
+
 
     const parsedYear = Number(year);
     const stringGroup = String(group);
@@ -42,16 +44,31 @@ export async function getPmReplaceChecklistSubmitted(req, res) {
 
     const totalWeeks = getTotalWeeksInYear(parsedYear);
 
-    const mapped = rows.map((r) => ({
-      ...r,
-      confirm_week: generateWeeklyDataForTargetYear(
-        totalWeeks,
-        r.periode,
-        r.periode_start,
-        parsedYear
-      ),
-    }));
+    // const mapped = rows.map((r) => ({
+    //   ...r,
+    //   confirm_week: generateWeeklyDataForTargetYear(
+    //     totalWeeks,
+    //     r.periode,
+    //     r.periode_start,
+    //     parsedYear
+    //   ),
+    // }));
+    const mapped = rows.map((r) => {
+      const rawWeeks = String(r.periode_start || '')
+        .split(',')
+        .map(w => w.trim())
+        .filter(Boolean);
 
+      const weekNumbers = rawWeeks.map(w =>
+        Number(w.replace(/^.*w/i, ''))
+      );
+
+      return {
+        ...r,
+        confirm_week: weekNumbers,
+        confirm_week_label: rawWeeks,
+      };
+    });
     res.json(mapped);
   } catch (err) {
     console.error("Error fetching Replacement PM:", err);
