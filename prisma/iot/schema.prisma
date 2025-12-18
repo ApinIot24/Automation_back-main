@@ -1175,7 +1175,7 @@ model ck_malkist {
 model ck_wafer_status {
   id              Int    @id @default(autoincrement())
   line            String @db.VarChar(10)
-  ck_status       Int?
+  ck_status       Boolean?
   ck_mixing       Int?
   ck_temp_cooling Float? @db.Real
   temp_water      Float? @db.Real
