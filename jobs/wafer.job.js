@@ -13,7 +13,7 @@ export async function runWaferPM() {
   const targetYear = last.year;
 
   const rows = await automationDB.pm_wafer.findMany();
-
+  const createdRows = [];
   for (const row of rows) {
     if (!hasReplacementInPeriode(row.periode)) {
         continue;
@@ -29,11 +29,17 @@ export async function runWaferPM() {
         continue;
     }
 
-    await automationDB.replacement_pm.create({
+    const created = await automationDB.replacement_pm.create({
       data: { ...row, jenis_pm: "wafer" },
     });
+
+    createdRows.push(created);
   }
 
-//   console.log(`[WAFER] synced week ${targetWeek}`);
   console.log(`[WAFER] synced week ${targetYear}w${targetWeek}`);
+  return {
+    rows: createdRows,
+    targetWeek,
+    targetYear,
+  };
 }

@@ -13,6 +13,7 @@ export async function runUtilityPM() {
   const targetYear = last.year;
 
   const rows = await automationDB.pm_utility.findMany();
+  const createdRows = [];
 
   for (const row of rows) {
     if (!hasReplacementInPeriode(row.periode)) {
@@ -28,11 +29,16 @@ export async function runUtilityPM() {
     ) {
       continue;
     }
-    await automationDB.replacement_pm.create({
+    const created = await automationDB.replacement_pm.create({
       data: { ...row, jenis_pm: "utility" },
     });
+    createdRows.push(created);
   }
 
-  // console.log(`[UTILITY] synced week ${targetWeek}`);
   console.log(`[UTILITY] synced week ${targetYear}w${targetWeek}`);
+  return {
+    rows: createdRows,
+    targetWeek,
+    targetYear,
+  };
 }

@@ -1,25 +1,6 @@
 import { automationDB } from "../src/db/automation.js";
 import { generateWeeklyDataForTargetYear, getTotalWeeksInYear } from "../config/dateUtils.js";
 
-// const transporter = nodemailer.createTransport({
-//       service: "gmail",
-//       auth: {
-//         user: "cahyospprt@gmail.com", // email pengirim
-//         pass: "xkwojxzaccrorerw", // App password Gmail, bukan password biasa
-//     },
-// });
-
-// const PM_TABLE_MAP = {
-//   wafer: "pm_wafer",
-//   biscuit: "pm_biscuit",
-//   utility: "pm_utility",
-// };
-
-// function getPmTable(jenisPm) {
-//   const key = jenisPm?.toLowerCase();
-//   return PM_TABLE_MAP[key] || null;
-// }
-
 export async function getPmReplaceChecklistSubmitted(req, res) {
   try {
     const { group, year } = req.params;

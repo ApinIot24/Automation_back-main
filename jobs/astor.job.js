@@ -13,6 +13,7 @@ export async function runAstorPM() {
   const targetYear = last.year;
 
   const rows = await automationDB.pm_astor.findMany();
+  const createdRows = [];
 
   for (const row of rows) {
     if (!hasReplacementInPeriode(row.periode)) {
@@ -28,11 +29,18 @@ export async function runAstorPM() {
     ) {
       continue;
     }
-    await automationDB.replacement_pm.create({
+    const created = await automationDB.replacement_pm.create({
       data: { ...row, jenis_pm: "astor" },
     });
+
+    createdRows.push(created);
   }
 
-  // console.log(`[ASTOR] synced week ${targetWeek}`);
   console.log(`[ASTOR] synced week ${targetYear}w${targetWeek}`);
+
+  return {
+    rows: createdRows,
+    targetWeek,
+    targetYear,
+  };
 }

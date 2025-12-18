@@ -13,7 +13,7 @@ export async function runBiscuitPM() {
   const targetYear = last.year;
 
   const rows = await automationDB.pm_biscuit.findMany();
-
+  const createdRows = [];
   for (const row of rows) {
     if (!hasReplacementInPeriode(row.periode)) {
         continue;
@@ -29,11 +29,17 @@ export async function runBiscuitPM() {
         continue;
     }
 
-    await automationDB.replacement_pm.create({
+    const created = await automationDB.replacement_pm.create({
       data: { ...row, jenis_pm: "biscuit" },
     });
+
+    createdRows.push(created);
   }
 
-//   console.log(`[BISCUIT] synced week ${targetWeek}`);
   console.log(`[BISCUIT] synced week ${targetYear}w${targetWeek}`);
+  return {
+    rows: createdRows,
+    targetWeek,
+    targetYear,
+  };
 }

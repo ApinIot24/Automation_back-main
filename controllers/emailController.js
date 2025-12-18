@@ -1,59 +1,145 @@
-import nodemailer from 'nodemailer';
-import cron from 'node-cron';
+import nodemailer from 'nodemailer'
+import { PM_EMAIL_CHANNEL, PM_EMAIL_MAP } from '../config/pmEmailMap.js'
+import xlsx from 'xlsx'
 
 // Konfigurasi nodemailer
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    service: "gmail",
     auth: {
-        user: 'your-email@gmail.com',
-        pass: 'your-email-password'
-    }
-});
+        user: "cahyospprt@gmail.com", // email pengirim
+        pass: "xkwojxzaccrorerw", // App password Gmail, bukan password biasa
+    },
+})
 
-// Simpan informasi tentang jadwal cron
-const schedules = [];
+// services/emailTemplate.js
+function renderPMTable(rows) {
+  if (!rows || rows.length === 0) {
+    return `<p>Tidak ada data PM.</p>`
+  }
 
-// Fungsi untuk mengirim email
-const sendEmail = () => {
-    const mailOptions = {
-        from: 'your-email@gmail.com',
-        to: 'recipient-email@example.com',
-        subject: 'Update Mingguan',
-        text: `Ini adalah pesan otomatis untuk minggu ke-${getCurrentWeekNumber()}.`
-    };
+  return `
+    <table border="1" cellpadding="6" cellspacing="0" width="100%" style="border-collapse:collapse; font-size:12px">
+      <thead style="background:#f4f4f4">
+        <tr>
+          <th>ID</th>
+          <th>No</th>
+          <th>Machine</th>
+          <th>Equipment</th>
+          <th>Qty</th>
+          <th>Periode</th>
+          <th>Grup</th>
+          <th>Kode Barang</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows
+          .map(
+            (r) => `
+          <tr>
+            <td>${r.id}</td>
+            <td>${r.no}</td>
+            <td>${r.machine_name ?? "-"}</td>
+            <td>${r.equipment ?? "-"}</td>
+            <td>${r.qty ?? "-"}</td>
+            <td>${r.periode ?? "-"}</td>
+            <td>${r.grup ?? "-"}</td>
+            <td>${r.kode_barang ?? "-"}</td>
+            <td style="text-align:center">
+              ${r.status === 0 ? "❌" : r.status === 1 ? "⏳" : "✅"}
+            </td>
+          </tr>
+        `
+          )
+          .join("")}
+      </tbody>
+    </table>
+  `
+}
 
-    transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            return console.log(`Error: ${error}`);
-        }
-        console.log(`Email sent: ${info.response}`);
-    });
-};
+function renderSummary(label, rows) {
+  const done = rows.filter((r) => r.status === 2).length
+  const pending = rows.filter((r) => r.status === 1).length
+  const notDone = rows.filter((r) => r.status === 0).length
 
-// Fungsi untuk mendapatkan nomor minggu saat ini
-const getCurrentWeekNumber = () => {
-    const date = new Date();
-    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-    const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
-    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-};
+  return `
+    <p>
+      <b>${label}</b> →
+      ✅ ${done} |
+      ⏳ ${pending} |
+      ❌ ${notDone}
+    </p>
+  `
+}
 
-// Menjadwalkan pengiriman email setiap Senin jam 9 pagi
-const job = cron.schedule('0 9 * * 1', () => {
-    console.log('Mengirim email mingguan...');
-    sendEmail();
-});
+function generateExcelBuffer(rows) {
+  const sheet = xlsx.utils.json_to_sheet(rows)
+  const wb = xlsx.utils.book_new()
+  xlsx.utils.book_append_sheet(wb, sheet, "PM")
 
-// Menyimpan informasi tentang job
-schedules.push({
-    name: 'Weekly Email',
-    cronTime: '0 9 * * 1'
-});
+  return xlsx.write(wb, {
+    bookType: "xlsx",
+    type: "buffer",
+  })
+}
 
-// Fungsi untuk mendapatkan daftar job yang dijadwalkan
-const getScheduledJobs = () => {
-    return schedules;
-};
+export async function sendEmailByJenisPM(jenis, rows, targetYear, targetWeek) {
+  const channel = PM_EMAIL_CHANNEL[jenis] ?? jenis
+  const recipients = PM_EMAIL_MAP[channel]
+  const weekLabel = `${targetYear}w${targetWeek}`;
 
-// Ekspor fungsi yang diperlukan
-export default { sendEmail, getScheduledJobs };
+  if (!recipients || recipients.length === 0) {
+    console.log(`[EMAIL] No recipient for channel ${channel}`)
+    return
+  }
+
+  const jenisList = Object.entries(PM_EMAIL_CHANNEL)
+    .filter(([_, ch]) => ch === channel)
+    .map(([j]) => j)
+
+  const grouped = {}
+  for (const j of jenisList) {
+    grouped[j] = rows.filter((r) => r.jenis_pm === j)
+  }
+
+  const summaryHtml = Object.entries(grouped)
+    .map(([j, data]) => renderSummary(j.toUpperCase(), data))
+    .join("")
+
+  const tableHtml = Object.entries(grouped)
+    .map(
+      ([j, data]) => `
+        <h3>${j.toUpperCase()}</h3>
+        ${renderPMTable(data)}
+      `
+    )
+    .join("<br/>")
+
+  const attachments = []
+  for (const [j, data] of Object.entries(grouped)) {
+    if (!data.length) continue
+    attachments.push({
+      filename: `PM_${j.toUpperCase()}_${weekLabel}.xlsx`,
+      content: generateExcelBuffer(data),
+      contentType:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    })
+  }
+
+  await transporter.sendMail({
+    from: "cahyospprt@gmail.com",
+    to: recipients.join(","),
+    subject: `PM ${channel.toUpperCase()} - ${weekLabel} - Weekly Update`,
+    html: `
+      <h2>PM ${channel.toUpperCase()} - ${weekLabel} - Weekly Update</h2>
+      ${summaryHtml}
+      <hr/>
+      ${tableHtml}
+      <br/>
+      <small>Generated automatically by system</small>
+    `,
+    attachments,
+  })
+
+  console.log(`[EMAIL] Sent channel ${channel}`)
+}
