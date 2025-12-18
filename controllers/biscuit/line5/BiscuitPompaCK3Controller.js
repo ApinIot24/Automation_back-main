@@ -5,16 +5,22 @@ export const getPompaStatus = async (req, res) => {
   const { pompa, startdate, enddate } = req.params;
 
   try {
-    const rows = await iotDB.ck_biscuit_pompa.findMany({
-      where: {
+    const sql = `
+      SELECT 
+        id,
         pompa,
-        tanggal: {
-          gte: new Date(startdate),
-          lte: new Date(enddate),
-        }
-      },
-      orderBy: { jam_aktif: "asc" }
-    });
+        jam_aktif,
+        jam_non_aktif,
+        durasi::text as durasi,
+        status,
+        tanggal
+      FROM purwosari.ck_biscuit_pompa
+      WHERE pompa='${pompa}'
+        AND tanggal BETWEEN '${startdate}' AND '${enddate}'
+      ORDER BY jam_aktif ASC
+    `;
+
+    const rows = await raw(sql);
 
     if (!rows.length) {
       return res.status(404).json({
@@ -23,13 +29,25 @@ export const getPompaStatus = async (req, res) => {
       });
     }
 
+    // Serialize data to handle BigInt and Date objects
+    const serializedRows = rows.map(row => ({
+      id: Number(row.id),
+      pompa: row.pompa,
+      jam_aktif: row.jam_aktif ? new Date(row.jam_aktif).toISOString() : null,
+      jam_non_aktif: row.jam_non_aktif ? new Date(row.jam_non_aktif).toISOString() : null,
+      durasi: row.durasi || null,
+      status: row.status,
+      tanggal: row.tanggal ? new Date(row.tanggal).toISOString() : null,
+    }));
+
     res.json({
       pompa,
-      status_history: rows,
-      total_records: rows.length,
+      status_history: serializedRows,
+      total_records: serializedRows.length,
     });
 
   } catch (err) {
+    console.error("getPompaStatus Error:", err);
     res.status(500).json({
       message: "Gagal mengambil status pompa",
       error: err.message,
@@ -65,7 +83,7 @@ export const getPompaDurasiTotal = async (req, res) => {
     res.json({
       pompa,
       total_durasi: dur.toFixed(2),
-      total_kejadian: row.total_kejadian,
+      total_kejadian: Number(row.total_kejadian),
       waktu_pertama: row.waktu_pertama,
       waktu_terakhir: row.waktu_terakhir
     });
@@ -93,7 +111,7 @@ export const getPompaDurasiPeriode = async (req, res) => {
       AND tanggal BETWEEN '${startdate}' AND '${enddate}';
     `;
 
-    const [row] = await rawIot(sql);
+    const [row] = await raw(sql);
 
     const akt = parseFloat(row.durasi_aktif);
     const non = parseFloat(row.durasi_non_aktif);
@@ -109,8 +127,8 @@ export const getPompaDurasiPeriode = async (req, res) => {
       pompa,
       durasi_aktif: akt.toFixed(2),
       durasi_non_aktif: non.toFixed(2),
-      total_kejadian_aktif: row.total_kejadian_aktif,
-      total_kejadian_non_aktif: row.total_kejadian_non_aktif
+      total_kejadian_aktif: Number(row.total_kejadian_aktif),
+      total_kejadian_non_aktif: Number(row.total_kejadian_non_aktif)
     });
 
   } catch (err) {

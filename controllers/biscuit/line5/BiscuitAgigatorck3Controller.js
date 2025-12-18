@@ -4,25 +4,25 @@ export const getStatus = async (req, res) => {
   const { agitator, startdate, enddate } = req.params;
 
   try {
-    const rows = await iotDB.ck_biscuit_agitator.findMany({
-      where: {
+    const rows = await iotDB.$queryRawUnsafe(
+      `
+      SELECT 
+        id,
         agitator,
-        tanggal: {
-          gte: new Date(startdate),
-          lte: new Date(enddate),
-        },
-      },
-      select: {
-        id: true,
-        agitator: true,
-        jam_aktif: true,
-        jam_non_aktif: true,
-        durasi: true,
-        status: true,
-        tanggal: true,
-      },
-      orderBy: { jam_aktif: "asc" },
-    });
+        jam_aktif,
+        jam_non_aktif,
+        durasi::text as durasi,
+        status,
+        tanggal
+      FROM purwosari.ck_biscuit_agitator
+      WHERE agitator = $1
+        AND tanggal BETWEEN $2 AND $3
+      ORDER BY jam_aktif ASC
+      `,
+      agitator,
+      startdate,
+      enddate
+    );
 
     if (!rows.length) {
       return res.status(404).json({
@@ -31,12 +31,24 @@ export const getStatus = async (req, res) => {
       });
     }
 
+    // Serialize data to handle BigInt and Date objects
+    const serializedRows = rows.map(row => ({
+      id: Number(row.id),
+      agitator: row.agitator,
+      jam_aktif: row.jam_aktif ? new Date(row.jam_aktif).toISOString() : null,
+      jam_non_aktif: row.jam_non_aktif ? new Date(row.jam_non_aktif).toISOString() : null,
+      durasi: row.durasi || null,
+      status: row.status,
+      tanggal: row.tanggal ? new Date(row.tanggal).toISOString() : null,
+    }));
+
     res.status(200).json({
       agitator,
-      status_history: rows,
-      total_records: rows.length,
+      status_history: serializedRows,
+      total_records: serializedRows.length,
     });
   } catch (err) {
+    console.error("getStatus Error:", err);
     res.status(500).json({
       message: "Terjadi kesalahan saat mengambil data",
       error: err.message,
@@ -77,7 +89,7 @@ export const getTotalDurasi = async (req, res) => {
     res.json({
       agitator,
       total_durasi: totalDurasi.toFixed(2),
-      total_kejadian: data.total_kejadian,
+      total_kejadian: Number(data.total_kejadian),
       waktu_pertama: data.waktu_pertama,
       waktu_terakhir: data.waktu_terakhir,
     });
@@ -111,9 +123,16 @@ export const getDurasiPeriode = async (req, res) => {
     );
 
     const row = result[0];
+    
+    if (!row) {
+      return res.status(404).json({
+        message: "Tidak ada data dalam rentang tanggal tersebut",
+        details: { agitator, startdate, enddate },
+      });
+    }
 
-    const durasiAktif = parseFloat(row.durasi_aktif);
-    const durasiNonAktif = parseFloat(row.durasi_non_aktif);
+    const durasiAktif = parseFloat(row.durasi_aktif || 0);
+    const durasiNonAktif = parseFloat(row.durasi_non_aktif || 0);
 
     if (durasiAktif === 0 && durasiNonAktif === 0) {
       return res.status(404).json({
@@ -124,13 +143,14 @@ export const getDurasiPeriode = async (req, res) => {
 
     res.json({
       agitator,
-      durasi_aktif: durasiAktif.toFixed(2),
-      durasi_non_aktif: durasiNonAktif.toFixed(2),
-      total_kejadian_aktif: row.total_kejadian_aktif,
-      total_kejadian_non_aktif: row.total_kejadian_non_aktif,
+      durasi_aktif: isNaN(durasiAktif) ? "0.00" : durasiAktif.toFixed(2),
+      durasi_non_aktif: isNaN(durasiNonAktif) ? "0.00" : durasiNonAktif.toFixed(2),
+      total_kejadian_aktif: Number(row.total_kejadian_aktif || 0),
+      total_kejadian_non_aktif: Number(row.total_kejadian_non_aktif || 0),
     });
 
   } catch (err) {
+    console.error("getDurasiPeriode Error:", err);
     res.status(500).json({
       message: "Terjadi kesalahan saat mengambil durasi periode",
       error: err.message,

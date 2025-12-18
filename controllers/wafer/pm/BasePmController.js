@@ -26,9 +26,10 @@ export const GetWaferSelect = async (req, res) => {
 
 export const GetWaferQRCode = async (req, res) => {
   try {
-    const group = req.params.group;
-    if (isNaN(group)) {
-      return res.status(400).send("Invalid group parameter");
+    const { group } = req.params;
+
+    if (!group) {
+      return res.status(400).json({ error: "Group parameter is required" });
     }
 
     const rows = await automationDB.$queryRaw`

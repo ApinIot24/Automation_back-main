@@ -24,18 +24,21 @@ export async function getMachineUtilityByName(req, res) {
 export async function getMachinePMListUtilityByGroup(req, res) {
   try {
     const { group } = req.params;
-    // const { group } = req.params.group;
 
-    const result = await raw(`
+    if (!group) {
+      return res.status(400).json({ error: "Group parameter is required" });
+    }
+
+    const result = await automationDB.$queryRaw`
       SELECT machine_name, no
       FROM (
         SELECT DISTINCT ON (machine_name) machine_name, no
         FROM automation.pm_utility
-        WHERE grup = '${group}'
+        WHERE grup = ${group}
         ORDER BY machine_name, no ASC
       ) AS unique_machines
-      ORDER BY no ASC;
-    `);
+      ORDER BY no ASC
+    `;
 
     res.json(result);
   } catch (err) {
@@ -46,17 +49,23 @@ export async function getMachinePMListUtilityByGroup(req, res) {
 
 export const getQrCodeUtilityListByGroup = async (req, res) => {
     try {
-        const group = parseInt(req.params.group, 10)
-        if (isNaN(group)) {
-            return res.status(400).json({ error: "Invalid group parameter" });
+        const { group } = req.params;
+
+        if (!group) {
+            return res.status(400).json({ error: "Group parameter is required" });
         }
 
-        const result = await automationDB.$queryRaw
-            `SELECT DISTINCT ON (qrcode) machine_name, qrcode FROM automation.pm_utility WHERE grup = ${group} ORDER BY qrcode`
+        const result = await automationDB.$queryRaw`
+            SELECT DISTINCT ON (qrcode) machine_name, qrcode 
+            FROM automation.pm_utility 
+            WHERE grup = ${group} 
+            ORDER BY qrcode
+        `;
 
         res.json(result);
     } catch (err) {
-        res.status(500).send("Gagal mengambildata:" + err.message);
+        console.error("Error fetching QR code data:", err);
+        res.status(500).json({ error: err.message });
     }
 }
 

@@ -22,10 +22,13 @@ export async function getMachineAstorByName(req, res) {
 
 export const getMachineAstorListByGroup = async (req, res) => {
     try {
-        const group = parseInt(req.params.group, 10);
+        const { group } = req.params;
 
-        const results = await automationDB.$queryRaw
-        `
+        if (!group) {
+            return res.status(400).json({ error: "Group parameter is required" });
+        }
+
+        const results = await automationDB.$queryRaw`
             SELECT machine_name, no
             FROM (
                 SELECT DISTINCT ON (machine_name) 
@@ -36,28 +39,34 @@ export const getMachineAstorListByGroup = async (req, res) => {
                 ORDER BY machine_name, no ASC
             ) AS unique_machines
             ORDER BY no ASC
-        `
+        `;
 
         res.json(results);
     } catch (err) {
         console.error("Error fetching data:", err);
-        res.status(500).json({ error: "Error fetching data" })
+        res.status(500).json({ error: "Error fetching data" });
     }
 }
 
 export const getQrCodeAstorListByGroup = async (req, res) => {
     try {
-        const group = parseInt(req.params.group, 10)
-        if (isNaN(group)) {
-            return res.status(400).json({ error: "Invalid group parameter" });
+        const { group } = req.params;
+
+        if (!group) {
+            return res.status(400).json({ error: "Group parameter is required" });
         }
 
-        const result = await automationDB.$queryRaw
-            `SELECT DISTINCT ON (qrcode) machine_name, qrcode FROM automation.pm_astor WHERE grup = ${group} ORDER BY qrcode`
+        const result = await automationDB.$queryRaw`
+            SELECT DISTINCT ON (qrcode) machine_name, qrcode 
+            FROM automation.pm_astor 
+            WHERE grup = ${group} 
+            ORDER BY qrcode
+        `;
 
         res.json(result);
     } catch (err) {
-        res.status(500).send("Gagal mengambildata:" + err.message);
+        console.error("Error fetching QR code data:", err);
+        res.status(500).json({ error: err.message });
     }
 }
 
