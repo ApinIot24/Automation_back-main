@@ -259,3 +259,25 @@ export function isReplacementAtTargetWeek(
     if (y === targetYear && w === targetWeek) return true;
   }
 }
+function getNextWeeksFrom(week, year, count = 4) {
+  const out = [];
+  let w = week;
+  let y = year;
+
+  for (let i = 0; i < count; i++) {
+    w += 1; // exclude current week
+    const max = getTotalWeeksInYear(y);
+
+    if (w > max) {
+      w = 1;
+      y++;
+    }
+    out.push({ week: w, year: y });
+  }
+
+  return out;
+}
+export function getEmailWeeksRange(count = 4) {
+  const { week, year } = getCurrentWeekAndYear();
+  return getNextWeeksFrom(week, year, count); // -> 52,1,2,3 dari 51
+}
