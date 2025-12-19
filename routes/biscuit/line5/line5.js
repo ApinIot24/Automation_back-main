@@ -19,6 +19,7 @@ import {
   GetTiltingHourlyL5,
   GetTiltingShift_L5,
   GetTiltingL5,
+  GetTiltingL5Variance,
 } from "../../../controllers/biscuit/line5/Line5Controller.js";
 const app = Router();
 
@@ -48,6 +49,7 @@ app.get("/packing_l5_weekly/date/:date", GetPackingL5WeeklyByDate);
 
 // ==== Tilting ====
 app.get("/tilting_l5", GetTiltingL5);
+app.get("/tilting_l5_variance", GetTiltingL5Variance);
 app.get("/tilting_hourly_l5", GetTiltingHourlyL5);
 app.get("/tilting_shift_l5", GetTiltingShift_L5);
 
