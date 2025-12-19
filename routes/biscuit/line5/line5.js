@@ -48,7 +48,7 @@ app.get("/packing_l5_weekly/date/:date", GetPackingL5WeeklyByDate);
 
 // ==== Tilting ====
 app.get("/tilting_l5", GetTiltingL5);
-app.get("/tilting_hourly_l5", GetTiltingHourlyL5);
-app.get("/tilting_shift_l5", GetTiltingShift_L5);
+app.get("/shift1_l5_tilting_hourly", GetTiltingHourlyL5);
+app.get("/tilting_l5_variance_per_shift", GetTiltingShift_L5);
 
 export default app;
