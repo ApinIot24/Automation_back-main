@@ -365,7 +365,7 @@ export const GetTiltingHourlyL5 = async (req, res) => {
   const today = format(new Date());
 
   const rows = await raw(`
-    SELECT id, cntr_bandet, cntr_carton, jam
+    SELECT id, cntr_bandet, cntr_tilting, jam
     FROM automation.tilting_l5
     WHERE graph='Y' AND tanggal='${today}'
     AND jam IN (${Hourly.map((j) => `'${j}'`).join(",")})
