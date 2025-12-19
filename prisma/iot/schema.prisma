@@ -1181,6 +1181,7 @@ model ck_wafer_status {
   temp_water      Float? @db.Real
   timing_mixing   Float? @db.Real
   weight_mixing   Float? @db.Real
-
+  realdatetime DateTime? @default(now()) @db.Timestamptz(6)
+  
   @@schema("purwosari")
 }
