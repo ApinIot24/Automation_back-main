@@ -348,3 +348,38 @@ export const GetPackingL5WeeklyByDate = async (req, res) => {
 
   res.send(rows);
 };
+
+export const GetTiltingL5 = async (req, res) => {
+  const rows = await automationDB.tilting_l5.findMany({
+    orderBy: { id: "desc" },
+    take: 1
+  });
+  res.send(rows);
+};
+
+export const GetTiltingHourlyL5 = async (req, res) => {
+  const today = format(new Date());
+
+  const rows = await raw(`
+    SELECT id, cntr_bandet, cntr_carton, jam
+    FROM automation.tilting_l5
+    WHERE graph='Y' AND tanggal='${today}'
+    AND jam IN (${Hourly.map(j => `'${j}'`).join(",")})
+    ORDER BY id ASC
+  `);
+
+  res.send(rows);
+}
+
+export const GetTiltingShift_L5 = async (req, res) => {
+  const today = new Date();
+
+  const rows = await automationDB.counter_shift_l5_tilting.findMany({
+    select: { shift1: true, shift2: true, shift3: true },
+    where: { tanggal: today },
+    orderBy: { id: "desc" },
+    take: 1
+  });
+
+  res.send(rows);
+};
