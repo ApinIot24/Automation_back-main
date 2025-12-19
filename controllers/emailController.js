@@ -29,6 +29,7 @@ function renderPMTable(rows) {
           <th>Periode</th>
           <th>Grup</th>
           <th>Kode Barang</th>
+          <th>Periode Start</th>
           <th>Status</th>
         </tr>
       </thead>
@@ -45,6 +46,7 @@ function renderPMTable(rows) {
             <td>${r.periode ?? "-"}</td>
             <td>${r.grup ?? "-"}</td>
             <td>${r.kode_barang ?? "-"}</td>
+            <td>${r.periode_start ?? "-"}</td>
             <td style="text-align:center">
               ${r.status === 0 ? "❌" : r.status === 1 ? "⏳" : "✅"}
             </td>
@@ -83,55 +85,52 @@ function generateExcelBuffer(rows) {
   })
 }
 
-export async function sendEmailByJenisPM(jenis, rows, targetYear, targetWeek) {
-  const channel = PM_EMAIL_CHANNEL[jenis] ?? jenis
-  const recipients = PM_EMAIL_MAP[channel]
-  const weekLabel = `${targetYear}w${targetWeek}`;
+export async function sendEmailByJenisPMRange(jenis, rows, weeksRange) {
+  const channel = PM_EMAIL_CHANNEL[jenis] ?? jenis;
+  const recipients = PM_EMAIL_MAP[channel];
 
-  if (!recipients || recipients.length === 0) {
-    console.log(`[EMAIL] No recipient for channel ${channel}`)
-    return
+  if (!recipients?.length) {
+    console.log(`[EMAIL] No recipient for channel ${channel}`);
+    return;
   }
+
+  const rangeLabel = `${weeksRange[0].year}w${weeksRange[0].week} - ${
+    weeksRange[weeksRange.length - 1].year
+  }w${weeksRange[weeksRange.length - 1].week}`;
 
   const jenisList = Object.entries(PM_EMAIL_CHANNEL)
     .filter(([_, ch]) => ch === channel)
-    .map(([j]) => j)
+    .map(([j]) => j);
 
-  const grouped = {}
-  for (const j of jenisList) {
-    grouped[j] = rows.filter((r) => r.jenis_pm === j)
-  }
+  const grouped = {};
+  for (const j of jenisList) grouped[j] = rows.filter(r => r.jenis_pm === j);
 
   const summaryHtml = Object.entries(grouped)
     .map(([j, data]) => renderSummary(j.toUpperCase(), data))
-    .join("")
+    .join("");
 
   const tableHtml = Object.entries(grouped)
-    .map(
-      ([j, data]) => `
-        <h3>${j.toUpperCase()}</h3>
-        ${renderPMTable(data)}
-      `
-    )
-    .join("<br/>")
+    .map(([j, data]) => `<h3>${j.toUpperCase()}</h3>${renderPMTable(data)}`)
+    .join("<br/>");
 
-  const attachments = []
+  const attachments = [];
   for (const [j, data] of Object.entries(grouped)) {
-    if (!data.length) continue
+    if (!data.length) continue;
     attachments.push({
-      filename: `PM_${j.toUpperCase()}_${weekLabel}.xlsx`,
+      filename: `PM_${j.toUpperCase()}_${rangeLabel}.xlsx`,
       content: generateExcelBuffer(data),
       contentType:
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    })
+    });
   }
 
   await transporter.sendMail({
     from: "cahyospprt@gmail.com",
     to: recipients.join(","),
-    subject: `PM ${channel.toUpperCase()} - ${weekLabel} - Weekly Update`,
+    subject: `PM ${channel.toUpperCase()} - ${rangeLabel} - Weekly Preview`,
     html: `
-      <h2>PM ${channel.toUpperCase()} - ${weekLabel} - Weekly Update</h2>
+      <h2>PM ${channel.toUpperCase()} - ${rangeLabel}</h2>
+      <p><i>Preview rencana PM 4 minggu ke depan</i></p>
       ${summaryHtml}
       <hr/>
       ${tableHtml}
@@ -139,7 +138,67 @@ export async function sendEmailByJenisPM(jenis, rows, targetYear, targetWeek) {
       <small>Generated automatically by system</small>
     `,
     attachments,
-  })
+  });
 
-  console.log(`[EMAIL] Sent channel ${channel}`)
+  console.log(`[EMAIL] Sent RANGE channel ${channel}`);
 }
+// export async function sendEmailByJenisPM(jenis, rows, targetYear, targetWeek) {
+//   const channel = PM_EMAIL_CHANNEL[jenis] ?? jenis
+//   const recipients = PM_EMAIL_MAP[channel]
+//   const weekLabel = `${targetYear}w${targetWeek}`;
+
+//   if (!recipients || recipients.length === 0) {
+//     console.log(`[EMAIL] No recipient for channel ${channel}`)
+//     return
+//   }
+
+//   const jenisList = Object.entries(PM_EMAIL_CHANNEL)
+//     .filter(([_, ch]) => ch === channel)
+//     .map(([j]) => j)
+
+//   const grouped = {}
+//   for (const j of jenisList) {
+//     grouped[j] = rows.filter((r) => r.jenis_pm === j)
+//   }
+
+//   const summaryHtml = Object.entries(grouped)
+//     .map(([j, data]) => renderSummary(j.toUpperCase(), data))
+//     .join("")
+
+//   const tableHtml = Object.entries(grouped)
+//     .map(
+//       ([j, data]) => `
+//         <h3>${j.toUpperCase()}</h3>
+//         ${renderPMTable(data)}
+//       `
+//     )
+//     .join("<br/>")
+
+//   const attachments = []
+//   for (const [j, data] of Object.entries(grouped)) {
+//     if (!data.length) continue
+//     attachments.push({
+//       filename: `PM_${j.toUpperCase()}_${weekLabel}.xlsx`,
+//       content: generateExcelBuffer(data),
+//       contentType:
+//         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+//     })
+//   }
+
+//   await transporter.sendMail({
+//     from: "cahyospprt@gmail.com",
+//     to: recipients.join(","),
+//     subject: `PM ${channel.toUpperCase()} - ${weekLabel} - Weekly Update`,
+//     html: `
+//       <h2>PM ${channel.toUpperCase()} - ${weekLabel} - Weekly Update</h2>
+//       ${summaryHtml}
+//       <hr/>
+//       ${tableHtml}
+//       <br/>
+//       <small>Generated automatically by system</small>
+//     `,
+//     attachments,
+//   })
+
+//   console.log(`[EMAIL] Sent channel ${channel}`)
+// }

@@ -6,7 +6,7 @@ import {
 import { automationDB } from "../src/db/automation.js";
 
 export async function runUtilityPM() {
-  const rolling = getLastWeekRolling4(4);
+  const rolling = getLastWeekRolling4(5);
 
   const last = rolling[rolling.length - 1];
   const targetWeek = last.week;
@@ -29,8 +29,20 @@ export async function runUtilityPM() {
     ) {
       continue;
     }
+    const {
+      id,   
+      status, 
+      ...clean
+    } = row;
+
     const created = await automationDB.replacement_pm.create({
-      data: { ...row, jenis_pm: "utility" },
+      data: { 
+        ...clean, 
+        jenis_pm: "utility", 
+        status: 0, 
+        target_week: String(targetWeek), 
+        target_year: String(targetYear) 
+      },
     });
     createdRows.push(created);
   }
