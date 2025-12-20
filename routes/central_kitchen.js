@@ -1,15 +1,7 @@
 import { Router } from "express";
 import {
   getCenkitL1,
-  GetCenkitL1DailyByDate,
-  GetCenkitL1WeeklyByDate,
-  getHourlyCenkitL1ByDate,
-  getShiftCenkitL1,
-  getShiftEndCenkitL1,
-  getCenkitL1SummaryStats,
-  getCenkitL1WeightMixingPeaks,
-  getCenkitL1TemperatureAnalysis,
-  getCenkitL1StatusAnalysis,
+  getCenkitL1WeightMixingHistory,
 } from "../controllers/CentralKitchen1Controller.js";
 import {
   getCenkitL2,
@@ -28,17 +20,7 @@ import {
 const app = Router();
 
 app.get("/cenkit_l1", getCenkitL1);
-app.get("/cenkit_l1/shift/:shift", getShiftCenkitL1);
-app.get("/end_cenkit_l1/shift/:shift", getShiftEndCenkitL1);
-app.get("/cenkit_l1_hourly/date/:date", getHourlyCenkitL1ByDate);
-app.get("/cenkit_l1_daily/date/:date", GetCenkitL1DailyByDate);
-app.get("/cenkit_l1_weekly/date/:date", GetCenkitL1WeeklyByDate);
-
-// ==== ANALYTICS ENDPOINTS ====
-app.get("/cenkit_l1/summary", getCenkitL1SummaryStats);
-app.get("/cenkit_l1/weight_peaks", getCenkitL1WeightMixingPeaks);
-app.get("/cenkit_l1/temperature", getCenkitL1TemperatureAnalysis);
-app.get("/cenkit_l1/status", getCenkitL1StatusAnalysis);
+app.get("/cenkit_l1/weight_mixing/history", getCenkitL1WeightMixingHistory);
 
 // ==== BASIC CENTRAL KITCHEN 2 ======
 app.get("/cenkit_l2", getCenkitL2);
