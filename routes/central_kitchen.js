@@ -6,6 +6,10 @@ import {
   getHourlyCenkitL1ByDate,
   getShiftCenkitL1,
   getShiftEndCenkitL1,
+  getCenkitL1SummaryStats,
+  getCenkitL1WeightMixingPeaks,
+  getCenkitL1TemperatureAnalysis,
+  getCenkitL1StatusAnalysis,
 } from "../controllers/CentralKitchen1Controller.js";
 import {
   getCenkitL2,
@@ -29,6 +33,12 @@ app.get("/end_cenkit_l1/shift/:shift", getShiftEndCenkitL1);
 app.get("/cenkit_l1_hourly/date/:date", getHourlyCenkitL1ByDate);
 app.get("/cenkit_l1_daily/date/:date", GetCenkitL1DailyByDate);
 app.get("/cenkit_l1_weekly/date/:date", GetCenkitL1WeeklyByDate);
+
+// ==== ANALYTICS ENDPOINTS ====
+app.get("/cenkit_l1/summary", getCenkitL1SummaryStats);
+app.get("/cenkit_l1/weight_peaks", getCenkitL1WeightMixingPeaks);
+app.get("/cenkit_l1/temperature", getCenkitL1TemperatureAnalysis);
+app.get("/cenkit_l1/status", getCenkitL1StatusAnalysis);
 
 // ==== BASIC CENTRAL KITCHEN 2 ======
 app.get("/cenkit_l2", getCenkitL2);
