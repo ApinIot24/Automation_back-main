@@ -53,6 +53,8 @@ import formtiket from "./routes/ticket.js";
 import settingpm from "./routes/setting_pm/index.js";
 // replacement_pm
 import replacementpm from "./routes/pm_replacement.js";
+// pm weekly test
+import pmWeeklyTest from "./routes/pmWeeklyTest.js";
 // gas meter
 import gasmeter from "./routes/utility/gasmeter/gasmeter.js";
 // sync_database
@@ -241,6 +243,7 @@ app.use("/api", qrchecklist);
 app.use("/api", formtiket);
 app.use("/api", settingpm);
 app.use("/api", replacementpm);
+app.use("/api", pmWeeklyTest);
 
 // Gas meter routes
 app.use("/api", gasmeter);
