@@ -8,12 +8,27 @@ export const GetChecklistFilteredData = async (req, res) => {
     const year = parseInt(req.params.year, 10);
     const week = parseInt(req.params.week, 10);
 
+    if (isNaN(year) || isNaN(week)) {
+      return res.status(400).json({ 
+        error: "Invalid year or week parameter",
+        details: { year: req.params.year, week: req.params.week }
+      });
+    }
+
+    const totalWeeks = getTotalWeeksInYear(year);
+    
+    if (week < 1 || week > totalWeeks) {
+      return res.status(400).json({ 
+        error: `Week must be between 1 and ${totalWeeks} for year ${year}`,
+        details: { week, totalWeeks, year }
+      });
+    }
+
     const rows = await automationDB.pm_wafer.findMany({
       where: { grup: group },
       orderBy: { no: "asc",},
     });
 
-    const totalWeeks = getTotalWeeksInYear(year);
     const start = week;
     const end = Math.min(week, totalWeeks);
 
@@ -29,10 +44,11 @@ export const GetChecklistFilteredData = async (req, res) => {
         const filtered = {};
         let has = false;
 
-        for (let i = start; i <= end; i++) {
+        for (let i = start; i <= end && i <= totalWeeks; i++) {
           const key = `w${i}`;
-          if (weekly[key] && weekly[key] !== "-") {
-            filtered[key] = weekly[key];
+          const val = weekly[key];
+          if (val && val !== "-") {
+            filtered[key] = val;
             has = true;
           }
         }
@@ -53,9 +69,19 @@ export const GetChecklistFilteredData = async (req, res) => {
       .filter(Boolean);
 
     res.json(mapped);
-  } catch (e) {
-    console.error("Error fetching checklist data:", e);
-    res.status(500).json({ error: e.message });
+  } catch (err) {
+    console.error("Error in GetChecklistFilteredData:", err);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ 
+      error: err.message || "Error fetching checklist data",
+      details: {
+        group: req.params.group,
+        year: req.params.year,
+        week: req.params.week,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
+    });
   }
 };
 
@@ -65,7 +91,21 @@ export const GetChecklistDataFull = async (req, res) => {
     const year = parseInt(req.params.year, 10);
     const currentWeek = parseInt(req.params.week, 10);
 
+    if (isNaN(year) || isNaN(currentWeek)) {
+      return res.status(400).json({ 
+        error: "Invalid year or week parameter",
+        details: { year: req.params.year, week: req.params.week }
+      });
+    }
+
     const totalWeeks = getTotalWeeksInYear(year);
+
+    if (currentWeek < 1 || currentWeek > totalWeeks) {
+      return res.status(400).json({ 
+        error: `Week must be between 1 and ${totalWeeks} for year ${year}`,
+        details: { currentWeek, totalWeeks, year }
+      });
+    }
 
     // Ambil data checklist PM Wafer (equivalent SELECT * FROM checklist_pm_wafer)
     const rows = await automationDB.checklist_pm_wafer.findMany({
@@ -116,9 +156,9 @@ export const GetChecklistDataFull = async (req, res) => {
         let hasScheduledMaintenance = false;
 
         // filter minggu sesuai router lama
-        for (let i = startWeek; i <= endWeek; i++) {
+        for (let i = startWeek; i <= endWeek && i <= totalWeeks; i++) {
           const v = weeklyData[`w${i}`];
-          if (v !== "-") {
+          if (v && v !== "-") {
             filteredWeeks[`w${i}`] = v;
             hasScheduledMaintenance = true;
           }
@@ -152,9 +192,19 @@ export const GetChecklistDataFull = async (req, res) => {
       .filter(Boolean);
 
     res.json(modifiedData);
-  } catch (error) {
-    console.error("Error in GetChecklistDataFull:", error);
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error("Error in GetChecklistDataFull:", err);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ 
+      error: err.message || "Error fetching checklist data",
+      details: {
+        group: req.params.group,
+        year: req.params.year,
+        week: req.params.week,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
+    });
   }
 };
 
@@ -163,6 +213,13 @@ export const GetChecklistLength = async (req, res) => {
     const group = req.params.group;
     const year = parseInt(req.params.year, 10);
     const week = parseInt(req.params.week, 10);
+
+    if (isNaN(year) || isNaN(week)) {
+      return res.status(400).json({ 
+        error: "Invalid year or week parameter",
+        details: { year: req.params.year, week: req.params.week }
+      });
+    }
 
     const setting = await automationDB.$queryRaw`
       SELECT week FROM automation.setting_pm
@@ -178,6 +235,14 @@ export const GetChecklistLength = async (req, res) => {
     `;
 
     const total = getTotalWeeksInYear(year);
+    
+    if (week < 1 || week > total) {
+      return res.status(400).json({ 
+        error: `Week must be between 1 and ${total} for year ${year}`,
+        details: { week, total, year }
+      });
+    }
+
     const start = week;
     const end = Math.min(week + range - 1, total);
 
@@ -185,8 +250,9 @@ export const GetChecklistLength = async (req, res) => {
 
     rows.forEach(r => {
       const weekly = generateWeeklyDataForTargetYear(total, r.periode, r.periode_start, year);
-      for (let i = start; i <= end; i++) {
-        if (weekly[`w${i}`] !== "-") {
+      for (let i = start; i <= end && i <= total; i++) {
+        const val = weekly[`w${i}`];
+        if (val && val !== "-") {
           count++;
           break;
         }
@@ -194,8 +260,19 @@ export const GetChecklistLength = async (req, res) => {
     });
 
     res.json({ totalData: count });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+  } catch (err) {
+    console.error("Error in GetChecklistLength:", err);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ 
+      error: err.message || "Error fetching checklist length",
+      details: {
+        group: req.params.group,
+        year: req.params.year,
+        week: req.params.week,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
+    });
   }
 };
 
@@ -254,9 +331,19 @@ export const SubmitChecklistPM = async (req, res) => {
       success: true,
       insertedRows: insert,
     });
-  } catch (e) {
-    console.error("SubmitChecklistPM error:", e);
-    res.status(500).json({ error: e.message });
+  } catch (err) {
+    console.error("Error in SubmitChecklistPM:", err);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ 
+      error: err.message || "Error submitting checklist",
+      details: {
+        grup: req.params.grup,
+        year: req.body.year,
+        week: req.body.week,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
+    });
   }
 };
 
@@ -289,9 +376,17 @@ export const UpdateChecklistPM = async (req, res) => {
     }
 
     res.json({ message: "Updated", data: rows[0] });
-  } catch (e) {
-    console.error("Error updating machine checklist", e);
-    res.status(500).json({ error: e.message });
+  } catch (err) {
+    console.error("Error in UpdateChecklistPM:", err);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ 
+      error: err.message || "Error updating checklist",
+      details: {
+        id: req.params.id,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
+    });
   }
 };
 
@@ -311,11 +406,17 @@ export const DeleteChecklistPM = async (req, res) => {
     res.status(200).json({
       message: "Data successfully deleted",
     });
-  } catch (e) {
-    console.error("Error delete machine checklist:", e);
+  } catch (err) {
+    console.error("Error in DeleteChecklistPM:", err);
+    console.error("Error stack:", err.stack);
     res.status(500).json({
-      error: "Failed to delete checklist",
-      details: e.message,
+      error: err.message || "Failed to delete checklist",
+      details: {
+        week: req.params.week,
+        grup: req.params.grup,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
     });
   }
 };
