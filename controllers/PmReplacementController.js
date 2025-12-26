@@ -35,19 +35,49 @@ export async function getPmReplaceChecklistSubmitted(req, res) {
     //   ),
     // }));
     const mapped = rows.map((r) => {
-      const rawWeeks = String(r.periode_start || '')
-        .split(',')
-        .map(w => w.trim())
-        .filter(Boolean);
+      // weektargetreal = target asli dari database
+      const weektargetreal = r.target_week && r.target_year 
+        ? `${r.target_year}w${r.target_week}`
+        : null;
 
-      const weekNumbers = rawWeeks.map(w =>
-        Number(w.replace(/^.*w/i, ''))
-      );
+       // confirm_week dan confirm_week_label = hanya week terakhir (target + 4 minggu)
+       let confirm_week = [];
+       let confirm_week_label = [];
+
+       if (r.target_week && r.target_year) {
+         const targetWeek = parseInt(r.target_week, 10);
+         const targetYear = parseInt(r.target_year, 10);
+         
+         if (!isNaN(targetWeek) && !isNaN(targetYear)) {
+           // Hitung 4 minggu ke depan dari target week, ambil hanya week terakhir
+           // Contoh: Week 52 (2025) → Week 4 (2026) = 52 + 4 = 56, tapi karena max 52, jadi 4 di tahun 2026
+           // Contoh: Week 5 (2026) → Week 9 (2026) = 5 + 4 = 9
+           let w = targetWeek;
+           let y = targetYear;
+           
+           // Tambahkan 4 minggu
+           for (let i = 0; i < 4; i++) {
+             w++;
+             const max = getTotalWeeksInYear(y);
+             
+             // Jika week melebihi max weeks di tahun tersebut, pindah ke tahun berikutnya
+             if (w > max) {
+               w = 1;
+               y++;
+             }
+           }
+           
+           // Hanya ambil week terakhir
+           confirm_week.push(w);
+           confirm_week_label.push(`${y}w${w}`);
+         }
+       }
 
       return {
         ...r,
-        confirm_week: weekNumbers,
-        confirm_week_label: rawWeeks,
+        confirm_week,
+        confirm_week_label,
+        weektargetreal, // Target asli dari database: "2026w5"
       };
     });
     res.json(mapped);
