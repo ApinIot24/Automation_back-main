@@ -29,6 +29,21 @@ export async function runUtilityPM() {
     ) {
       continue;
     }
+    // Check if already exists to prevent duplicate
+    const exists = await automationDB.replacement_pm.findFirst({
+      where: {
+        jenis_pm: "utility",
+        target_week: String(targetWeek),
+        target_year: String(targetYear),
+        machine_name: row.machine_name,
+        grup: row.grup,
+      },
+    });
+
+    if (exists) {
+      continue; // Skip if already exists
+    }
+
     const {
       id,   
       status, 
