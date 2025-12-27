@@ -53,6 +53,9 @@ import formtiket from "./routes/ticket.js";
 import settingpm from "./routes/setting_pm/index.js";
 // replacement_pm
 import replacementpm from "./routes/pm_replacement.js";
+import gdspMaster from "./routes/gdsp/master_gdsp.js"
+import gdspUser from "./routes/gdsp/master_user.js"
+import gdspMasterData from "./routes/gdsp/master_data.js"
 // gas meter
 import gasmeter from "./routes/utility/gasmeter/gasmeter.js";
 // sync_database
@@ -241,6 +244,9 @@ app.use("/api", qrchecklist);
 app.use("/api", formtiket);
 app.use("/api", settingpm);
 app.use("/api", replacementpm);
+app.use("/api", gdspMaster);
+app.use("/api", gdspUser);
+app.use("/api", gdspMasterData);
 
 // Gas meter routes
 app.use("/api", gasmeter);
