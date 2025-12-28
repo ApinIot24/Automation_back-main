@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getCenkitL1,
   getCenkitL1WeightMixingHistory,
+  getFormasiBagianCenkitL1ByDate,
 } from "../controllers/CentralKitchen1Controller.js";
 import {
   getCenkitL2,
@@ -21,6 +22,7 @@ const app = Router();
 
 app.get("/cenkit_l1", getCenkitL1);
 app.get("/cenkit_l1/weight_mixing/history", getCenkitL1WeightMixingHistory);
+app.get("/cenkit_l1/formasi_bagian/date", getFormasiBagianCenkitL1ByDate);
 
 // ==== BASIC CENTRAL KITCHEN 2 ======
 app.get("/cenkit_l2", getCenkitL2);
