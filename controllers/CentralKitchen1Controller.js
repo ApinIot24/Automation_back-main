@@ -320,10 +320,45 @@ export const getFormasiBagianCenkitL1ByDate = async (req, res) => {
           // frekuensi empty: jumlah record weight_mixing == 0 pada batch tsb
           const frekuensi_Empty = batchRows.filter((x) => x.weight_mixing === 0).length;
 
-          // menit_2 & menit_6: timestamp
-          const startDateObj = start ? new Date(start) : null;
-          const menit_2 = startDateObj ? Math.floor((startDateObj.getTime() + 2 * 60 * 1000) / (60 * 1000)) : null;
-          const menit_6 = startDateObj ? Math.floor((startDateObj.getTime() + 6 * 60 * 1000) / (60 * 1000)) : null;
+          // menit_2 & menit_6: ambil weight_mixing pada waktu start + 2 menit dan start + 6 menit
+          let menit_2 = null;
+          let menit_6 = null;
+          
+          if (start) {
+            const startDateObj = new Date(start);
+            const targetTime2 = new Date(startDateObj.getTime() + 2 * 60 * 1000); // start + 2 menit
+            const targetTime6 = new Date(startDateObj.getTime() + 6 * 60 * 1000); // start + 6 menit
+            
+            // Cari record yang realdatetime paling dekat dengan targetTime2 (dalam batch yang sama)
+            const closest2 = batchRows.reduce((closest, current) => {
+              if (current.realdatetime) {
+                const currentTime = new Date(current.realdatetime);
+                const currentDiff = Math.abs(currentTime.getTime() - targetTime2.getTime());
+                
+                if (!closest || currentDiff < Math.abs(new Date(closest.realdatetime).getTime() - targetTime2.getTime())) {
+                  return current;
+                }
+              }
+              return closest;
+            }, null);
+            
+            // Cari record yang realdatetime paling dekat dengan targetTime6 (dalam batch yang sama)
+            const closest6 = batchRows.reduce((closest, current) => {
+              if (current.realdatetime) {
+                const currentTime = new Date(current.realdatetime);
+                const currentDiff = Math.abs(currentTime.getTime() - targetTime6.getTime());
+                
+                if (!closest || currentDiff < Math.abs(new Date(closest.realdatetime).getTime() - targetTime6.getTime())) {
+                  return current;
+                }
+              }
+              return closest;
+            }, null);
+            
+            // Ambil weight_mixing dari record terdekat (convert ke int)
+            menit_2 = closest2?.weight_mixing != null ? Math.floor(closest2.weight_mixing) : null;
+            menit_6 = closest6?.weight_mixing != null ? Math.floor(closest6.weight_mixing) : null;
+          }
 
           batchResults.push({
             batch,
