@@ -1,5 +1,4 @@
 import { iotDB } from "../src/db/iot.js";
-import { rawIot } from "../config/sqlRaw.js";
 
 const WHERE_L1 = { line: 'L1' };
 
@@ -217,7 +216,9 @@ export const getFormasiBagianCenkitL1ByDate = async (req, res) => {
       const dateStr = targetDate.toISOString().split('T')[0];
   
       // Query data by date using DATE() function (not date range)
-      const rows = await rawIot(`
+      // Using parameterized query for security
+      const rows = await iotDB.$queryRawUnsafe(
+        `
         SELECT 
           id,
           line,
@@ -230,9 +231,11 @@ export const getFormasiBagianCenkitL1ByDate = async (req, res) => {
           realdatetime
         FROM purwosari.ck_wafer_status
         WHERE line = 'L1'
-          AND DATE(realdatetime) = '${dateStr}'
+          AND DATE(realdatetime) = $1
         ORDER BY realdatetime ASC
-      `);
+        `,
+        dateStr
+      );
   
       if (!rows || rows.length === 0) {
         return res.status(404).send({ error: "No data found for this date" });
@@ -284,9 +287,9 @@ export const getFormasiBagianCenkitL1ByDate = async (req, res) => {
           const firstTrue = batchRows.find((x) => x.ck_status === true && x.realdatetime);
           const start = firstTrue?.realdatetime || batchRows[0]?.realdatetime || null;
 
-          // timing_mixing: ambil value terakhir yang non-null pada batch
-          const timingRow = [...batchRows].reverse().find((x) => x.timing_mixing != null);
-          const timing_mixing_float = timingRow?.timing_mixing ?? null;
+          // timing_mixing: ambil dari record terakhir dengan ck_status === true pada batch
+          const lastTrue = [...batchRows].reverse().find((x) => x.ck_status === true && x.realdatetime);
+          const timing_mixing_float = lastTrue?.timing_mixing ?? null;
           const timing_mixing = timing_mixing_float != null ? secondsToTime(timing_mixing_float) : null;
 
           // weight_air: ambil dari batch sebelumnya dalam shift yang sama (kalau ada)
@@ -298,21 +301,22 @@ export const getFormasiBagianCenkitL1ByDate = async (req, res) => {
             weight_air = prevWeightRow?.weight_mixing != null ? Math.floor(prevWeightRow.weight_mixing) : 0;
           }
 
-          // selesai: TRUE terakhir pada batch tsb
-          const lastTrue = [...batchRows].reverse().find((x) => x.ck_status === true && x.realdatetime);
+          // selesai: TRUE terakhir pada batch tsb (menggunakan lastTrue yang sudah dideklarasikan di atas)
           const selesai = lastTrue?.realdatetime || null;
 
-          // empyting: dari selesai -> weight_mixing 0 pertama SETELAH selesai (batch sama)
+          // empyting: dari selesai (TRUE terakhir) -> FALSE pertama SETELAH selesai dalam batch yang sama
+          // Mencari transisi dari true ke false, hitung durasi dari selesai ke false pertama
           let empyting = null;
           if (selesai) {
-            const firstZeroAfterSelesai = batchRows.find((x) => {
+            // Cari record pertama dengan ck_status = false setelah selesai (dari akhir batch)
+            const firstFalseAfterSelesai = batchRows.find((x) => {
               if (!x.realdatetime) return false;
-              return new Date(x.realdatetime) > new Date(selesai) && x.weight_mixing === 0;
+              return new Date(x.realdatetime) > new Date(selesai) && x.ck_status === false;
             });
 
-            if (firstZeroAfterSelesai?.realdatetime) {
+            if (firstFalseAfterSelesai?.realdatetime) {
               const durationMs =
-                new Date(firstZeroAfterSelesai.realdatetime).getTime() - new Date(selesai).getTime();
+                new Date(firstFalseAfterSelesai.realdatetime).getTime() - new Date(selesai).getTime();
               empyting = secondsToTime(Math.floor(durationMs / 1000));
             }
           }
