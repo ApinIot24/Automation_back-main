@@ -1179,6 +1179,8 @@ model master_data_gdsp {
   currency             String?   @db.VarChar(5)
   price_unit           Int?
   created_by           String?   @db.VarChar(100)
-  
+  deleted_at           DateTime? @db.Timestamp(6)
+
+  @@index([deleted_at], map: "idx_master_data_gdsp_deleted_at")
   @@schema("automation")
 }
