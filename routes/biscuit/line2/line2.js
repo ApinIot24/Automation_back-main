@@ -55,6 +55,6 @@ app.get("/packingtray_l2b_weekly", GetPackingL2bTrayWeekly);
 app.get("/packingtray_l2b_weekly/date/:date", GetPackingL2bTrayWeeklyByDate);
 
 // ==== PROSES ENROBER ====
-app.get("/proses_enrober/date", getProsesEnroberByDate);
+app.get("/proses_enrober/2b/date", getProsesEnroberByDate);
 
 export default app;
