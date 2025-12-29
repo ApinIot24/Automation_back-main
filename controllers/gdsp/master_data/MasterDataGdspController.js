@@ -10,6 +10,7 @@ export async function getMasterDataGdsp(req, res) {
         const material = req.query.material?.trim();
         
         const where = {
+          deleted_at: null,
           ...(q && {
               OR: [
               { material_description: { contains: q, mode: "insensitive" } },
@@ -28,7 +29,8 @@ export async function getMasterDataGdsp(req, res) {
           data = await automationDB.$queryRaw`
             SELECT *
             FROM automation.master_data_gdsp
-            WHERE CAST(material AS TEXT) ILIKE ${materialLike}
+            WHERE deleted_at IS NULL AND 
+            CAST(material AS TEXT) ILIKE ${materialLike}
             ORDER BY id ASC
             LIMIT ${size} OFFSET ${skip}
           `;
@@ -36,7 +38,8 @@ export async function getMasterDataGdsp(req, res) {
           const countResult = await automationDB.$queryRaw`
             SELECT COUNT(*)::int AS total
             FROM automation.master_data_gdsp
-            WHERE CAST(material AS TEXT) ILIKE ${materialLike}
+            WHERE deleted_at IS NULL AND 
+            CAST(material AS TEXT) ILIKE ${materialLike}
           `;
 
           total = countResult[0]?.total ?? 0;
@@ -101,7 +104,7 @@ export async function getMasterDataByMaterial(req, res) {
         base_unit_of_measure,
         plant
       FROM automation.master_data_gdsp
-      WHERE ${whereClause}
+      WHERE deleted_at IS NULL AND ${whereClause}
       ORDER BY material
       LIMIT 20
       `,
@@ -139,7 +142,7 @@ export async function createMasterDataGdsp(req, res) {
 
         res.status(201).json({
         message: "Created successfully",
-        data: created,
+        data: serializeBigInt(created),
         });
     } catch (err) {
         console.error(err);
@@ -152,7 +155,7 @@ export async function updateMasterDataGdsp(req, res) {
     const id = Number(req.params.id);
 
     const exist = await automationDB.master_data_gdsp.findUnique({
-      where: { id },
+      where: { id, deleted_at: null },
     });
 
     if (!exist) {
@@ -177,10 +180,90 @@ export async function updateMasterDataGdsp(req, res) {
 
     res.json({
       message: "Updated successfully",
-      data: updated,
+      data: serializeBigInt(updated),
     });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+export async function deleteMasterDataGdsp(req, res) {
+  try {
+    const id = Number(req.params.id);
+
+    const exist = await automationDB.master_data_gdsp.findUnique({
+      where: { id },
+    });
+
+    if (!exist || exist.deleted_at) {
+      return res.status(404).json({ message: "Data not found" });
+    }
+
+    await automationDB.master_data_gdsp.update({
+      where: { id },
+      data: { deleted_at: new Date() },
+    });
+
+    res.json({ message: "Deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+export async function getDeletedMasterDataGdsp(req, res) {
+  try {
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const size = Math.max(Number(req.query.size) || 20, 1);
+    const skip = (page - 1) * size;
+
+    const [data, total] = await Promise.all([
+      automationDB.master_data_gdsp.findMany({
+        where: {
+          deleted_at: { not: null },
+        },
+        orderBy: { deleted_at: "desc" },
+        skip,
+        take: size,
+      }),
+      automationDB.master_data_gdsp.count({
+        where: {
+          deleted_at: { not: null },
+        },
+      }),
+    ]);
+
+    const serialize = serializeBigInt(data)
+    res.json({
+      data: serialize,
+      meta: {
+        page,
+        size,
+        total,
+        totalPages: Math.ceil(total / size),
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
+
+export async function restoreMasterDataGdsp(req, res) {
+  try {
+    const id = Number(req.params.id);
+
+    const restored = await automationDB.master_data_gdsp.update({
+      where: { id },
+      data: { deleted_at: null },
+    });
+
+    res.json({
+      message: "Restored successfully",
+      data: serializeBigInt(restored),
+    });
+  } catch (err) {
     res.status(500).json({ error: "Internal Server Error" });
   }
 }
