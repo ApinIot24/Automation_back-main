@@ -8,6 +8,9 @@ import {
     GetShift2L2bTrayHourly, GetShift3L2bRenceng, GetShift3L2bRencengHourly, GetShift3L2bRencengHourlyByDate, 
     GetShift3L2bTray, GetShift3L2bTrayHourly, GetShift3L2bTrayHourlyByDate, GetShift_L2b 
 } from "../../../controllers/biscuit/line2/Line2bController.js";
+import {
+    getProsesEnroberByDate
+} from "../../../controllers/biscuit/line2/ProsesEnroberController.js";
 
 const app = Router();
 
@@ -50,5 +53,8 @@ app.get("/packingrenceng_l2b_weekly", GetPackingL2bRencengWeekly);
 app.get("/packingrenceng_l2b_weekly/date/:date", GetPackingL2bRencengWeeklyByDate);
 app.get("/packingtray_l2b_weekly", GetPackingL2bTrayWeekly);
 app.get("/packingtray_l2b_weekly/date/:date", GetPackingL2bTrayWeeklyByDate);
+
+// ==== PROSES ENROBER ====
+app.get("/proses_enrober/date", getProsesEnroberByDate);
 
 export default app;
