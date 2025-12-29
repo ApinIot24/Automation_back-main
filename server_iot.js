@@ -53,6 +53,8 @@ import formtiket from "./routes/ticket.js";
 import settingpm from "./routes/setting_pm/index.js";
 // replacement_pm
 import replacementpm from "./routes/pm_replacement.js";
+// pm weekly test
+import pmWeeklyTest from "./routes/pmWeeklyTest.js";
 import gdspMaster from "./routes/gdsp/master_gdsp.js"
 import gdspUser from "./routes/gdsp/master_user.js"
 import gdspMasterData from "./routes/gdsp/master_data.js"
@@ -244,6 +246,7 @@ app.use("/api", qrchecklist);
 app.use("/api", formtiket);
 app.use("/api", settingpm);
 app.use("/api", replacementpm);
+app.use("/api", pmWeeklyTest);
 app.use("/api", gdspMaster);
 app.use("/api", gdspUser);
 app.use("/api", gdspMasterData);

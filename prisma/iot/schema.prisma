@@ -494,7 +494,7 @@ model l5_machine_status {
 }
 
 model log {
-  id           Int       @id @default(autoincrement())
+  id   Int     @id @default(autoincrement())
   data String? @db.VarChar
 
   @@schema("purwosari")
@@ -1173,15 +1173,30 @@ model ck_malkist {
 }
 
 model ck_wafer_status {
-  id              Int    @id @default(autoincrement())
-  line            String @db.VarChar(10)
+  id              Int       @id @default(autoincrement())
+  line            String    @db.VarChar(10)
   ck_status       Boolean?
   ck_mixing       Int?
-  ck_temp_cooling Float? @db.Real
-  temp_water      Float? @db.Real
-  timing_mixing   Float? @db.Real
-  weight_mixing   Float? @db.Real
+  ck_temp_cooling Float?    @db.Real
+  temp_water      Float?    @db.Real
+  timing_mixing   Int?
+  weight_mixing   Float?    @db.Real
+  realdatetime    DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("purwosari")
+}
+
+model malkist_coklat {
+  id           Int       @id(map: "lvmdp_1_1_pkey_1") @default(autoincrement())
   realdatetime DateTime? @default(now()) @db.Timestamptz(6)
-  
+  temp_coklat  Float?
+  water_temp1  Float?
+  water_temp2  Float?
+  room_heater  Float?
+  temp_zone12  Float?
+  temp_zone34  Float?
+  temp_zone56  Float?
+  speed        Float?
+
   @@schema("purwosari")
 }

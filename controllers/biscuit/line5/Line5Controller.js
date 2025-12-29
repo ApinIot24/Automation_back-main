@@ -133,6 +133,8 @@ export const GetShift1L5Hourly = async (req, res) => {
       ORDER BY jam, id ASC
   `;
   const rows = await raw(sql);
+  // Sort by id ascending
+  rows.sort((a, b) => a.id - b.id);
   res.send(rows);
 };
 export const GetShift2L5Hourly = async (req, res) => {
@@ -153,6 +155,8 @@ export const GetShift2L5Hourly = async (req, res) => {
     ORDER BY jam, id ASC
   `;
   const rows = await raw(sql);
+  // Sort by id ascending
+  rows.sort((a, b) => a.id - b.id);
   res.send(rows);
 };
 export const GetShift3L5Hourly = async (req, res) => {
@@ -171,6 +175,8 @@ export const GetShift3L5Hourly = async (req, res) => {
       ORDER BY jam, id ASC
     `;
     const rows = await raw(sql);
+    // Sort by id ascending
+    rows.sort((a, b) => a.id - b.id);
     res.send(rows);
     return;
   }
@@ -183,6 +189,7 @@ export const GetShift3L5Hourly = async (req, res) => {
     ORDER BY jam, id ASC
   `);
   const mapped = d23.map((r) => ({
+    id: r.id,
     jam: "0.23",
     cntr_bandet: r.cntr_bandet,
     cntr_carton: r.cntr_carton,
@@ -197,7 +204,10 @@ export const GetShift3L5Hourly = async (req, res) => {
     ORDER BY jam, id ASC
   `);
 
-  res.send(mapped.concat(nextRows));
+  const combined = mapped.concat(nextRows);
+  // Sort by id ascending
+  combined.sort((a, b) => a.id - b.id);
+  res.send(combined);
 };
 // ==== SHIFT 3 BY DATE ====
 export const GetShift3L5HourlyByDate = async (req, res) => {

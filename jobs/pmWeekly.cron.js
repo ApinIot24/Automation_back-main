@@ -5,6 +5,7 @@ import { runUtilityPM } from "./utility.job.js";
 import { runAstorPM } from "./astor.job.js";
 import { sendEmailByJenisPMRange } from "../controllers/emailController.js";
 import { getEmailWeeksRange } from "../config/dateUtils.js";
+import { automationDB } from "../src/db/automation.js";
 
 cron.schedule(
     "0 1 * * 5", // ini jam 1 pagi di hari jumat => 5
@@ -42,8 +43,8 @@ cron.schedule(
 
       const weeks = getEmailWeeksRange(4); // 52,1,2,3
       const or = weeks.map(w => ({
-        target_week: w.week,
-        target_year: w.year,
+        target_week: String(w.week),
+        target_year: String(w.year),
       }));
 
       for (const jenis of ["wafer", "biscuit", "utility", "astor"]) {

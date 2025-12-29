@@ -14,9 +14,17 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
       return res.status(400).json({ error: "Data tidak valid" });
     }
 
+    // Parse week and year to integers
+    const parsedWeek = parseInt(week, 10);
+    const parsedYear = parseInt(year, 10);
+
+    if (isNaN(parsedWeek) || isNaN(parsedYear)) {
+      return res.status(400).json({ error: "Week dan year harus berupa angka" });
+    }
+
     // Check duplicate submission for same week/year/group
     const exists = await automationDB.checklist_pm_utility.findFirst({
-      where: { week, year, grup: grupString },
+      where: { week: parsedWeek, year: parsedYear, grup: grupString },
     });
 
     if (exists) {
@@ -51,8 +59,8 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
     await automationDB.checklist_pm_utility.createMany({
       data: pmRows.map((r) => ({
         pm_utility_id: r.id,
-        week,
-        year,
+        week: parsedWeek,
+        year: parsedYear,
         grup,
         machine_name: r.machine_name,
         part_kebutuhan_alat: r.part_kebutuhan_alat,
@@ -66,7 +74,7 @@ export async function submitChecklistWeekUtilityByGroup(req, res) {
     });
 
     const insertedRows = await automationDB.checklist_pm_utility.findMany({
-      where: { week, year, grup: grupString },
+      where: { week: parsedWeek, year: parsedYear, grup: grupString },
       orderBy: { id: "asc" },
     });
 
@@ -130,8 +138,14 @@ export async function deleteChecklistUtilityByWeek(req, res) {
   try {
     const { week, grup } = req.params;
 
+    // Parse week to integer
+    const parsedWeek = parseInt(week, 10);
+    if (isNaN(parsedWeek)) {
+      return res.status(400).json({ error: "Week harus berupa angka" });
+    }
+
     const deleted = await automationDB.checklist_pm_utility.deleteMany({
-      where: { week: week, grup },
+      where: { week: parsedWeek, grup },
     });
 
     if (deleted.count === 0) {
@@ -284,17 +298,34 @@ export async function getChecklistUtilityRange(req, res) {
     const currentWeek = parseInt(week, 10);
     const parsedYear = parseInt(year, 10);
 
+    if (isNaN(currentWeek) || isNaN(parsedYear)) {
+      return res.status(400).json({ 
+        error: "Invalid week or year parameter",
+        details: { week, year, parsedWeek: currentWeek, parsedYear }
+      });
+    }
+
     const setting = await automationDB.setting_pm.findFirst({
       where: { grup: group, pmtablename: "pm_utility" },
       select: { week: true },
     });
 
     if (!setting) {
-      return res.status(500).json({ error: "Failed to fetch week setting" });
+      return res.status(500).json({ 
+        error: "Failed to fetch week setting",
+        details: { group, pmtablename: "pm_utility" }
+      });
     }
 
-    const totalWeeksSetting = setting?.week;
+    const totalWeeksSetting = setting?.week ?? 1;
     const totalWeeks = getTotalWeeksInYear(parsedYear);
+
+    if (currentWeek < 1 || currentWeek > totalWeeks) {
+      return res.status(400).json({ 
+        error: `Week must be between 1 and ${totalWeeks} for year ${parsedYear}`,
+        details: { currentWeek, totalWeeks, parsedYear }
+      });
+    }
 
     const pmRows = await automationDB.pm_utility.findMany({
       where: { grup: group },
@@ -316,9 +347,9 @@ export async function getChecklistUtilityRange(req, res) {
         let filtered = {};
         let hasData = false;
 
-        for (let i = startWeek; i <= endWeek; i++) {
+        for (let i = startWeek; i <= endWeek && i <= totalWeeks; i++) {
           const val = weeklyData[`w${i}`];
-          if (val !== "-") {
+          if (val && val !== "-") {
             filtered[`w${i}`] = val;
             hasData = true;
           }
@@ -341,7 +372,18 @@ export async function getChecklistUtilityRange(req, res) {
 
     res.json(response);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Error in getChecklistUtilityRange:", err);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ 
+      error: err.message || "Error fetching data",
+      details: {
+        group: req.params.group,
+        year: req.params.year,
+        week: req.params.week,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
+    });
   }
 }
 export async function getChecklistUtilityAll(req, res) {
@@ -350,16 +392,33 @@ export async function getChecklistUtilityAll(req, res) {
     const parsedYear = parseInt(year, 10);
     const currentWeek = parseInt(week, 10);
 
+    if (isNaN(currentWeek) || isNaN(parsedYear)) {
+      return res.status(400).json({ 
+        error: "Invalid week or year parameter",
+        details: { week, year, parsedWeek: currentWeek, parsedYear }
+      });
+    }
+
     const setting = await automationDB.setting_pm.findFirst({
       where: { grup: group, pmtablename: "pm_utility" },
       select: { week: true },
     });
     if (!setting) {
-      return res.status(500).json({ error: "Failed to fetch week setting" });
+      return res.status(500).json({ 
+        error: "Failed to fetch week setting",
+        details: { group, pmtablename: "pm_utility" }
+      });
     }
 
     const totalWeeksSettingVal = setting?.week ?? 1;
     const totalWeeks = getTotalWeeksInYear(parsedYear);
+
+    if (currentWeek < 1 || currentWeek > totalWeeks) {
+      return res.status(400).json({ 
+        error: `Week must be between 1 and ${totalWeeks} for year ${parsedYear}`,
+        details: { currentWeek, totalWeeks, parsedYear }
+      });
+    }
 
     const pmRows = await automationDB.pm_utility.findMany({
       where: { grup: group },
@@ -383,8 +442,9 @@ export async function getChecklistUtilityAll(req, res) {
 
         // check if ANY week in range has data
         let hasMaintenance = false;
-        for (let i = startWeek; i <= endWeek; i++) {
-          if (weeklyData[`w${i}`] !== "-") {
+        for (let i = startWeek; i <= endWeek && i <= totalWeeks; i++) {
+          const val = weeklyData[`w${i}`];
+          if (val && val !== "-") {
             hasMaintenance = true;
             break;
           }
@@ -410,8 +470,18 @@ export async function getChecklistUtilityAll(req, res) {
       weeksetting: totalWeeksSettingVal,
     });
   } catch (err) {
-    console.error("Error fetching data:", err);
-    res.status(500).json({ error: "Error fetching data" });
+    console.error("Error in getChecklistUtilityAll:", err);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ 
+      error: err.message || "Error fetching data",
+      details: {
+        group: req.params.group,
+        year: req.params.year,
+        week: req.params.week,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
+    });
   }
 }
 

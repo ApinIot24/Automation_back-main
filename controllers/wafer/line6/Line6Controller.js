@@ -129,6 +129,8 @@ export const GetShift1L6Hourly = async (req, res) => {
   `;
 
   const rows = await raw(sql);
+  // Sort by id ascending
+  rows.sort((a, b) => a.id - b.id);
   res.send(rows);
 };
 export const GetShift2L6Hourly = async (req, res) => {
@@ -148,6 +150,8 @@ export const GetShift2L6Hourly = async (req, res) => {
   `;
 
   const rows = await raw(sql);
+  // Sort by id ascending
+  rows.sort((a, b) => a.id - b.id);
   res.send(rows);
 };
 export const GetShift3L6Hourly = async (req, res) => {
@@ -166,6 +170,8 @@ export const GetShift3L6Hourly = async (req, res) => {
       ORDER BY jam, id ASC
     `;
     const rows = await raw(sql);
+    // Sort by id ascending
+    rows.sort((a, b) => a.id - b.id);
     res.send(rows);
     return;
   }
@@ -179,6 +185,7 @@ export const GetShift3L6Hourly = async (req, res) => {
   `);
 
   const mapped = d23.map(r => ({
+    id: r.id,
     jam: "23.45",
     cntr_bandet: r.cntr_bandet,
     cntr_carton: r.cntr_carton
@@ -193,7 +200,10 @@ export const GetShift3L6Hourly = async (req, res) => {
     ORDER BY jam, id ASC
   `);
 
-  res.send(mapped.concat(nextRows));
+  const combined = mapped.concat(nextRows);
+  // Sort by id ascending
+  combined.sort((a, b) => a.id - b.id);
+  res.send(combined);
 };
 // ==== ini PACKING L6 PERJAM & DATE ====
 export const GetPackingL6Hourly = async (req, res) => {

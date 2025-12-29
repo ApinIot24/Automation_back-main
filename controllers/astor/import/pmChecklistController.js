@@ -66,8 +66,18 @@ export async function submitChecklistWeekAstorByGroup(req, res) {
       insertedRows 
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Terjadi kesalahan pada server" });
+    console.error("Error in submitChecklistWeekAstorByGroup:", err);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ 
+      error: err.message || "Terjadi kesalahan pada server",
+      details: {
+        grup: req.params.grup,
+        year: req.body.year,
+        week: req.body.week,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
+    });
   }
 }
 // ========================== UPDATE CHECKLIST ==========================
@@ -108,8 +118,19 @@ export async function updateChecklistAstor(req, res) {
       data: updated
     });
   } catch (err) {
-    console.error("Error updating machine checklist:", err)
-    res.status(500).json({ error: "Failed to update checklist", details: err.message });
+    console.error("Error in updateChecklistAstor:", err);
+    console.error("Error stack:", err.stack);
+    if (err.code === "P2025") {
+      return res.status(404).json({ error: "Data not found for the given ID" });
+    }
+    res.status(500).json({ 
+      error: err.message || "Failed to update checklist",
+      details: {
+        id: req.params.id,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
+    });
   }
 }
 
@@ -131,16 +152,41 @@ export async function deleteChecklistAstorByWeek(req, res) {
 
     res.status(200).json({ message: "Data successfully deleted"});
   } catch (err) {
-    console.error("Error delete machine checklist:", err);
-    res.status(500).json({ error: "Failed to delete checklist", details: err.message });
+    console.error("Error in deleteChecklistAstorByWeek:", err);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ 
+      error: err.message || "Failed to delete checklist",
+      details: {
+        week: req.params.week,
+        grup: req.params.grup,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
+    });
   }
 }
 // ========================== GET CHECKLIST (FILTERED) ==========================
 export async function getChecklistAstorData(req, res) {
   try {
     const { group, year, week } = req.params;
+    const parsedYear = parseInt(year, 10);
     const currentWeek = parseInt(week, 10);
-    const totalWeeks = getTotalWeeksInYear(parseInt(year, 10));
+
+    if (isNaN(parsedYear) || isNaN(currentWeek)) {
+      return res.status(400).json({ 
+        error: "Invalid year or week parameter",
+        details: { year: req.params.year, week: req.params.week }
+      });
+    }
+
+    const totalWeeks = getTotalWeeksInYear(parsedYear);
+
+    if (currentWeek < 1 || currentWeek > totalWeeks) {
+      return res.status(400).json({ 
+        error: `Week must be between 1 and ${totalWeeks} for year ${parsedYear}`,
+        details: { currentWeek, totalWeeks, parsedYear }
+      });
+    }
 
     const pmRows = await automationDB.pm_astor.findMany({
       where: { grup: group },
@@ -162,9 +208,9 @@ export async function getChecklistAstorData(req, res) {
         let filteredWeeks = {};
         let hasData = false;
 
-        for (let i = startWeek; i <= endWeek; i++) {
+        for (let i = startWeek; i <= endWeek && i <= totalWeeks; i++) {
           const val = weeklyData[`w${i}`];
-          if (val !== "-") {
+          if (val && val !== "-") {
             filteredWeeks[`w${i}`] = val;
             hasData = true;
           }
@@ -195,9 +241,24 @@ export async function getChecklistAstorData(req, res) {
 export async function getChecklistAstorSubmitted(req, res) {
   try {
     const { group, year, week } = req.params;
-    const currentWeek = parseInt(week, 10);
-    const totalWeeks = getTotalWeeksInYear(parseInt(year, 10));
     const parsedYear = parseInt(year, 10);
+    const currentWeek = parseInt(week, 10);
+
+    if (isNaN(parsedYear) || isNaN(currentWeek)) {
+      return res.status(400).json({ 
+        error: "Invalid year or week parameter",
+        details: { year: req.params.year, week: req.params.week }
+      });
+    }
+
+    const totalWeeks = getTotalWeeksInYear(parsedYear);
+
+    if (currentWeek < 1 || currentWeek > totalWeeks) {
+      return res.status(400).json({ 
+        error: `Week must be between 1 and ${totalWeeks} for year ${parsedYear}`,
+        details: { currentWeek, totalWeeks, parsedYear }
+      });
+    }
 
     const rows = await automationDB.checklist_pm_astor.findMany({
       where: { grup: group, year: parsedYear, week: currentWeek },
@@ -243,9 +304,9 @@ export async function getChecklistAstorSubmitted(req, res) {
         let filtered = {};
         let hasData = false;
 
-        for (let i = startWeek; i <= endWeek; i++) {
+        for (let i = startWeek; i <= endWeek && i <= totalWeeks; i++) {
           const val = weeklyData[`w${i}`];
-          if (val !== "-") {
+          if (val && val !== "-") {
             filtered[`w${i}`] = val;
             hasData = true;
           }
@@ -262,8 +323,18 @@ export async function getChecklistAstorSubmitted(req, res) {
 
     res.json(modifiedData);
   } catch (err) {
-    console.error("Error fetching data:", err)
-    res.status(500).json({ error: "Error fetching data" });
+    console.error("Error in getChecklistAstorSubmitted:", err);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ 
+      error: err.message || "Error fetching data",
+      details: {
+        group: req.params.group,
+        year: req.params.year,
+        week: req.params.week,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
+    });
   }
 }
 
@@ -273,17 +344,34 @@ export async function getChecklistAstorRange(req, res) {
     const currentWeek = parseInt(week, 10);
     const parsedYear = parseInt(year, 10);
 
+    if (isNaN(currentWeek) || isNaN(parsedYear)) {
+      return res.status(400).json({ 
+        error: "Invalid week or year parameter",
+        details: { week, year, parsedWeek: currentWeek, parsedYear }
+      });
+    }
+
     const setting = await automationDB.setting_pm.findFirst({
       where: { grup: group, pmtablename: "pm_astor" },
       select: { week: true }
     });
 
     if (!setting) {
-      return res.status(500).json({ error: "Failed to fetch week setting" });
+      return res.status(500).json({ 
+        error: "Failed to fetch week setting",
+        details: { group, pmtablename: "pm_astor" }
+      });
     }
 
-    const totalWeeksSetting = setting?.week;
+    const totalWeeksSetting = setting?.week ?? 1;
     const totalWeeks = getTotalWeeksInYear(parsedYear);
+
+    if (currentWeek < 1 || currentWeek > totalWeeks) {
+      return res.status(400).json({ 
+        error: `Week must be between 1 and ${totalWeeks} for year ${parsedYear}`,
+        details: { currentWeek, totalWeeks, parsedYear }
+      });
+    }
 
     const pmRows = await automationDB.pm_astor.findMany({
       where: { grup: group },
@@ -305,9 +393,9 @@ export async function getChecklistAstorRange(req, res) {
         let filtered = {};
         let hasData = false;
 
-        for (let i = startWeek; i <= endWeek; i++) {
+        for (let i = startWeek; i <= endWeek && i <= totalWeeks; i++) {
           const val = weeklyData[`w${i}`];
-          if (val !== "-") {
+          if (val && val !== "-") {
             filtered[`w${i}`] = val;
             hasData = true;
           }
@@ -330,26 +418,54 @@ export async function getChecklistAstorRange(req, res) {
 
     res.json(response);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Error in getChecklistAstorRange:", err);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ 
+      error: err.message || "Error fetching data",
+      details: {
+        group: req.params.group,
+        year: req.params.year,
+        week: req.params.week,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
+    });
   }
 }
 
 export async function getChecklistAstorAll(req, res) {
   try {
     const { group, year, week } = req.params;
-    const parsedYear = parseInt(year, 10)
+    const parsedYear = parseInt(year, 10);
     const currentWeek = parseInt(week, 10);
+
+    if (isNaN(currentWeek) || isNaN(parsedYear)) {
+      return res.status(400).json({ 
+        error: "Invalid week or year parameter",
+        details: { week, year, parsedWeek: currentWeek, parsedYear }
+      });
+    }
 
     const setting = await automationDB.setting_pm.findFirst({
       where: { grup: group, pmtablename: "pm_astor" },
       select: { week: true }
     });
     if (!setting) {
-      return res.status(500).json({ error: "Failed to fetch week setting" });
+      return res.status(500).json({ 
+        error: "Failed to fetch week setting",
+        details: { group, pmtablename: "pm_astor" }
+      });
     }
 
     const totalWeeksSettingVal = setting?.week ?? 1;
     const totalWeeks = getTotalWeeksInYear(parsedYear);
+
+    if (currentWeek < 1 || currentWeek > totalWeeks) {
+      return res.status(400).json({ 
+        error: `Week must be between 1 and ${totalWeeks} for year ${parsedYear}`,
+        details: { currentWeek, totalWeeks, parsedYear }
+      });
+    }
 
     const pmRows = await automationDB.pm_astor.findMany({
       where: { grup: group },
@@ -370,8 +486,9 @@ export async function getChecklistAstorAll(req, res) {
 
         // check if ANY week in range has data
         let hasMaintenance = false;
-        for (let i = startWeek; i <= endWeek; i++) {
-          if (weeklyData[`w${i}`] !== "-") {
+        for (let i = startWeek; i <= endWeek && i <= totalWeeks; i++) {
+          const val = weeklyData[`w${i}`];
+          if (val && val !== "-") {
             hasMaintenance = true;
             break;
           }
@@ -396,29 +513,55 @@ export async function getChecklistAstorAll(req, res) {
       modifiedData,
       weeksetting: totalWeeksSettingVal
     });
-
   } catch (err) {
-    console.error("Error fetching data:", err)
-    res.status(500).json({ error: "Error fetching data" });
+    console.error("Error in getChecklistAstorAll:", err);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ 
+      error: err.message || "Error fetching data",
+      details: {
+        group: req.params.group,
+        year: req.params.year,
+        week: req.params.week,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
+    });
   }
 }
 
 export async function getChecklistAstorCount(req, res) {
   try {
     const { group, year, week } = req.params;
-    const parsedYear = parseInt(year, 10)
+    const parsedYear = parseInt(year, 10);
     const currentWeek = parseInt(week, 10);
+
+    if (isNaN(parsedYear) || isNaN(currentWeek)) {
+      return res.status(400).json({ 
+        error: "Invalid year or week parameter",
+        details: { year: req.params.year, week: req.params.week }
+      });
+    }
 
     const setting = await automationDB.setting_pm.findFirst({
       where: { grup: group, pmtablename: "pm_astor" },
       select: { week: true }
     });
     if (!setting) {
-      return res.status(500).json({ error: "Failed to fetch week setting" });
+      return res.status(500).json({ 
+        error: "Failed to fetch week setting",
+        details: { group, pmtablename: "pm_astor" }
+      });
     }
 
     const totalWeeksSetting = setting?.week ?? 1;
     const totalWeeks = getTotalWeeksInYear(parsedYear);
+
+    if (currentWeek < 1 || currentWeek > totalWeeks) {
+      return res.status(400).json({ 
+        error: `Week must be between 1 and ${totalWeeks} for year ${parsedYear}`,
+        details: { currentWeek, totalWeeks, parsedYear }
+      });
+    }
 
     const pmRows = await automationDB.pm_astor.findMany({
       where: { grup: group },
@@ -438,8 +581,9 @@ export async function getChecklistAstorCount(req, res) {
         parsedYear
       );
 
-      for (let i = startWeek; i <= endWeek; i++) {
-        if (weeklyData[`w${i}`] !== "-") {
+      for (let i = startWeek; i <= endWeek && i <= totalWeeks; i++) {
+        const val = weeklyData[`w${i}`];
+        if (val && val !== "-") {
           totalData++;
           break;
         }
@@ -448,7 +592,17 @@ export async function getChecklistAstorCount(req, res) {
 
     res.json({ totalData });
   } catch (err) {
-    console.error("Error fetching data:", err)
-    res.status(500).json({ error: "Error fetching data" });
+    console.error("Error in getChecklistAstorCount:", err);
+    console.error("Error stack:", err.stack);
+    res.status(500).json({ 
+      error: err.message || "Error fetching data",
+      details: {
+        group: req.params.group,
+        year: req.params.year,
+        week: req.params.week,
+        errorName: err.name,
+        errorStack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+      }
+    });
   }
 }
