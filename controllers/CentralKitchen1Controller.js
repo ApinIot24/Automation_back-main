@@ -298,7 +298,7 @@ export const getFormasiBagianCenkitL1ByDate = async (req, res) => {
             const prevBatch = batchKeys[i - 1];
             const prevRows = byBatch.get(prevBatch) || [];
             const prevWeightRow = [...prevRows].reverse().find((x) => x.weight_mixing != null);
-            weight_air = prevWeightRow?.weight_mixing != null ? Math.floor(prevWeightRow.weight_mixing) : 0;
+            weight_air = prevWeightRow?.weight_mixing != null ? parseFloat(prevWeightRow.weight_mixing.toFixed(2)) : 0;
           }
 
           // selesai: TRUE terakhir pada batch tsb (menggunakan lastTrue yang sudah dideklarasikan di atas)
@@ -359,9 +359,9 @@ export const getFormasiBagianCenkitL1ByDate = async (req, res) => {
               return closest;
             }, null);
             
-            // Ambil weight_mixing dari record terdekat (convert ke int)
-            menit_2 = closest2?.weight_mixing != null ? Math.floor(closest2.weight_mixing) : null;
-            menit_6 = closest6?.weight_mixing != null ? Math.floor(closest6.weight_mixing) : null;
+            // Ambil weight_mixing dari record terdekat (format dengan 2 desimal)
+            menit_2 = closest2?.weight_mixing != null ? parseFloat(closest2.weight_mixing.toFixed(2)) : null;
+            menit_6 = closest6?.weight_mixing != null ? parseFloat(closest6.weight_mixing.toFixed(2)) : null;
           }
 
           batchResults.push({
