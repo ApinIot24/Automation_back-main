@@ -44,16 +44,22 @@ const getShiftTimeRange = (shift, date = new Date()) => {
     }
 
     // Convert time string (e.g., "6.47") to Date object
-    const parseTime = (timeStr, baseDate) => {
+    const parseTime = (timeStr, baseDate, isEndTime = false) => {
         const [hours, minutes] = timeStr.split('.').map(Number);
         const date = new Date(baseDate);
-        date.setHours(hours, minutes || 0, 0, 0);
+        if (isEndTime) {
+            // For end time, set to end of that minute (e.g., 14.45 -> 14:45:59.999)
+            date.setHours(hours, minutes || 0, 59, 999);
+        } else {
+            // For start time, set to beginning of that minute (e.g., 6.47 -> 06:47:00.000)
+            date.setHours(hours, minutes || 0, 0, 0);
+        }
         return date;
     };
 
     const startDate = new Date(date);
     startDate.setHours(0, 0, 0, 0);
-    const start = parseTime(startTime, startDate);
+    const start = parseTime(startTime, startDate, false);
 
     let end;
     if (shift === 3 && isNormal) {
@@ -61,9 +67,9 @@ const getShiftTimeRange = (shift, date = new Date()) => {
         const nextDay = new Date(date);
         nextDay.setDate(nextDay.getDate() + 1);
         nextDay.setHours(0, 0, 0, 0);
-        end = parseTime(endTime, nextDay);
+        end = parseTime(endTime, nextDay, true);
     } else {
-        end = parseTime(endTime, startDate);
+        end = parseTime(endTime, startDate, true);
     }
 
     return { start, end };
@@ -82,23 +88,45 @@ const getShiftFromDateTime = (realdatetime, targetDate) => {
     const targetDateOnly = new Date(date);
     targetDateOnly.setHours(0, 0, 0, 0);
     
-    // Check if realdatetime is on target date or previous day (for shift 3)
-    const isSameDay = dtDate.getTime() === targetDateOnly.getTime();
     const prevDay = new Date(targetDateOnly);
     prevDay.setDate(prevDay.getDate() - 1);
     const isPrevDay = dtDate.getTime() === prevDay.getTime();
+    const isSameDay = dtDate.getTime() === targetDateOnly.getTime();
     
-    // Check each shift (1, 2, 3) on target date
-    for (let shift = 1; shift <= 3; shift++) {
+    // First, ALWAYS check shift 1 and 2 on target date first (these don't span days)
+    // This ensures data like 14:45 goes to shift 1, not shift 3
+    for (let shift = 1; shift <= 2; shift++) {
         const { start, end } = getShiftTimeRange(shift, date);
         if (dt >= start && dt <= end) {
             return shift;
         }
     }
     
-    // Handle shift 3 that spans to next day (check previous day's shift 3)
+    // Then check shift 3 from previous day (00:30 - 06:59 of target date)
+    // This is ONLY for data that is on previous day OR same day but before 07:00
     if (isPrevDay) {
         const { start, end } = getShiftTimeRange(3, prevDay);
+        if (dt >= start && dt <= end) {
+            return 3;
+        }
+    } else if (isSameDay) {
+        // For same day, only check shift 3 if hour is before 7 (00:30 - 06:59)
+        const hour = dt.getHours();
+        const minute = dt.getMinutes();
+        if (hour < 7 || (hour === 6 && minute <= 59)) {
+            const { start, end } = getShiftTimeRange(3, prevDay);
+            if (dt >= start && dt <= end) {
+                return 3;
+            }
+        }
+    }
+    
+    // Finally, check shift 3 on target date (ONLY for Saturday short shift)
+    // Only check if it's Saturday and data is on same day
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 6 && isSameDay) {
+        const { start, end } = getShiftTimeRange(3, date);
+        // For Saturday, shift 3 is 17:45 - 21:45, so check if within range
         if (dt >= start && dt <= end) {
             return 3;
         }
