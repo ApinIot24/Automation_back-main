@@ -351,16 +351,33 @@ export async function getChecklistChokiRange(req, res) {
       });
     }
 
-    const setting = await automationDB.setting_pm.findFirst({
+    let setting = await automationDB.setting_pm.findFirst({
       where: { grup: group, pmtablename: "pm_choki" },
       select: { week: true }
     });
-
+    
+    // Jika setting tidak ditemukan, buat setting baru dengan default week = 1
     if (!setting) {
-      return res.status(500).json({ 
-        error: "Failed to fetch week setting",
-        details: { group, pmtablename: "pm_choki" }
-      });
+      try {
+        setting = await automationDB.setting_pm.create({
+          data: {
+            pmtablename: "pm_choki",
+            grup: group,
+            week: 1
+          },
+          select: { week: true }
+        });
+      } catch (createError) {
+        // Jika create gagal (mungkin karena race condition), query lagi
+        setting = await automationDB.setting_pm.findFirst({
+          where: { grup: group, pmtablename: "pm_choki" },
+          select: { week: true }
+        });
+        // Jika masih tidak ada, gunakan default
+        if (!setting) {
+          setting = { week: 1 };
+        }
+      }
     }
 
     const totalWeeksSetting = setting?.week ?? 1;
@@ -446,15 +463,33 @@ export async function getChecklistChokiAll(req, res) {
       });
     }
 
-    const setting = await automationDB.setting_pm.findFirst({
+    let setting = await automationDB.setting_pm.findFirst({
       where: { grup: group, pmtablename: "pm_choki" },
       select: { week: true }
     });
+    
+    // Jika setting tidak ditemukan, buat setting baru dengan default week = 1
     if (!setting) {
-      return res.status(500).json({ 
-        error: "Failed to fetch week setting",
-        details: { group, pmtablename: "pm_choki" }
-      });
+      try {
+        setting = await automationDB.setting_pm.create({
+          data: {
+            pmtablename: "pm_choki",
+            grup: group,
+            week: 1
+          },
+          select: { week: true }
+        });
+      } catch (createError) {
+        // Jika create gagal (mungkin karena race condition), query lagi
+        setting = await automationDB.setting_pm.findFirst({
+          where: { grup: group, pmtablename: "pm_choki" },
+          select: { week: true }
+        });
+        // Jika masih tidak ada, gunakan default
+        if (!setting) {
+          setting = { week: 1 };
+        }
+      }
     }
 
     const totalWeeksSettingVal = setting?.week ?? 1;
@@ -542,15 +577,33 @@ export async function getChecklistChokiCount(req, res) {
       });
     }
 
-    const setting = await automationDB.setting_pm.findFirst({
+    let setting = await automationDB.setting_pm.findFirst({
       where: { grup: group, pmtablename: "pm_choki" },
       select: { week: true }
     });
+    
+    // Jika setting tidak ditemukan, buat setting baru dengan default week = 1
     if (!setting) {
-      return res.status(500).json({ 
-        error: "Failed to fetch week setting",
-        details: { group, pmtablename: "pm_choki" }
-      });
+      try {
+        setting = await automationDB.setting_pm.create({
+          data: {
+            pmtablename: "pm_choki",
+            grup: group,
+            week: 1
+          },
+          select: { week: true }
+        });
+      } catch (createError) {
+        // Jika create gagal (mungkin karena race condition), query lagi
+        setting = await automationDB.setting_pm.findFirst({
+          where: { grup: group, pmtablename: "pm_choki" },
+          select: { week: true }
+        });
+        // Jika masih tidak ada, gunakan default
+        if (!setting) {
+          setting = { week: 1 };
+        }
+      }
     }
 
     const totalWeeksSetting = setting?.week ?? 1;
