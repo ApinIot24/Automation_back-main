@@ -33,4 +33,5 @@ export const PM_EMAIL_MAP = {
     biscuit: "biscuit",
     utility: "utility",
     astor: "wafer",
+    choki: "wafer",
   };

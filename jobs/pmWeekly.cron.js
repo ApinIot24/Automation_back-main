@@ -3,6 +3,7 @@ import { runWaferPM } from "./wafer.job.js";
 import { runBiscuitPM } from "./biscuit.job.js";
 import { runUtilityPM } from "./utility.job.js";
 import { runAstorPM } from "./astor.job.js";
+import { runChokiPM } from "./choki.js";
 import { sendEmailByJenisPMRange } from "../controllers/emailController.js";
 import { getEmailWeeksRange } from "../config/dateUtils.js";
 import { automationDB } from "../src/db/automation.js";
@@ -20,6 +21,7 @@ cron.schedule(
         { fn: runBiscuitPM, jenis: "biscuit" },
         { fn: runUtilityPM, jenis: "utility" },
         { fn: runAstorPM, jenis: "astor" },
+        { fn: runChokiPM, jenis: "choki" },
       ];
 
       for (const job of PM_JOBS) {
@@ -47,7 +49,7 @@ cron.schedule(
         target_year: String(w.year),
       }));
 
-      for (const jenis of ["wafer", "biscuit", "utility", "astor"]) {
+      for (const jenis of ["wafer", "biscuit", "utility", "astor", "choki"]) {
         const rows = await automationDB.replacement_pm.findMany({
           where: {
             jenis_pm: jenis,
