@@ -5,8 +5,7 @@ import { fileURLToPath } from "url";
 import multer from "multer";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
-import { ticket, updateTicket } from "../controllers/ticket.js";
-import { automationDB } from "../src/db/automation.js";
+import { createTicket, deleteTicket, serveUpload, ticket, updateTicket } from "../controllers/ticket.js";
 // Use import.meta.url to get the current directory in ES modules
 const router = Router();
 const __filename = fileURLToPath(import.meta.url);
@@ -49,126 +48,17 @@ const upload = multer({
 });
 
 // Handle form submission with file upload
-router.post("/submit/tiket/form", upload.single("photo"), async (req, res) => {
-  try {
-    // Check if all required fields are present
-    if (!req.body.category || !req.body.description || !req.file) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields",
-      });
-    }
+router.post("/submit/tiket/form", upload.single("photo"), createTicket);
 
-    // Get form data
-    const { category, description } = req.body;
-    const photoFilename = req.file.filename;
-    const timestamp = new Date();
-
-    // Insert record into database
-    const result = await automationDB.$queryRaw`
-      INSERT INTO automation.history (category, description, photo_path, created_at) 
-      VALUES (${category}, ${description}, ${photoFilename}, ${timestamp}) 
-      RETURNING id
-    `;
-    console.log(result);
-
-    // Return success response
-    res.status(201).json({
-      success: true,
-      message: "Form submitted successfully",
-      data: {
-        id: result[0].id,
-        category,
-        description,
-        photoPath: photoFilename,
-        createdAt: timestamp,
-      },
-    });
-  } catch (error) {
-    console.error("Error submitting form:", error);
-
-    // Handle Multer file size error
-    if (error.code === "LIMIT_FILE_SIZE") {
-      return res.status(400).json({
-        success: false,
-        message: "File size should be less than 5MB",
-      });
-    }
-
-    // General error handling
-    res.status(500).json({
-      success: false,
-      message: "An error occurred while processing your request",
-    });
-  }
-});
 // Menambahkan middleware untuk otentikasi dan otorisasi
 router.get("/ticket", ticket);
 
 router.put("/ticket/:id", updateTicket);
 
-router.delete("/ticket/:id", async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    // Check if the ticket exists
-    const ticketResult = await automationDB.$queryRaw`
-      SELECT photo_path FROM automation.history WHERE id = ${parseInt(id)}
-    `;
-    console.log(ticketResult);
-    if (ticketResult.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Ticket not found",
-      });
-    }
-
-    // Delete the ticket from the database
-    const result = await automationDB.$queryRaw`
-      DELETE FROM automation.history WHERE id = ${parseInt(id)} RETURNING id, photo_path
-    `;
-    console.log(result);  
-    // If a photo_path exists, delete the associated image from the server
-    if (result[0]?.photo_path) {
-      const filePath = path.join(
-        __dirname,
-        "../uploads",
-        result[0].photo_path
-      );
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath); // Delete the file from the server
-      }
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Ticket deleted successfully",
-      data: result[0],
-    });
-  } catch (error) {
-    console.error("Error deleting ticket:", error);
-    res.status(500).json({
-      success: false,
-      message: "An error occurred while deleting the ticket",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
-    });
-  }
-});
+router.delete("/ticket/:id", deleteTicket);
 
 // Route to serve uploaded images
-router.get("/uploads/:filename", (req, res) => {
-  const filePath = path.join(__dirname, "../uploads", req.params.filename);
-
-  // Check if file exists
-  if (fs.existsSync(filePath)) {
-    res.sendFile(filePath);
-  } else {
-    res.status(404).json({
-      success: false,
-      message: "Image not found",
-    });
-  }
-});
+router.get("/uploads/:filename", serveUpload);
 
 router.post("/send-whatsapp", async (req, res) => {
   const { phoneNumber, message } = req.body;

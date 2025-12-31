@@ -1,15 +1,6 @@
-import nodemailer from 'nodemailer'
 import { PM_EMAIL_CHANNEL, PM_EMAIL_MAP } from '../config/pmEmailMap.js'
+import transporter from '../config/mailer.js'
 import xlsx from 'xlsx'
-
-// Konfigurasi nodemailer
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: "cahyospprt@gmail.com", // email pengirim
-        pass: "xkwojxzaccrorerw", // App password Gmail, bukan password biasa
-    },
-})
 
 // services/emailTemplate.js
 function renderPMTable(rows) {
