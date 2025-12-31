@@ -870,6 +870,23 @@ model pm_wafer {
   @@schema("automation")
 }
 
+model pm_choki {
+  id                  Int     @id(map: "machine_pkey_4") @default(autoincrement())
+  no                  Int?
+  machine_name        String? @db.VarChar(225)
+  part_kebutuhan_alat String? @db.VarChar(225)
+  qty                 String? @db.VarChar(20)
+  equipment           String? @db.VarChar(255)
+  periode             String? @db.VarChar(80)
+  grup                String? @db.VarChar(5)
+  kode_barang         String? @db.VarChar(200)
+  periode_start       String? @db.VarChar(100)
+  seri                String? @db.Char(1)
+  qrcode              String? @db.VarChar(250)
+
+  @@schema("automation")
+}
+
 model setting_pm {
   pmtablename String    @db.VarChar(55)
   grup        String    @db.VarChar(100)
@@ -907,6 +924,36 @@ model checklist_pm_astor {
   id                  String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
 
   pm_astor_id         Int?
+  status_checklist    Int?      @default(0)
+  pic                 String?   @db.VarChar(100)
+  c_i                 Boolean?
+  l                   Boolean?
+  r                   Boolean?
+  keterangan          String?
+  foto                String?   @db.VarChar(255)
+  created_at          DateTime? @default(now()) @db.Timestamp(6)
+  updated_at          DateTime? @default(now()) @db.Timestamp(6)
+  week                Int?
+  year                Int?
+  tanggal             String?   @db.VarChar(20)
+  grup                String?   @db.VarChar(20)
+  machine_name        String?   @db.VarChar(225)
+  part_kebutuhan_alat String?   @db.VarChar(225)
+  equipment           String?   @db.VarChar(255)
+  kode_barang         String?   @db.VarChar(200)
+  seri                String?   @db.Char(1)
+  no                  Int?
+  periode             String?   @db.VarChar(80)
+  periode_start       String?   @db.VarChar(100)
+  qrcode              String?   @db.VarChar(250)
+
+  @@schema("automation")
+}
+
+model checklist_pm_choki {
+  id                  String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+
+  pm_choki_id         Int?
   status_checklist    Int?      @default(0)
   pic                 String?   @db.VarChar(100)
   c_i                 Boolean?
