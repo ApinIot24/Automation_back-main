@@ -310,14 +310,8 @@ export async function getChecklistUtilityRange(req, res) {
       select: { week: true },
     });
 
-    if (!setting) {
-      return res.status(500).json({ 
-        error: "Failed to fetch week setting",
-        details: { group, pmtablename: "pm_utility" }
-      });
-    }
-
-    const totalWeeksSetting = setting?.week ?? 1;
+    // Use default value of 4 weeks if setting not found
+    const totalWeeksSetting = setting?.week ?? 4;
     const totalWeeks = getTotalWeeksInYear(parsedYear);
 
     if (currentWeek < 1 || currentWeek > totalWeeks) {
@@ -403,14 +397,9 @@ export async function getChecklistUtilityAll(req, res) {
       where: { grup: group, pmtablename: "pm_utility" },
       select: { week: true },
     });
-    if (!setting) {
-      return res.status(500).json({ 
-        error: "Failed to fetch week setting",
-        details: { group, pmtablename: "pm_utility" }
-      });
-    }
-
-    const totalWeeksSettingVal = setting?.week ?? 1;
+    
+    // Use default value of 4 weeks if setting not found
+    const totalWeeksSettingVal = setting?.week ?? 4;
     const totalWeeks = getTotalWeeksInYear(parsedYear);
 
     if (currentWeek < 1 || currentWeek > totalWeeks) {

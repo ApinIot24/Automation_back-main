@@ -2,6 +2,7 @@ import { runWaferPM } from "../jobs/wafer.job.js";
 import { runBiscuitPM } from "../jobs/biscuit.job.js";
 import { runUtilityPM } from "../jobs/utility.job.js";
 import { runAstorPM } from "../jobs/astor.job.js";
+import { runChokiPM } from "../jobs/choki.js";
 import { sendEmailByJenisPMRange } from "./emailController.js";
 import { getEmailWeeksRange, getLastWeekRolling4, hasReplacementInPeriode, isReplacementAtTargetWeek, getTotalWeeksInYear } from "../config/dateUtils.js";
 import { automationDB } from "../src/db/automation.js";
@@ -78,6 +79,7 @@ export async function testPmWeeklyCron(req, res) {
       biscuit: "pm_biscuit",
       utility: "pm_utility",
       astor: "pm_astor",
+      choki: "pm_choki",
     };
 
     for (const [jenis, tableName] of Object.entries(pmTables)) {
@@ -126,7 +128,7 @@ export async function testPmWeeklyCron(req, res) {
       target_year: String(w.year),
     }));
 
-    for (const jenis of ["wafer", "biscuit", "utility", "astor"]) {
+    for (const jenis of ["wafer", "biscuit", "utility", "astor", "choki"]) {
       const count = await automationDB.replacement_pm.count({
         where: {
           jenis_pm: jenis,
@@ -142,6 +144,7 @@ export async function testPmWeeklyCron(req, res) {
       { fn: runBiscuitPM, jenis: "biscuit", table: "pm_biscuit" },
       { fn: runUtilityPM, jenis: "utility", table: "pm_utility" },
       { fn: runAstorPM, jenis: "astor", table: "pm_astor" },
+      { fn: runChokiPM, jenis: "choki", table: "pm_choki" },
     ];
 
     for (const job of PM_JOBS) {
@@ -239,7 +242,7 @@ export async function testPmWeeklyCron(req, res) {
     // }));
 
     // Send emails for each jenis
-    for (const jenis of ["wafer", "biscuit", "utility", "astor"]) {
+    for (const jenis of ["wafer", "biscuit", "utility", "astor", "choki"]) {
       try {
         const rows = await automationDB.replacement_pm.findMany({
           where: {
