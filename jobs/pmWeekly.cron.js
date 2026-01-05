@@ -25,10 +25,16 @@ cron.schedule(
       ];
 
       for (const job of PM_JOBS) {
-        const result = await job.fn();
-        if (!result || !result.rows || result.rows.length === 0) {
-          console.log(`[CRON] No new PM for ${job.jenis}`);
-          continue;
+        try {
+          const result = await job.fn();
+          if (!result || !result.rows || result.rows.length === 0) {
+            console.log(`[CRON] No new PM for ${job.jenis}`);
+            continue;
+          }
+          console.log(`[CRON] Successfully processed ${job.jenis}: ${result.rows.length} rows`);
+        } catch (err) {
+          console.error(`[CRON] Error processing ${job.jenis}:`, err);
+          // Continue with next job even if one fails
         }
       }
 
@@ -44,34 +50,47 @@ cron.schedule(
       console.log("[CRON] FRIDAY EMAIL MODE");
 
       const weeks = getEmailWeeksRange(4); // 52,1,2,3
+      if (!weeks || weeks.length === 0) {
+        console.error("[CRON] No weeks range returned from getEmailWeeksRange");
+        return;
+      }
       const or = weeks.map(w => ({
         target_week: String(w.week),
         target_year: String(w.year),
       }));
 
       for (const jenis of ["wafer", "biscuit", "utility", "astor", "choki"]) {
-        const rows = await automationDB.replacement_pm.findMany({
-          where: {
-            jenis_pm: jenis,
-            OR: or,
-          },
-          orderBy: [
-            { target_year: "asc" },
-            { target_week: "asc" },
-          ],
-        });
+        try {
+          const rows = await automationDB.replacement_pm.findMany({
+            where: {
+              jenis_pm: jenis,
+              OR: or,
+            },
+            orderBy: [
+              { target_year: "asc" },
+              { target_week: "asc" },
+            ],
+          });
 
-        if (!rows.length) {
-          console.log(`[CRON] No PM rows for email (${jenis})`);
-          continue;
+          if (!rows.length) {
+            console.log(`[CRON] No PM rows for email (${jenis})`);
+            continue;
+          }
+
+          await sendEmailByJenisPMRange(jenis, rows, weeks);
+          console.log(`[CRON] Successfully sent email for ${jenis}`);
+        } catch (err) {
+          console.error(`[CRON] Error sending email for ${jenis}:`, err);
+          // Continue with next jenis even if one fails
         }
-
-        await sendEmailByJenisPMRange(jenis, rows, weeks);
       }
 
       console.log("[CRON] PM WEEKLY DONE");
     } catch (err) {
       console.error("[CRON] ERROR:", err);
+      console.error("[CRON] ERROR Stack:", err.stack);
+      // Don't let the error crash the entire application
+      // The cron will continue to run on the next schedule
     }
   },
   { timezone: "Asia/Jakarta" }
