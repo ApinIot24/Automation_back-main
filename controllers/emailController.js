@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer'
 import { PM_EMAIL_CHANNEL, PM_EMAIL_MAP } from '../config/pmEmailMap.js'
+import { automationDB } from '../src/db/automation.js'
 import xlsx from 'xlsx'
 
 // Konfigurasi nodemailer
@@ -86,119 +87,108 @@ function generateExcelBuffer(rows) {
 }
 
 export async function sendEmailByJenisPMRange(jenis, rows, weeksRange) {
-  const channel = PM_EMAIL_CHANNEL[jenis] ?? jenis;
-  const recipients = PM_EMAIL_MAP[channel];
+  try {
+    const channel = PM_EMAIL_CHANNEL[jenis] ?? jenis;
+    const recipients = PM_EMAIL_MAP[channel];
 
-  if (!recipients?.length) {
-    console.log(`[EMAIL] No recipient for channel ${channel}`);
-    return;
-  }
+    if (!recipients?.length) {
+      console.log(`[EMAIL] No recipient for channel ${channel}`);
+      return;
+    }
 
-  const rangeLabel = `${weeksRange[0].year}w${weeksRange[0].week} - ${
-    weeksRange[weeksRange.length - 1].year
-  }w${weeksRange[weeksRange.length - 1].week}`;
+    const rangeLabel = `${weeksRange[0].year}w${weeksRange[0].week} - ${
+      weeksRange[weeksRange.length - 1].year
+    }w${weeksRange[weeksRange.length - 1].week}`;
 
-  const jenisList = Object.entries(PM_EMAIL_CHANNEL)
-    .filter(([_, ch]) => ch === channel)
-    .map(([j]) => j);
+    // Dapatkan semua jenis PM yang menggunakan channel yang sama
+    const jenisList = Object.entries(PM_EMAIL_CHANNEL)
+      .filter(([_, ch]) => ch === channel)
+      .map(([j]) => j);
 
-  const grouped = {};
-  for (const j of jenisList) grouped[j] = rows.filter(r => r.jenis_pm === j);
+    console.log(`[EMAIL] Channel ${channel} includes jenis: ${jenisList.join(", ")}`);
 
-  const summaryHtml = Object.entries(grouped)
-    .map(([j, data]) => renderSummary(j.toUpperCase(), data))
-    .join("");
+    // PERBAIKAN: Fetch semua data untuk jenis PM yang share channel yang sama
+    const or = weeksRange.map(w => ({
+      target_week: String(w.week),
+      target_year: String(w.year),
+    }));
 
-  const tableHtml = Object.entries(grouped)
-    .map(([j, data]) => `<h3>${j.toUpperCase()}</h3>${renderPMTable(data)}`)
-    .join("<br/>");
-
-  const attachments = [];
-  for (const [j, data] of Object.entries(grouped)) {
-    if (!data.length) continue;
-    attachments.push({
-      filename: `PM_${j.toUpperCase()}_${rangeLabel}.xlsx`,
-      content: generateExcelBuffer(data),
-      contentType:
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    // Fetch data dari database untuk semua jenis PM dalam channel ini
+    const allRows = await automationDB.replacement_pm.findMany({
+      where: {
+        jenis_pm: {
+          in: jenisList, // Ambil semua jenis yang di channel ini
+        },
+        OR: or,
+      },
+      orderBy: [
+        { jenis_pm: "asc" },
+        { target_year: "asc" },
+        { target_week: "asc" },
+      ],
     });
+
+    console.log(`[EMAIL] Found ${allRows.length} total rows for channel ${channel}`);
+
+    // Group berdasarkan jenis_pm
+    const grouped = {};
+    for (const j of jenisList) {
+      grouped[j] = allRows.filter(r => r.jenis_pm === j);
+      console.log(`[EMAIL] ${j}: ${grouped[j].length} rows`);
+    }
+
+    // Cek apakah ada data
+    const totalData = Object.values(grouped).reduce((sum, arr) => sum + arr.length, 0);
+    if (totalData === 0) {
+      console.log(`[EMAIL] No data for channel ${channel}, skipping email`);
+      return;
+    }
+
+    // Generate summary HTML
+    const summaryHtml = Object.entries(grouped)
+      .filter(([_, data]) => data.length > 0) // Hanya yang ada datanya
+      .map(([j, data]) => renderSummary(j.toUpperCase(), data))
+      .join("");
+
+    // Generate table HTML
+    const tableHtml = Object.entries(grouped)
+      .filter(([_, data]) => data.length > 0) // Hanya yang ada datanya
+      .map(([j, data]) => `<h3>${j.toUpperCase()}</h3>${renderPMTable(data)}`)
+      .join("<br/>");
+
+    // Generate Excel attachments
+    const attachments = [];
+    for (const [j, data] of Object.entries(grouped)) {
+      if (!data.length) continue;
+      attachments.push({
+        filename: `PM_${j.toUpperCase()}_${rangeLabel}.xlsx`,
+        content: generateExcelBuffer(data),
+        contentType:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+    }
+
+    // Kirim email
+    await transporter.sendMail({
+      from: "cahyospprt@gmail.com",
+      to: recipients.join(","),
+      subject: `PM ${channel.toUpperCase()} - ${rangeLabel} - Weekly Preview`,
+      html: `
+        <h2>PM ${channel.toUpperCase()} - ${rangeLabel}</h2>
+        <p><i>Preview rencana PM 4 minggu ke depan</i></p>
+        <p><b>Jenis PM dalam email ini:</b> ${jenisList.map(j => j.toUpperCase()).join(", ")}</p>
+        ${summaryHtml}
+        <hr/>
+        ${tableHtml}
+        <br/>
+        <small>Generated automatically by system</small>
+      `,
+      attachments,
+    });
+
+    console.log(`[EMAIL] ✓ Sent to channel ${channel} (${jenisList.join(", ")}) - ${recipients.length} recipients`);
+  } catch (err) {
+    console.error(`[EMAIL] Error sending email for ${jenis}:`, err);
+    throw err; // Re-throw agar cron tahu ada error
   }
-
-  await transporter.sendMail({
-    from: "cahyospprt@gmail.com",
-    to: recipients.join(","),
-    subject: `PM ${channel.toUpperCase()} - ${rangeLabel} - Weekly Preview`,
-    html: `
-      <h2>PM ${channel.toUpperCase()} - ${rangeLabel}</h2>
-      <p><i>Preview rencana PM 4 minggu ke depan</i></p>
-      ${summaryHtml}
-      <hr/>
-      ${tableHtml}
-      <br/>
-      <small>Generated automatically by system</small>
-    `,
-    attachments,
-  });
-
-  console.log(`[EMAIL] Sent RANGE channel ${channel}`);
 }
-// export async function sendEmailByJenisPM(jenis, rows, targetYear, targetWeek) {
-//   const channel = PM_EMAIL_CHANNEL[jenis] ?? jenis
-//   const recipients = PM_EMAIL_MAP[channel]
-//   const weekLabel = `${targetYear}w${targetWeek}`;
-
-//   if (!recipients || recipients.length === 0) {
-//     console.log(`[EMAIL] No recipient for channel ${channel}`)
-//     return
-//   }
-
-//   const jenisList = Object.entries(PM_EMAIL_CHANNEL)
-//     .filter(([_, ch]) => ch === channel)
-//     .map(([j]) => j)
-
-//   const grouped = {}
-//   for (const j of jenisList) {
-//     grouped[j] = rows.filter((r) => r.jenis_pm === j)
-//   }
-
-//   const summaryHtml = Object.entries(grouped)
-//     .map(([j, data]) => renderSummary(j.toUpperCase(), data))
-//     .join("")
-
-//   const tableHtml = Object.entries(grouped)
-//     .map(
-//       ([j, data]) => `
-//         <h3>${j.toUpperCase()}</h3>
-//         ${renderPMTable(data)}
-//       `
-//     )
-//     .join("<br/>")
-
-//   const attachments = []
-//   for (const [j, data] of Object.entries(grouped)) {
-//     if (!data.length) continue
-//     attachments.push({
-//       filename: `PM_${j.toUpperCase()}_${weekLabel}.xlsx`,
-//       content: generateExcelBuffer(data),
-//       contentType:
-//         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-//     })
-//   }
-
-//   await transporter.sendMail({
-//     from: "cahyospprt@gmail.com",
-//     to: recipients.join(","),
-//     subject: `PM ${channel.toUpperCase()} - ${weekLabel} - Weekly Update`,
-//     html: `
-//       <h2>PM ${channel.toUpperCase()} - ${weekLabel} - Weekly Update</h2>
-//       ${summaryHtml}
-//       <hr/>
-//       ${tableHtml}
-//       <br/>
-//       <small>Generated automatically by system</small>
-//     `,
-//     attachments,
-//   })
-
-//   console.log(`[EMAIL] Sent channel ${channel}`)
-// }
