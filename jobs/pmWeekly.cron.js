@@ -109,16 +109,16 @@ cron.schedule(
       };
 
       // Step 0: Tentukan window minggu untuk email & generate
-      const emailWeeks = getEmailWeeksRange(4);
+      const emailWeeks = getEmailWeeksRange(5);
       if (!emailWeeks || emailWeeks.length === 0) {
         console.error("[CRON] No weeks range returned from getEmailWeeksRange");
         return;
       }
 
-      // Gunakan rolling window yang lebih besar (8 minggu) untuk generate
-      const rolling8 = getLastWeekRolling4(8);
+      // Gunakan rolling window yang lebih besar (10 minggu) untuk generate
+      const rolling8 = getLastWeekRolling4(10);
       
-      // windowWeeks = 8 minggu ke depan untuk generate data
+      // windowWeeks = 10 minggu ke depan untuk generate data
       const windowWeeks = [];
       const seen = new Set();
       for (const w of rolling8) {

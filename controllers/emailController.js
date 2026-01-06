@@ -31,6 +31,7 @@ function renderPMTable(rows) {
           <th>Grup</th>
           <th>Kode Barang</th>
           <th>Periode Start</th>
+          <th>Target</th>
           <th>Status</th>
         </tr>
       </thead>
@@ -48,6 +49,7 @@ function renderPMTable(rows) {
             <td>${r.grup ?? "-"}</td>
             <td>${r.kode_barang ?? "-"}</td>
             <td>${r.periode_start ?? "-"}</td>
+            <td>${(r.target_year ?? "-")}w${r.target_week ?? "-"}</td>
             <td style="text-align:center">
               ${r.status === 0 ? "❌" : r.status === 1 ? "⏳" : "✅"}
             </td>
