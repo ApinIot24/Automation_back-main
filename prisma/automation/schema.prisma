@@ -725,8 +725,9 @@ model packing_l2a_renceng {
   @@schema("automation")
 }
 
+
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
-model packing_l2a_crackers_tray {
+model packing_l2a_tray {
   id           Int       @default(autoincrement())
   cntr_bandet  Int
   cntr_carton  Int
@@ -739,7 +740,7 @@ model packing_l2a_crackers_tray {
   @@schema("automation")
 }
 
-model packing_l2b_malcok_renceng {
+model packing_l2b_renceng {
   id           Int       @id @default(autoincrement())
   cntr_bandet  Int
   cntr_carton  Int
@@ -751,7 +752,7 @@ model packing_l2b_malcok_renceng {
   @@schema("automation")
 }
 
-model packing_l2b_malcok_tray {
+model packing_l2b_tray {
   id           Int       @id @default(autoincrement())
   cntr_bandet  Int
   cntr_carton  Int

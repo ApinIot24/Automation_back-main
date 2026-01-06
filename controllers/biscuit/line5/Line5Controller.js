@@ -385,6 +385,92 @@ export const GetTiltingHourlyL5 = async (req, res) => {
   res.send(rows);
 };
 
+export const GetShift2L5TiltingHourly = async (req, res) => {
+  const today = new Date();
+  const isSaturday = today.getDay() === 6;
+  const date = format(today);
+  const hours = isSaturday ? JamListShortShift2.saturday : JamListShortShift2.normal;
+  const sql = `
+    SELECT DISTINCT ON (jam)
+      id, cntr_bandet, cntr_tilting, jam
+    FROM automation.tilting_l5
+    WHERE graph='Y' AND tanggal='${date}'
+    AND jam IN (${hours.map((h) => `'${h}'`).join(",")})
+    ORDER BY jam, id ASC
+  `;
+  const rows = await raw(sql);
+  rows.sort((a, b) => a.id - b.id);
+  res.send(rows);
+};
+
+export const GetShift1L5TiltingHourly = async (req, res) => {
+  const today = new Date();
+  const isSaturday = today.getDay() === 6;
+  const date = format(today);
+  const hours = isSaturday ? JamListShortShift1.saturday : JamListShortShift1.normal;
+  const sql = `
+    SELECT DISTINCT ON (jam)
+      id, cntr_bandet, cntr_tilting, jam
+    FROM automation.tilting_l5
+    WHERE graph='Y' AND tanggal='${date}'
+    AND jam IN (${hours.map((h) => `'${h}'`).join(",")})
+    ORDER BY jam, id ASC
+  `;
+  const rows = await raw(sql);
+  rows.sort((a, b) => a.id - b.id);
+  res.send(rows);
+};
+
+export const GetShift3L5TiltingHourly = async (req, res) => {
+  const today = moment();
+  const isSaturday = today.day() === 6;
+  const date = format(today.toDate());
+  const nextDate = format(today.clone().add(1, "day").toDate());
+
+  if (isSaturday) {
+    const sql = `
+      SELECT DISTINCT ON (jam)
+        id, cntr_bandet, cntr_tilting, jam
+      FROM automation.tilting_l5
+      WHERE graph='Y' AND tanggal='${date}'
+      AND jam IN (${JamListShortShift3.saturday.map((h) => `'${h}'`).join(",")})
+      ORDER BY jam, id ASC
+    `;
+    const rows = await raw(sql);
+    rows.sort((a, b) => a.id - b.id);
+    res.send(rows);
+    return;
+  }
+
+  const d23 = await raw(`
+    SELECT DISTINCT ON (jam)
+      id, cntr_bandet, cntr_tilting, jam
+    FROM automation.tilting_l5
+    WHERE graph='Y' AND tanggal='${date}'
+    AND jam='23.45'
+    ORDER BY jam, id ASC
+  `);
+  const mapped = d23.map((r) => ({
+    id: r.id,
+    jam: "0.23",
+    cntr_bandet: r.cntr_bandet,
+    cntr_tilting: r.cntr_tilting,
+  }));
+
+  const nextRows = await raw(`
+    SELECT DISTINCT ON (jam)
+      id, cntr_bandet, cntr_tilting, jam
+    FROM automation.tilting_l5
+    WHERE graph='Y' AND tanggal='${nextDate}'
+    AND jam IN (${NextHours.map((h) => `'${h}'`).join(",")})
+    ORDER BY jam, id ASC
+  `);
+
+  const combined = mapped.concat(nextRows);
+  combined.sort((a, b) => a.id - b.id);
+  res.send(combined);
+};
+
 export const GetTiltingShift_L5 = async (req, res) => {
   const today = new Date();
 
@@ -463,4 +549,3 @@ export const GetTiltingL5Variance = async (req, res) => {
       .json({ message: "Terjadi kesalahan pada server", error: error.message });
   }
 };
-
