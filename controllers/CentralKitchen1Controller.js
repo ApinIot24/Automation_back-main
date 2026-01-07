@@ -228,6 +228,7 @@ export const getFormasiBagianCenkitL1ByDate = async (req, res) => {
           temp_water,
           timing_mixing,
           weight_mixing,
+          weight_air,
           realdatetime
         FROM purwosari.ck_wafer_status
         WHERE line = 'L1'
@@ -298,7 +299,7 @@ export const getFormasiBagianCenkitL1ByDate = async (req, res) => {
             const prevBatch = batchKeys[i - 1];
             const prevRows = byBatch.get(prevBatch) || [];
             const prevWeightRow = [...prevRows].reverse().find((x) => x.weight_mixing != null);
-            weight_air = prevWeightRow?.weight_mixing != null ? parseFloat(prevWeightRow.weight_mixing.toFixed(2)) : 0;
+            weight_air = prevWeightRow?.weight_mixing != null ? parseFloat(prevWeightRow.weight_air) : 0;
           }
 
           // selesai: TRUE terakhir pada batch tsb (menggunakan lastTrue yang sudah dideklarasikan di atas)

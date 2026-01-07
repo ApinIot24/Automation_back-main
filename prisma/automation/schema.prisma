@@ -160,7 +160,7 @@ model counter_shift_l2 {
   @@schema("automation")
 }
 
-model counter_shift_l2a {
+model counter_shift_l2a_renceng {
   id           Int       @id @default(autoincrement())
   shift1       Int
   shift2       Int
@@ -173,7 +173,33 @@ model counter_shift_l2a {
   @@schema("automation")
 }
 
-model counter_shift_l2b {
+model counter_shift_l2a_tray {
+  id           Int       @id @default(autoincrement())
+  shift1       Int
+  shift2       Int
+  shift3       Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("automation")
+}
+
+model counter_shift_l2b_renceng {
+  id           Int       @id @default(autoincrement())
+  shift1       Int
+  shift2       Int
+  shift3       Int
+  realdatetime DateTime? @default(now()) @db.Timestamp(6)
+  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
+  jam          String?   @db.VarChar(50)
+  graph        String?   @db.VarChar(10)
+
+  @@schema("automation")
+}
+
+model counter_shift_l2b_tray {
   id           Int       @id @default(autoincrement())
   shift1       Int
   shift2       Int
@@ -1089,20 +1115,6 @@ model replacement_pm {
   target_year         String?   @db.VarChar(5)
   emailed_at          DateTime? @db.Timestamp(6)
 
-  @@schema("automation")
-}
-
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
-model packing_l2a_crackers_renceng {
-  id           Int       @default(autoincrement())
-  cntr_bandet  Int
-  cntr_carton  Int
-  realdatetime DateTime? @default(now()) @db.Timestamp(6)
-  tanggal      DateTime? @default(dbgenerated("CURRENT_DATE")) @db.Date
-  jam          String?   @db.VarChar(50)
-  graph        String?   @db.VarChar(10)
-
-  @@ignore
   @@schema("automation")
 }
 
