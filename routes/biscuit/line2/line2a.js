@@ -37,12 +37,18 @@ const app = Router();
 
 // Shift overview
 app.get("/shift_l2a", GetShift_L2a);
+// Alias shift per line (underscore)
+app.get("/shift_renceng_l2a", GetShift_L2a);
+app.get("/shift_tray_l2a", GetShift_L2a);
 
 // Basic packing L2a
 app.get("/packingrenceng_l2a", GetPackingRencengL2a);
 app.get("/packingrenceng_l2a_all", GetPackingL2aRencengAll);
 app.get("/packingtray_l2a", GetPackingTrayL2a);
 app.get("/packingtray_l2a_all", GetPackingL2aTrayAll);
+// Alias packing (underscore)
+app.get("/packing_renceng_l2a", GetPackingRencengL2a);
+app.get("/packing_tray_l2a", GetPackingTrayL2a);
 
 // Shift L2a
 app.get("/shift1renceng_l2a", GetShift1L2aRenceng);
@@ -51,6 +57,13 @@ app.get("/shift3renceng_l2a", GetShift3L2aRenceng);
 app.get("/shift1tray_l2a", GetShift1L2aTray);
 app.get("/shift2tray_l2a", GetShift2L2aTray);
 app.get("/shift3tray_l2a", GetShift3L2aTray);
+// Alias shift per line (underscore)
+app.get("/shift1_renceng_l2a", GetShift1L2aRenceng);
+app.get("/shift2_renceng_l2a", GetShift2L2aRenceng);
+app.get("/shift3_renceng_l2a", GetShift3L2aRenceng);
+app.get("/shift1_tray_l2a", GetShift1L2aTray);
+app.get("/shift2_tray_l2a", GetShift2L2aTray);
+app.get("/shift3_tray_l2a", GetShift3L2aTray);
 
 // Shift hourly L2a
 app.get("/shift1renceng_l2a_hourly", GetShift1L2aRencengHourly);
@@ -59,16 +72,31 @@ app.get("/shift3renceng_l2a_hourly", GetShift3L2aRencengHourly);
 app.get("/shift1tray_l2a_hourly", GetShift1L2aTrayHourly);
 app.get("/shift2tray_l2a_hourly", GetShift2L2aTrayHourly);
 app.get("/shift3tray_l2a_hourly", GetShift3L2aTrayHourly);
+// Alias hourly (underscore)
+app.get("/shift1_renceng_l2a_hourly", GetShift1L2aRencengHourly);
+app.get("/shift2_renceng_l2a_hourly", GetShift2L2aRencengHourly);
+app.get("/shift3_renceng_l2a_hourly", GetShift3L2aRencengHourly);
+app.get("/shift1_tray_l2a_hourly", GetShift1L2aTrayHourly);
+app.get("/shift2_tray_l2a_hourly", GetShift2L2aTrayHourly);
+app.get("/shift3_tray_l2a_hourly", GetShift3L2aTrayHourly);
 
 // By date (shift 3)
 app.get("/shift3renceng_l2a_hourly/:date", GetShift3L2aRencengHourlyByDate);
 app.get("/shift3tray_l2a_hourly/:date", GetShift3L2aTrayHourlyByDate);
+// Alias by date (underscore)
+app.get("/shift3_renceng_l2a_hourly/:date", GetShift3L2aRencengHourlyByDate);
+app.get("/shift3_tray_l2a_hourly/:date", GetShift3L2aTrayHourlyByDate);
 
 // Hourly & By Date
 app.get("/packingrenceng_l2a_hourly", GetPackingL2aRencengHourly);
 app.get("/packingrenceng_l2a_hourly/date/:date", GetPackingL2aRencengHourlyByDate);
 app.get("/packingtray_l2a_hourly", GetPackingL2aTrayHourly);
 app.get("/packingtray_l2a_hourly/date/:date", GetPackingL2aTrayHourlyByDate);
+// Alias hourly packing (underscore)
+app.get("/packing_renceng_l2a_hourly", GetPackingL2aRencengHourly);
+app.get("/packing_renceng_l2a_hourly/date/:date", GetPackingL2aRencengHourlyByDate);
+app.get("/packing_tray_l2a_hourly", GetPackingL2aTrayHourly);
+app.get("/packing_tray_l2a_hourly/date/:date", GetPackingL2aTrayHourlyByDate);
 
 // Daily & Weekly
 app.get("/packingrenceng_l2a_daily", GetPackingL2aRencengDaily);

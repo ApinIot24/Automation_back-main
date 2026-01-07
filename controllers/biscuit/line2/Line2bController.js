@@ -104,7 +104,7 @@ export const GetShift2L2bRenceng = async (req, res) => {
     where: { tanggal: today, graph: "Y", jam: { in: JamListNormalShift2 } },
     orderBy: { id: "asc" }
   });
-  conso
+  console.log('Shift 2 Renceng L2b',rows)
   res.send(rows);
 }
 export const GetShift3L2bRenceng = async (req, res) => {

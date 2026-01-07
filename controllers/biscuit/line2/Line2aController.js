@@ -60,14 +60,14 @@ export const GetPackingTrayL2a = async (req, res) => {
 export const GetShift_L2a = async (req, res) => {
   const today = new Date();
 
-  const rows = await automationDB.counter_shift_l2b.findMany({
+  const rows = await automationDB.counter_shift_l2a.findMany({
     select: { shift1: true, shift2: true, shift3: true },
     where: { tanggal: today },
     orderBy: { id: "desc" },
     take: 1
   });
 
-  console.log('Shift L2b',rows)
+  console.log('Shift L2a',rows)
   res.send(rows);
 };
 export const GetPackingL2aRencengAll = async (req, res) => {
@@ -75,7 +75,7 @@ export const GetPackingL2aRencengAll = async (req, res) => {
     where: { graph: 'Y' },
     orderBy: { id: 'desc' }
   })
-  console.log('Renceng All L2b',result)
+  console.log('Renceng All L2a',result)
   res.send(result);
 }
 export const GetPackingL2aTrayAll = async (req, res) => {
@@ -83,7 +83,7 @@ export const GetPackingL2aTrayAll = async (req, res) => {
         where: { graph: 'Y' },
         orderBy: { id: 'desc' }
     })
-    console.log('Tray All L2b',result)
+    console.log('Tray All L2a',result)
     res.send(result);
 }
 // ==== SHIFT RENCENG DAN TRAY ====
@@ -94,7 +94,7 @@ export const GetShift1L2aRenceng = async (req, res) => {
     where: { tanggal: today, graph: "Y", jam: { in: JamListNormalShift1 } },
     orderBy: { id: "asc" }
   });
-  console.log('Shift 1 Renceng L2b',rows)
+  console.log('Shift 1 Renceng L2a',rows)
   res.send(rows);
 }
 export const GetShift2L2aRenceng = async (req, res) => {
@@ -104,7 +104,7 @@ export const GetShift2L2aRenceng = async (req, res) => {
     where: { tanggal: today, graph: "Y", jam: { in: JamListNormalShift2 } },
     orderBy: { id: "asc" }
   });
-  conso
+  console.log('Shift 2 Renceng L2a',rows)
   res.send(rows);
 }
 export const GetShift3L2aRenceng = async (req, res) => {
