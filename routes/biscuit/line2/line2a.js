@@ -3,6 +3,8 @@ import {
   GetPackingRencengL2a,
   GetPackingTrayL2a,
   GetShift_L2a,
+  GetShiftRenceng_L2a,
+  GetShiftTray_L2a,
   GetPackingL2aRencengAll,
   GetPackingL2aTrayAll,
   GetShift1L2aRenceng,
@@ -38,8 +40,8 @@ const app = Router();
 // Shift overview
 app.get("/shift_l2a", GetShift_L2a);
 // Alias shift per line (underscore)
-app.get("/shift_renceng_l2a", GetShift_L2a);
-app.get("/shift_tray_l2a", GetShift_L2a);
+app.get("/shift_renceng_l2a", GetShiftRenceng_L2a);
+app.get("/shift_tray_l2a", GetShiftTray_L2a);
 
 // Basic packing L2a
 app.get("/packingrenceng_l2a", GetPackingRencengL2a);

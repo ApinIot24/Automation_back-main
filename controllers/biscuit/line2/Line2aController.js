@@ -41,10 +41,10 @@ function getWeekDates(year, month, week) {
   return arr;
 }
 
-// ==== BASIC PACKING L5 ====
+// ==== BASIC PACKING L2A ====
 export const GetPackingRencengL2a = async (req, res) => {
   const rows = await raw(`
-    SELECT id, cntr_bandet, cntr_carton, jam, tanggal
+    SELECT id, cntr_bandet, cntr_carton, jam
     FROM automation.packing_l2a_renceng
     ORDER BY id DESC
     LIMIT 1
@@ -52,90 +52,67 @@ export const GetPackingRencengL2a = async (req, res) => {
   res.send(rows);
 };
 export const GetPackingTrayL2a = async (req, res) => {
-    const rows = await raw(`
-      SELECT id, cntr_bandet, cntr_carton, jam, tanggal
-      FROM automation.packing_l2a_tray
-      ORDER BY id DESC
-      LIMIT 1
-    `);
-    console.log('Packing tray',rows)
-    res.send(rows);
-}
-export const GetShift_L2a = async (req, res) => {
-  const today = new Date();
-
-  const rows = await automationDB.counter_shift_l2a.findMany({
-    select: { shift1: true, shift2: true, shift3: true },
-    where: { tanggal: today },
-    orderBy: { id: "desc" },
-    take: 1
-  });
-
-  console.log('Shift L2a',rows)
+  const rows = await raw(`
+    SELECT id, cntr_bandet, cntr_carton, jam
+    FROM automation.packing_l2a_tray
+    ORDER BY id DESC
+    LIMIT 1
+  `);
   res.send(rows);
 };
 export const GetPackingL2aRencengAll = async (req, res) => {
-  const result = await raw(`
-    SELECT id, cntr_bandet, cntr_carton, jam, tanggal
+  const rows = await raw(`
+    SELECT id, cntr_bandet, cntr_carton, jam
     FROM automation.packing_l2a_renceng
     WHERE graph='Y'
     ORDER BY id DESC
   `);
-  console.log('Renceng All L2a',result)
-  res.send(result);
-}
+  res.send(rows);
+};
 export const GetPackingL2aTrayAll = async (req, res) => {
-    const result = await raw(`
-      SELECT id, cntr_bandet, cntr_carton, jam, tanggal
-      FROM automation.packing_l2a_tray
-      WHERE graph='Y'
-      ORDER BY id DESC
-    `);
-    console.log('Tray All L2a',result)
-    res.send(result);
-}
+  const rows = await raw(`
+    SELECT id, cntr_bandet, cntr_carton, jam
+    FROM automation.packing_l2a_tray
+    WHERE graph='Y'
+    ORDER BY id DESC
+  `);
+  res.send(rows);
+};
 // ==== SHIFT RENCENG DAN TRAY ====
 export const GetShift1L2aRenceng = async (req, res) => {
   const date = format(new Date());
   const rows = await raw(`
     SELECT cntr_bandet, cntr_carton, jam
     FROM automation.packing_l2a_renceng
-    WHERE graph='Y' AND tanggal='${date}'
-    AND jam IN (${JamListNormalShift1.map(j => `'${j}'`).join(",")})
+    WHERE tanggal='${date}' AND graph='Y' AND jam IN (${JamListNormalShift1.map(j => `'${j}'`).join(",")})
     ORDER BY id ASC
   `);
-  console.log('Shift 1 Renceng L2a',rows)
   res.send(rows);
-}
+};
 export const GetShift2L2aRenceng = async (req, res) => {
   const date = format(new Date());
   const rows = await raw(`
     SELECT cntr_bandet, cntr_carton, jam
     FROM automation.packing_l2a_renceng
-    WHERE graph='Y' AND tanggal='${date}'
-    AND jam IN (${JamListNormalShift2.map(j => `'${j}'`).join(",")})
+    WHERE tanggal='${date}' AND graph='Y' AND jam IN (${JamListNormalShift2.map(j => `'${j}'`).join(",")})
     ORDER BY id ASC
   `);
-  console.log('Shift 2 Renceng L2a',rows)
   res.send(rows);
-}
+};
 export const GetShift3L2aRenceng = async (req, res) => {
   const today = format(new Date());
   const next = moment().add(1, "day").format("YYYY-MM-DD");
-
   const d23 = await raw(`
     SELECT cntr_bandet, cntr_carton
     FROM automation.packing_l2a_renceng
-    WHERE graph='Y' AND tanggal='${today}' AND jam='23.0'
+    WHERE graph='Y' AND tanggal='${today}' AND jam='23.45'
     ORDER BY id ASC
   `);
-
   const mapped = d23.map(r => ({
     jam: "0.23",
     cntr_bandet: r.cntr_bandet,
     cntr_carton: r.cntr_carton
   }));
-
   const nextRows = await raw(`
     SELECT cntr_bandet, cntr_carton, jam
     FROM automation.packing_l2a_renceng
@@ -143,59 +120,51 @@ export const GetShift3L2aRenceng = async (req, res) => {
     AND jam IN (${JamListNormalShift3.map(j => `'${j}'`).join(",")})
     ORDER BY id ASC
   `);
-
   res.send(mapped.concat(nextRows));
-}
+};
 export const GetShift1L2aTray = async (req, res) => {
-    const date = format(new Date());
-    const rows = await raw(`
-      SELECT cntr_bandet, cntr_carton, jam
-      FROM automation.packing_l2a_tray
-      WHERE graph='Y' AND tanggal='${date}'
-      AND jam IN (${JamListNormalShift1.map(j => `'${j}'`).join(",")})
-      ORDER BY id ASC
-    `);
-    res.send(rows);
-}
+  const date = format(new Date());
+  const rows = await raw(`
+    SELECT cntr_bandet, cntr_carton, jam
+    FROM automation.packing_l2a_tray
+    WHERE tanggal='${date}' AND graph='Y' AND jam IN (${JamListNormalShift1.map(j => `'${j}'`).join(",")})
+    ORDER BY id ASC
+  `);
+  res.send(rows);
+};
 export const GetShift2L2aTray = async (req, res) => {
-    const date = format(new Date());
-    const rows = await raw(`
-      SELECT cntr_bandet, cntr_carton, jam
-      FROM automation.packing_l2a_tray
-      WHERE graph='Y' AND tanggal='${date}'
-      AND jam IN (${JamListNormalShift2.map(j => `'${j}'`).join(",")})
-      ORDER BY id ASC
-    `);
-    res.send(rows);
-}
+  const date = format(new Date());
+  const rows = await raw(`
+    SELECT cntr_bandet, cntr_carton, jam
+    FROM automation.packing_l2a_tray
+    WHERE tanggal='${date}' AND graph='Y' AND jam IN (${JamListNormalShift2.map(j => `'${j}'`).join(",")})
+    ORDER BY id ASC
+  `);
+  res.send(rows);
+};
 export const GetShift3L2aTray = async (req, res) => {
-    const today = format(new Date());
-    const next = moment().add(1, "day").format("YYYY-MM-DD");
-
-    const d23 = await raw(`
-        SELECT cntr_bandet, cntr_carton
-        FROM automation.packing_l2a_tray
-        WHERE graph='Y' AND tanggal='${today}' AND jam='23.0'
-        ORDER BY id ASC
-    `);
-
-    const mapped = d23.map(r => ({
-        jam: "0.23",
-        cntr_bandet: r.cntr_bandet,
-        cntr_carton: r.cntr_carton
-    }));
-
-    const nextRows = await raw(`
-        SELECT cntr_bandet, cntr_carton, jam
-        FROM automation.packing_l2a_tray
-        WHERE graph='Y' AND tanggal='${next}'
-        AND jam IN (${JamListNormalShift3.map(j => `'${j}'`).join(",")})
-        ORDER BY id ASC
-    `);
-
-    res.send(mapped.concat(nextRows));
-
-}
+  const today = format(new Date());
+  const next = moment().add(1, "day").format("YYYY-MM-DD");
+  const d23 = await raw(`
+    SELECT cntr_bandet, cntr_carton
+    FROM automation.packing_l2a_tray
+    WHERE graph='Y' AND tanggal='${today}' AND jam='23.45'
+    ORDER BY id ASC
+  `);
+  const mapped = d23.map(r => ({
+    jam: "0.23",
+    cntr_bandet: r.cntr_bandet,
+    cntr_carton: r.cntr_carton
+  }));
+  const nextRows = await raw(`
+    SELECT cntr_bandet, cntr_carton, jam
+    FROM automation.packing_l2a_tray
+    WHERE graph='Y' AND tanggal='${next}'
+    AND jam IN (${JamListNormalShift3.map(j => `'${j}'`).join(",")})
+    ORDER BY id ASC
+  `);
+  res.send(mapped.concat(nextRows));
+};
 // ==== SHIFT HOURLY ====
 export const GetShift1L2aRencengHourly = async (req, res) => {
   const today = new Date()
@@ -214,6 +183,40 @@ export const GetShift1L2aRencengHourly = async (req, res) => {
   `
   const rows = await raw(sql)
   res.send(rows)
+}
+
+export const GetShift_L2a = async (req, res) => {
+  const today = format(new Date());
+  const rows = await raw(`
+    SELECT shift1, shift2, shift3
+    FROM automation.counter_shift_l2a_renceng
+    WHERE tanggal='${today}'
+    ORDER BY id DESC
+    LIMIT 1
+  `);
+  res.send(rows);
+}
+export const GetShiftRenceng_L2a = async (req, res) => {
+  const today = format(new Date());
+  const rows = await raw(`
+    SELECT shift1, shift2, shift3
+    FROM automation.counter_shift_l2a_renceng
+    WHERE tanggal='${today}'
+    ORDER BY id DESC
+    LIMIT 1
+  `);
+  res.send(rows);
+}
+export const GetShiftTray_L2a = async (req, res) => {
+  const today = format(new Date());
+  const rows = await raw(`
+    SELECT shift1, shift2, shift3
+    FROM automation.counter_shift_l2a_tray
+    WHERE tanggal='${today}'
+    ORDER BY id DESC
+    LIMIT 1
+  `);
+  res.send(rows);
 }
 export const GetShift2L2aRencengHourly = async (req, res) => {
   const today = new Date()
@@ -269,7 +272,7 @@ export const GetShift3L2aRencengHourly = async (req, res) => {
   const nextRows = await raw(`
     SELECT DISTINCT ON (jam)
       id, cntr_bandet, cntr_carton, jam
-    FROM automation.packing_l5
+    FROM automation.packing_l2a_renceng
     WHERE graph='Y' AND tanggal='${nextDate}'
     AND jam IN (${NextHours.map(h => `'${h}'`).join(",")})
     ORDER BY jam, id ASC
@@ -349,7 +352,7 @@ export const GetShift3L2aTrayHourly = async (req, res) => {
   const nextRows = await raw(`
     SELECT DISTINCT ON (jam)
       id, cntr_bandet, cntr_carton, jam
-    FROM automation.packing_l5
+    FROM automation.packing_l2a_tray
     WHERE graph='Y' AND tanggal='${nextDate}'
     AND jam IN (${NextHours.map(h => `'${h}'`).join(",")})
     ORDER BY jam, id ASC

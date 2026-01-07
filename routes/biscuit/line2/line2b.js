@@ -32,7 +32,7 @@ app.get("/shift3tray_l2b", GetShift3L2bTray);
 app.get("/shift1renceng_l2b_hourly", GetShift1L2bRencengHourly);
 app.get("/shift2renceng_l2b_hourly", GetShift2L2bRencengHourly);
 app.get("/shift3renceng_l2b_hourly", GetShift3L2bRencengHourly);
-app.get("/shift1tray_l2b_hourly", GetShift1L2bRencengHourly);
+app.get("/shift1tray_l2b_hourly", GetShift1L2bTrayHourly);
 app.get("/shift2tray_l2b_hourly", GetShift2L2bTrayHourly);
 app.get("/shift3tray_l2b_hourly", GetShift3L2bTrayHourly);
 // ==== BY DATE ====

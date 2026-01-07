@@ -253,7 +253,7 @@ export const GetShift3L2bRencengHourly = async (req, res) => {
   const nextRows = await raw(`
     SELECT DISTINCT ON (jam)
       id, cntr_bandet, cntr_carton, jam
-    FROM automation.packing_l5
+    FROM automation.packing_l2b_renceng
     WHERE graph='Y' AND tanggal='${nextDate}'
     AND jam IN (${NextHours.map(h => `'${h}'`).join(",")})
     ORDER BY jam, id ASC
@@ -333,7 +333,7 @@ export const GetShift3L2bTrayHourly = async (req, res) => {
   const nextRows = await raw(`
     SELECT DISTINCT ON (jam)
       id, cntr_bandet, cntr_carton, jam
-    FROM automation.packing_l5
+    FROM automation.packing_l2b_tray
     WHERE graph='Y' AND tanggal='${nextDate}'
     AND jam IN (${NextHours.map(h => `'${h}'`).join(",")})
     ORDER BY jam, id ASC
