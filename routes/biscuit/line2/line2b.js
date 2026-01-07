@@ -4,7 +4,7 @@ import {
     GetPackingL2bRencengHourlyByDate, GetPackingL2bRencengWeekly, GetPackingL2bRencengWeeklyByDate, GetPackingL2bTrayAll, 
     GetPackingL2bTrayDaily, GetPackingL2bTrayDailyByDate, GetPackingL2bTrayHourly, GetPackingL2bTrayHourlyByDate, 
     GetPackingL2bTrayWeekly, GetPackingL2bTrayWeeklyByDate, GetPackingRencengL2b, GetPackingTrayL2b, GetShift1L2bRenceng, 
-    GetShift1L2bRencengHourly, GetShift1L2bTray, GetShift2L2bRenceng, GetShift2L2bRencengHourly, GetShift2L2bTray, 
+    GetShift1L2bRencengHourly, GetShift1L2bTray, GetShift1L2bTrayHourly, GetShift2L2bRenceng, GetShift2L2bRencengHourly, GetShift2L2bTray, 
     GetShift2L2bTrayHourly, GetShift3L2bRenceng, GetShift3L2bRencengHourly, GetShift3L2bRencengHourlyByDate, 
     GetShift3L2bTray, GetShift3L2bTrayHourly, GetShift3L2bTrayHourlyByDate, GetShift_L2b 
 } from "../../../controllers/biscuit/line2/Line2bController.js";
