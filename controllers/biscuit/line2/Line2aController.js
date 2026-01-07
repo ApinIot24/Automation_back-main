@@ -43,17 +43,21 @@ function getWeekDates(year, month, week) {
 
 // ==== BASIC PACKING L5 ====
 export const GetPackingRencengL2a = async (req, res) => {
-  const rows = await automationDB.packing_l2a_renceng.findMany({
-    orderBy: { id: "desc" },
-    take: 1
-  });
+  const rows = await raw(`
+    SELECT id, cntr_bandet, cntr_carton, jam, tanggal
+    FROM automation.packing_l2a_renceng
+    ORDER BY id DESC
+    LIMIT 1
+  `);
   res.send(rows);
 };
 export const GetPackingTrayL2a = async (req, res) => {
-    const rows = await automationDB.packing_l2a_tray.findMany({
-      orderBy: { id: "desc" },
-      take: 1
-    });
+    const rows = await raw(`
+      SELECT id, cntr_bandet, cntr_carton, jam, tanggal
+      FROM automation.packing_l2a_tray
+      ORDER BY id DESC
+      LIMIT 1
+    `);
     console.log('Packing tray',rows)
     res.send(rows);
 }
@@ -71,39 +75,47 @@ export const GetShift_L2a = async (req, res) => {
   res.send(rows);
 };
 export const GetPackingL2aRencengAll = async (req, res) => {
-  const result = automationDB.packing_l2a_renceng.findMany({
-    where: { graph: 'Y' },
-    orderBy: { id: 'desc' }
-  })
+  const result = await raw(`
+    SELECT id, cntr_bandet, cntr_carton, jam, tanggal
+    FROM automation.packing_l2a_renceng
+    WHERE graph='Y'
+    ORDER BY id DESC
+  `);
   console.log('Renceng All L2a',result)
   res.send(result);
 }
 export const GetPackingL2aTrayAll = async (req, res) => {
-    const result = automationDB.packing_l2a_tray.findMany({
-        where: { graph: 'Y' },
-        orderBy: { id: 'desc' }
-    })
+    const result = await raw(`
+      SELECT id, cntr_bandet, cntr_carton, jam, tanggal
+      FROM automation.packing_l2a_tray
+      WHERE graph='Y'
+      ORDER BY id DESC
+    `);
     console.log('Tray All L2a',result)
     res.send(result);
 }
 // ==== SHIFT RENCENG DAN TRAY ====
 export const GetShift1L2aRenceng = async (req, res) => {
-  const today = new Date();
-  const rows = await automationDB.packing_l2a_renceng.findMany({
-    select: { cntr_bandet: true, cntr_carton: true, jam: true },
-    where: { tanggal: today, graph: "Y", jam: { in: JamListNormalShift1 } },
-    orderBy: { id: "asc" }
-  });
+  const date = format(new Date());
+  const rows = await raw(`
+    SELECT cntr_bandet, cntr_carton, jam
+    FROM automation.packing_l2a_renceng
+    WHERE graph='Y' AND tanggal='${date}'
+    AND jam IN (${JamListNormalShift1.map(j => `'${j}'`).join(",")})
+    ORDER BY id ASC
+  `);
   console.log('Shift 1 Renceng L2a',rows)
   res.send(rows);
 }
 export const GetShift2L2aRenceng = async (req, res) => {
-  const today = new Date();
-  const rows = await automationDB.packing_l2a_renceng.findMany({
-    select: { cntr_bandet: true, cntr_carton: true, jam: true },
-    where: { tanggal: today, graph: "Y", jam: { in: JamListNormalShift2 } },
-    orderBy: { id: "asc" }
-  });
+  const date = format(new Date());
+  const rows = await raw(`
+    SELECT cntr_bandet, cntr_carton, jam
+    FROM automation.packing_l2a_renceng
+    WHERE graph='Y' AND tanggal='${date}'
+    AND jam IN (${JamListNormalShift2.map(j => `'${j}'`).join(",")})
+    ORDER BY id ASC
+  `);
   console.log('Shift 2 Renceng L2a',rows)
   res.send(rows);
 }
@@ -135,21 +147,25 @@ export const GetShift3L2aRenceng = async (req, res) => {
   res.send(mapped.concat(nextRows));
 }
 export const GetShift1L2aTray = async (req, res) => {
-    const today = new Date();
-    const rows = await automationDB.packing_l2a_tray.findMany({
-        select: { cntr_bandet: true, cntr_carton: true, jam: true },
-        where: { tanggal: today, graph: "Y", jam: { in: JamListNormalShift1 } },
-        orderBy: { id: "asc" }
-    });
+    const date = format(new Date());
+    const rows = await raw(`
+      SELECT cntr_bandet, cntr_carton, jam
+      FROM automation.packing_l2a_tray
+      WHERE graph='Y' AND tanggal='${date}'
+      AND jam IN (${JamListNormalShift1.map(j => `'${j}'`).join(",")})
+      ORDER BY id ASC
+    `);
     res.send(rows);
 }
 export const GetShift2L2aTray = async (req, res) => {
-    const today = new Date();
-    const rows = await automationDB.packing_l2a_tray.findMany({
-        select: { cntr_bandet: true, cntr_carton: true, jam: true },
-        where: { tanggal: today, graph: "Y", jam: { in: JamListNormalShift2 } },
-        orderBy: { id: "asc" }
-    });
+    const date = format(new Date());
+    const rows = await raw(`
+      SELECT cntr_bandet, cntr_carton, jam
+      FROM automation.packing_l2a_tray
+      WHERE graph='Y' AND tanggal='${date}'
+      AND jam IN (${JamListNormalShift2.map(j => `'${j}'`).join(",")})
+      ORDER BY id ASC
+    `);
     res.send(rows);
 }
 export const GetShift3L2aTray = async (req, res) => {
