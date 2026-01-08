@@ -282,6 +282,10 @@ export const getFormasiBagianCenkitL1ByDate = async (req, res) => {
 
         for (let i = 0; i < batchKeys.length; i++) {
           const batch = batchKeys[i];
+          
+          // Skip batch 0
+          if (batch === 0) continue;
+          
           const batchRows = byBatch.get(batch);
 
           // START: TRUE pertama (mulai mixing beneran), fallback ke record pertama batch
