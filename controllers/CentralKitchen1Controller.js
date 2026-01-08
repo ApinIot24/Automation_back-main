@@ -293,13 +293,12 @@ export const getFormasiBagianCenkitL1ByDate = async (req, res) => {
           const timing_mixing_float = lastTrue?.timing_mixing ?? null;
           const timing_mixing = timing_mixing_float != null ? secondsToTime(timing_mixing_float) : null;
 
-          // weight_air: ambil dari batch sebelumnya dalam shift yang sama (kalau ada)
           let weight_air = 0;
-          if (i > 0) {
-            const prevBatch = batchKeys[i - 1];
-            const prevRows = byBatch.get(prevBatch) || [];
-            const prevWeightRow = [...prevRows].reverse().find((x) => x.weight_mixing != null);
-            weight_air = prevWeightRow?.weight_mixing != null ? parseFloat(prevWeightRow.weight_air) : 0;
+          if (firstTrue?.weight_air != null) {
+            weight_air = parseFloat(firstTrue.weight_air);
+          } else {
+            const firstTrueWithWeight = batchRows.find((x) => x.ck_status === true && x.weight_air != null);
+            weight_air = firstTrueWithWeight?.weight_air != null ? parseFloat(firstTrueWithWeight.weight_air) : 0;
           }
 
           // selesai: TRUE terakhir pada batch tsb (menggunakan lastTrue yang sudah dideklarasikan di atas)
