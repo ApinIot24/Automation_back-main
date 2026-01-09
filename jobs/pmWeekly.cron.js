@@ -2,6 +2,7 @@ import cron from "node-cron";
 import { sendEmailByJenisPMRange } from "../controllers/emailController.js";
 import { getEmailWeeksRange, getLastWeekRolling4, hasReplacementInPeriode, getTotalWeeksInYear } from "../config/dateUtils.js";
 import { automationDB } from "../src/db/automation.js";
+import { PM_EMAIL_CHANNEL } from "../config/pmEmailMap.js";
 
 // Helper function to calculate replacement pattern weeks
 function calculateReplacementPattern(periode, periode_start, targetYear) {
