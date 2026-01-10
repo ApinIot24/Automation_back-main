@@ -7,6 +7,7 @@ import {
   JamListNormalShift3,
   JamListShortShift1,
   JamListShortShift2,
+  JamListShortShift3,
   Hourly,
   HourlyNextDay,
   NextHours
