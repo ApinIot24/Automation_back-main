@@ -2,6 +2,7 @@
 import pg from "pg"; // Import Pool dari pg
 import cron from "node-cron"; // Import node-cron untuk penjadwalan tugas
 import { Router } from "express";
+import { logErrorToFile, logDatabaseError, logInfo } from "../config/logger.js";
 const { Pool } = pg;
 const app = Router();
 // Koneksi ke PostgreSQL 1 (Automation)
@@ -28,7 +29,7 @@ async function checkConnection(client) {
     await client.query("SELECT 1");
     return true;
   } catch (err) {
-    console.error("Connection failed:", err);
+    logDatabaseError(err, "check_connection");
     return false;
   }
 }
@@ -41,24 +42,45 @@ async function retryConnection(client, retries = 3, delay = 5000) {
       return true;
     }
     attempt++;
-    console.log(
-      `Attempt ${attempt} failed. Retrying in ${delay / 1000} seconds...`
-    );
+    const message = `Attempt ${attempt} failed. Retrying in ${delay / 1000} seconds...`;
+    logInfo(message, "connection_retry");
     await new Promise((resolve) => setTimeout(resolve, delay));
   }
+  logErrorToFile(new Error(`Failed to connect to database after ${retries} attempts`), "connection_retry_failed");
   return false;
 }
 
 // Fungsi untuk memindahkan data dari kedua tabel
 async function transferData() {
-  const client1 = await pool1.connect();
-  const client2 = await pool2.connect();
+  logInfo("Starting data transfer process", "transfer_data");
+  
+  let client1, client2;
+  
+  try {
+    client1 = await pool1.connect();
+    logInfo("Connected to PostgreSQL 1 (Automation)", "connection_established");
+  } catch (err) {
+    logDatabaseError(err, "connect_to_postgresql_1");
+    throw new Error("Unable to connect to PostgreSQL 1");
+  }
+  
+  try {
+    client2 = await pool2.connect();
+    logInfo("Connected to PostgreSQL 2 (IoT)", "connection_established");
+  } catch (err) {
+    logDatabaseError(err, "connect_to_postgresql_2");
+    
+    // Still continue with PostgreSQL 1 if PostgreSQL 2 is not available
+    logInfo("Continuing with PostgreSQL 1 only", "connection_fallback");
+  }
 
   try {
     // Cek koneksi ke PostgreSQL 2 (client2) sebelum memulai transaksi
-    const isConnected2 = await retryConnection(client2);
-    if (!isConnected2) {
-      throw new Error("Unable to connect to PostgreSQL 2");
+    if (client2) {
+      const isConnected2 = await retryConnection(client2);
+      if (!isConnected2) {
+        throw new Error("Unable to connect to PostgreSQL 2");
+      }
     }
 
     // Mulai transaksi di PostgreSQL 1
@@ -101,10 +123,7 @@ async function transferData() {
             [row.id]
           );
         } catch (err) {
-          console.error(
-            `Gagal mengirim data ID ${row.id} ke PostgreSQL 2 (ck_biscuit_pompa):`,
-            err
-          );
+          logErrorToFile(err, `Failed to send ID ${row.id} to PostgreSQL 2 (ck_biscuit_pompa)`);
           continue;
         }
       }
@@ -133,10 +152,7 @@ async function transferData() {
             [row.id]
           );
         } catch (err) {
-          console.error(
-            `Gagal mengirim data ID ${row.id} ke PostgreSQL 2 (ck_biscuit_valve):`,
-            err
-          );
+          logErrorToFile(err, `Failed to send ID ${row.id} to PostgreSQL 2 (ck_biscuit_valve)`);
           continue;
         }
       }
@@ -165,10 +181,7 @@ async function transferData() {
             [row.id]
           );
         } catch (err) {
-          console.error(
-            `Gagal mengirim data ID ${row.id} ke PostgreSQL 2 (l2a_machine_status):`,
-            err
-          );
+          logErrorToFile(err, `Failed to send ID ${row.id} to PostgreSQL 2 (l2a_machine_status)`);
           continue;
         }
       }
@@ -197,10 +210,7 @@ async function transferData() {
             [row.id]
           );
         } catch (err) {
-          console.error(
-            `Gagal mengirim data ID ${row.id} ke PostgreSQL 2 (l5_machine_status):`,
-            err
-          );
+          logErrorToFile(err, `Failed to send ID ${row.id} to PostgreSQL 2 (l5_machine_status)`);
           continue;
         }
       }
@@ -208,30 +218,41 @@ async function transferData() {
 
     // Commit transaksi di PostgreSQL 1
     await client1.query("COMMIT");
-    console.log(
-      "Data berhasil dipindahkan ke PostgreSQL 2 dan dihapus dari PostgreSQL 1."
-    );
+    logInfo("Data successfully moved from PostgreSQL 1 and deleted from source", "transfer_complete");
+    
+    if (client2) {
+      logInfo("Data successfully transferred to PostgreSQL 2", "transfer_complete");
+    }
   } catch (err) {
     // Rollback jika ada error
     await client1.query("ROLLBACK");
-    console.error("Error terjadi:", err);
+    logErrorToFile(err, "transfer_data_error");
   } finally {
     // Tutup koneksi
-    client1.release();
-    client2.release();
+    if (client1) {
+      client1.release();
+      logInfo("PostgreSQL 1 connection closed", "connection_closed");
+    }
+    
+    if (client2) {
+      client2.release();
+      logInfo("PostgreSQL 2 connection closed", "connection_closed");
+    }
   }
 }
 
 //buat test api untuk memicu transferData
 app.get("/sync/transfer", async (req, res) => {
   try {
+    logInfo("Manual data transfer triggered via API", "api_trigger");
     await transferData();
-    res.status(200).json({ message: "Transfer data berhasil dijalankan." });
+    res.status(200).json({ message: "Transfer data successfully executed." });
   } catch (err) {
+    logErrorToFile(err, "API transfer_data_error");
     res
       .status(500)
       .json({
-        message: "Terjadi error saat transfer data.",
+        message: "Error occurred during data transfer.",
         error: err.message,
       });
   }
@@ -241,10 +262,16 @@ app.get("/sync/transfer", async (req, res) => {
 export const transferDataCron = cron.schedule(
   "0 12 * * 0",
   () => {
-    console.log("Menjalankan transfer data dari CRON...");
+    logInfo("Running data transfer from CRON...", "cron_job");
     transferData();
   },
-  { timezone: "Asia/Jakarta" }
+  { 
+    timezone: "Asia/Jakarta",
+    scheduled: true,
+    onComplete: () => {
+      logInfo("Data transfer cron job completed", "cron_job");
+    }
+  }
 );
 
 export default app;

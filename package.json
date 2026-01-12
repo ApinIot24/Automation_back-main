@@ -6,9 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon server_iot.js",
+    "dev:mon": "node scripts/startWithMonitoring.js && nodemon server_iot.js",
     "start": "pm2 start server_iot.js --name server_iot && cd ../../FUXA-1.2.5/server && pm2 start main.js --name fuxa && pm2 save",
     "restart": "pm2 restart server_iot && pm2 restart fuxa",
-    "stop": "pm2 stop server_iot && pm2 stop fuxa"
+    "stop": "pm2 stop server_iot && pm2 stop fuxa",
+    "check-db": "node -e \"import('./utils/databaseMonitor.js').then(m => m.checkAllDatabases().then(console.log))\""
   },
   "author": "Mayora.Indah.Tbk PSR",
   "license": "ISC",
