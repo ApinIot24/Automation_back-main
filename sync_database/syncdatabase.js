@@ -9,7 +9,7 @@ const app = Router();
 const pool1 = new Pool({
   user: "automation",
   password: "Auto123",
-  host: "localhost",
+  host: "10.37.12.17",
   port: 5432,
   database: "automation",
 });
