@@ -58,7 +58,7 @@ export const GetPackingTrayL2b = async (req, res) => {
     console.log('Packing tray',rows)
     res.send(rows);
 }
-export const GetShift_L2b = async (req, res) => {
+export const GetShift_L2b_Renceng = async (req, res) => {
   const today = new Date();
 
   const rows = await automationDB.counter_shift_l2b_renceng.findMany({
@@ -71,6 +71,19 @@ export const GetShift_L2b = async (req, res) => {
   console.log('Shift L2b',rows)
   res.send(rows);
 };
+export const GetShift_L2b_Tray = async (req, res) => {
+  const today = new Date();
+
+  const rows = await automationDB.counter_shift_l2b_tray.findMany({
+    select: { shift1: true, shift2: true, shift3: true },
+    where: { tanggal: today },
+    orderBy: { id: "desc" },
+    take: 1
+  });
+
+  console.log('Shift L2b',rows)
+  res.send(rows);
+}
 export const GetShiftRenceng_L2b = async (req, res) => {
   const today = new Date();
   const rows = await automationDB.counter_shift_l2b_renceng.findMany({

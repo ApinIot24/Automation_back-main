@@ -118,25 +118,15 @@ export const GetShift3L5 = async (req, res) => {
 // ==== SHIFT HOURLY ====
 export const GetShift1L5Hourly = async (req, res) => {
   const today = new Date();
-  const isSaturday = today.getDay() === 6;
-  const date = format(today);
-
-  const hours = isSaturday
-      ? JamListShortShift1.saturday
-      : JamListShortShift1.normal;
-
-  const data = await raw(`
-    SELECT * FROM (
-      SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
-      FROM automation.packing_l1
-      WHERE graph='Y' AND tanggal='${date}' 
-      AND jam IN (${hours.map(h => `'${h}'`).join(",")})
-      ORDER BY jam, id ASC
-    ) x ORDER BY id ASC
-  `);
-
-  res.send(data);
+  const rows = await automationDB.packing_l5.findMany({
+    select: { cntr_bandet: true, cntr_carton: true, jam: true },
+    where: { tanggal: today, graph: "Y", jam: { in: JamListShortShift1.normal } },
+    orderBy: { id: "asc" }
+  });
+  console.log('Shift 1',rows)
+  res.send(rows);
 }
+
 export const GetShift2L5Hourly = async (req, res) => {
   const today = new Date();
     const isSaturday = today.getDay() === 6;
