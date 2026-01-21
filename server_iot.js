@@ -23,6 +23,7 @@ import line1 from "./routes/wafer/line1/line1.js";
 import line2 from "./routes/wafer/line2/line2.js";
 import line6 from "./routes/wafer/line6/line6.js";
 import line7 from "./routes/wafer/line7/line7.js";
+import HistoryWafer from "./routes/wafer/historyWaferController.js"
 import line5 from "./routes/biscuit/line5/line5.js";
 import line2a from "./routes/biscuit/lhp/lhp_2a.js";
 import line2b from "./routes/biscuit/line2/line2b.js"
@@ -218,6 +219,7 @@ app.use("/", line1);
 app.use("/", line2);
 app.use("/", line6);
 app.use("/", line7);
+app.use("/api", HistoryWafer);
 app.use("/", downtime_wafer);
 app.use("/", lhp_wafer);
 app.use("/", control_wafer);

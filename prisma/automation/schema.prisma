@@ -97,6 +97,38 @@ model checkweigher_l5 {
   @@schema("automation")
 }
 
+model checkweigher_wafer_l1 {
+  id         Int       @id @default(autoincrement())
+  weight     Decimal?  @db.Decimal
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("automation")
+}
+
+model checkweigher_wafer_l2 {
+  id         Int       @id @default(autoincrement())
+  weight     Decimal?  @db.Decimal
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("automation")
+}
+
+model checkweigher_wafer_l6 {
+  id         Int       @id @default(autoincrement())
+  weight     Decimal?  @db.Decimal
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("automation")
+}
+
+model checkweigher_wafer_l7 {
+  id         Int       @id @default(autoincrement())
+  weight     Decimal?  @db.Decimal
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@schema("automation")
+}
+
 model ck_biscuit_pompa {
   id            Int                      @id(map: "machine_status_l5_pkey_2") @default(autoincrement())
   pompa         String                   @db.VarChar(255)
