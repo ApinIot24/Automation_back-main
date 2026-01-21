@@ -17,6 +17,9 @@ import {
   GetShift3L5HourlyByDate,
   GetShift_L5,
   GetTiltingHourlyL5,
+  GetShift1L5TiltingHourly,
+  GetShift2L5TiltingHourly,
+  GetShift3L5TiltingHourly,
   GetTiltingShift_L5,
   GetTiltingL5,
   GetTiltingL5Variance,
@@ -50,7 +53,9 @@ app.get("/packing_l5_weekly/date/:date", GetPackingL5WeeklyByDate);
 // ==== Tilting ====
 app.get("/tilting_l5", GetTiltingL5);
 app.get("/tilting_l5_variance", GetTiltingL5Variance);
-app.get("/shift1_l5_tilting_hourly", GetTiltingHourlyL5);
+app.get("/shift1_l5_tilting_hourly", GetShift1L5TiltingHourly);
+app.get("/shift2_l5_tilting_hourly", GetShift2L5TiltingHourly);
+app.get("/shift3_l5_tilting_hourly", GetShift3L5TiltingHourly);
 app.get("/tilting_l5_variance_per_shift", GetTiltingShift_L5);
 
 export default app;

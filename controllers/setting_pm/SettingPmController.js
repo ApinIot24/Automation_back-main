@@ -69,30 +69,70 @@ export async function upsertSettingPM(req, res) {
       });
     }
 
-    const result = await automationDB.setting_pm.upsert({
+    // First, find all existing records with same pmtablename and grup
+    // This ensures we delete ALL duplicates and keep only 1 unique record
+    const allExisting = await automationDB.setting_pm.findMany({
       where: {
-        pmtablename_grup_week: {
-          pmtablename: PMTableName,
-          grup,
-          week: weekNumber
-        }
-      },
-      update: {
-        week: weekNumber,
-        updated_at: new Date()
-      },
-      create: {
         pmtablename: PMTableName,
-        grup,
-        week: weekNumber,
-        created_at: new Date()
+        grup: grup
+      },
+      orderBy: {
+        created_at: 'asc' // Get the oldest record to preserve original created_at
       }
     });
 
+    let result;
+    let isUpdate = false;
+    let deletedCount = 0;
+
+    if (allExisting.length > 0) {
+      // If exists, delete ALL duplicate records first
+      // This ensures only 1 unique record exists for pmtablename + grup combination
+      const deleteResult = await automationDB.setting_pm.deleteMany({
+        where: {
+          pmtablename: PMTableName,
+          grup: grup
+        }
+      });
+      deletedCount = deleteResult.count;
+
+      // Preserve the original created_at from the oldest record
+      const originalCreatedAt = allExisting[0].created_at || new Date();
+
+      // Create new record with updated week, but preserve original created_at
+      result = await automationDB.setting_pm.create({
+        data: {
+          pmtablename: PMTableName,
+          grup,
+          week: weekNumber,
+          created_at: originalCreatedAt, // Preserve original created_at
+          updated_at: new Date() // Update timestamp
+        }
+      });
+      isUpdate = true;
+      
+      console.log(`[SETTING_PM] Synced ${PMTableName}/${grup}: Deleted ${deletedCount} duplicate(s), created 1 unique record`);
+    } else {
+      // Create new record if doesn't exist
+      result = await automationDB.setting_pm.create({
+        data: {
+          pmtablename: PMTableName,
+          grup,
+          week: weekNumber,
+          created_at: new Date(),
+          updated_at: new Date()
+        }
+      });
+      console.log(`[SETTING_PM] Created new setting for ${PMTableName}/${grup}`);
+    }
+
     res.json({
-      message: "Setting updated/inserted successfully",
+      message: isUpdate 
+        ? `Setting synced successfully (deleted ${deletedCount} duplicate(s), kept 1 unique record)` 
+        : "Setting created successfully",
       data: result,
-      affectedRows: 1
+      action: isUpdate ? "synced" : "created",
+      deletedDuplicates: deletedCount
     });
 
   } catch (error) {

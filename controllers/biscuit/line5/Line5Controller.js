@@ -7,6 +7,7 @@ import {
   JamListNormalShift3,
   JamListShortShift1,
   JamListShortShift2,
+  JamListShortShift3,
   Hourly,
   HourlyNextDay,
   NextHours,
@@ -117,98 +118,102 @@ export const GetShift3L5 = async (req, res) => {
 // ==== SHIFT HOURLY ====
 export const GetShift1L5Hourly = async (req, res) => {
   const today = new Date();
-  const isSaturday = today.getDay() === 6;
-  const date = format(today);
-
-  const hours = isSaturday
-    ? JamListShortShift1.saturday
-    : JamListShortShift1.normal;
-
-  const sql = `
-    SELECT DISTINCT ON (jam)
-        id, cntr_bandet, cntr_carton, jam
-      FROM automation.packing_l5
-      WHERE graph='Y' AND tanggal='${date}'
-      AND jam IN (${hours.map((h) => `'${h}'`).join(",")})
-      ORDER BY jam, id ASC
-  `;
-  const rows = await raw(sql);
-  // Sort by id ascending
-  rows.sort((a, b) => a.id - b.id);
+  const rows = await automationDB.packing_l5.findMany({
+    select: { cntr_bandet: true, cntr_carton: true, jam: true },
+    where: { tanggal: today, graph: "Y", jam: { in: JamListShortShift1.normal } },
+    orderBy: { id: "asc" }
+  });
+  console.log('Shift 1',rows)
   res.send(rows);
-};
+}
+
 export const GetShift2L5Hourly = async (req, res) => {
   const today = new Date();
-  const isSaturday = today.getDay() === 6;
-  const date = format(today);
-
-  const hours = isSaturday
-    ? JamListShortShift2.saturday
-    : JamListShortShift2.normal;
-
-  const sql = `
-    SELECT DISTINCT ON (jam)
-      id, cntr_bandet, cntr_carton, jam
-    FROM automation.packing_l5
-    WHERE graph='Y' AND tanggal='${date}'
-    AND jam IN (${hours.map((h) => `'${h}'`).join(",")})
-    ORDER BY jam, id ASC
-  `;
-  const rows = await raw(sql);
-  // Sort by id ascending
-  rows.sort((a, b) => a.id - b.id);
-  res.send(rows);
-};
+    const isSaturday = today.getDay() === 6;
+    const date = format(today);
+  
+    const hours = isSaturday
+      ? JamListShortShift2.saturday
+      : JamListShortShift2.normal
+  
+    const sql = `
+      SELECT * FROM (
+        SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
+        FROM automation.packing_l1
+        WHERE graph = 'Y' AND tanggal = '${date}'
+        AND jam IN (${hours.map(h => `'${h}'`).join(",")})
+        ORDER BY jam, id ASC
+      ) AS distinct_data
+      ORDER BY id ASC
+    `;
+  
+    const result = await raw(sql);
+    res.send(result);
+}
 export const GetShift3L5Hourly = async (req, res) => {
   const today = moment();
-  const isSaturday = today.day() === 6;
-  const date = format(today.toDate());
-  const nextDate = format(today.clone().add(1, "day").toDate());
-
-  if (isSaturday) {
-    const sql = `
-      SELECT DISTINCT ON (jam)
-        id, cntr_bandet, cntr_carton, jam
-      FROM automation.packing_l5
-      WHERE graph='Y' AND tanggal='${date}'
-      AND jam IN ('17.45','18.45','19.45','20.45','21.45')
-      ORDER BY jam, id ASC
+    const isSaturday = today.day() === 6;
+    const thisdaytime = today.format("YYYY-MM-DD");
+    const nextDate = today.clone().add(1, "day").format("YYYY-MM-DD");
+  
+    // ====== SHIFT 3 KHUSUS SABTU ======
+    if (isSaturday) {
+      const sql = `
+        SELECT * FROM (
+          SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
+          FROM automation.packing_l1
+          WHERE graph = 'Y' AND tanggal = '${thisdaytime}'
+          AND jam IN ('17.45','18.45','19.45','20.45','21.45')
+          ORDER BY jam, id ASC
+        ) x ORDER BY id ASC
+      `;
+  
+      const rows = await raw(sql);
+  
+      const cart = rows.map(r => ({
+        jam: r.jam,
+        cntr_bandet: r.cntr_bandet,
+        cntr_carton: r.cntr_carton,
+      }));
+  
+      return res.send(cart);
+    }
+  
+    // ====== SHIFT 3 HARI BIASA ======
+    // Ambil 23.45 hari ini
+    const sqlToday = `
+      SELECT * FROM (
+        SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
+        FROM automation.packing_l1
+        WHERE graph = 'Y' AND tanggal = '${thisdaytime}'
+        AND jam = '23.45'
+        ORDER BY jam, id ASC
+      ) x ORDER BY id ASC
     `;
-    const rows = await raw(sql);
-    // Sort by id ascending
-    rows.sort((a, b) => a.id - b.id);
-    res.send(rows);
-    return;
-  }
-  const d23 = await raw(`
-    SELECT DISTINCT ON (jam)
-      id, cntr_bandet, cntr_carton, jam
-    FROM automation.packing_l5
-    WHERE graph='Y' AND tanggal='${date}'
-    AND jam='23.45'
-    ORDER BY jam, id ASC
-  `);
-  const mapped = d23.map((r) => ({
-    id: r.id,
-    jam: "0.23",
-    cntr_bandet: r.cntr_bandet,
-    cntr_carton: r.cntr_carton,
-  }));
+  
+    const d23 = await raw(sqlToday);
+  
+    const cart = d23.map(r => ({
+      jam: "23.45",
+      cntr_bandet: r.cntr_bandet,
+      cntr_carton: r.cntr_carton,
+    }));
 
-  const nextRows = await raw(`
-    SELECT DISTINCT ON (jam)
-      id, cntr_bandet, cntr_carton, jam
-    FROM automation.packing_l5
-    WHERE graph='Y' AND tanggal='${nextDate}'
-    AND jam IN (${NextHours.map((h) => `'${h}'`).join(",")})
-    ORDER BY jam, id ASC
-  `);
-
-  const combined = mapped.concat(nextRows);
-  // Sort by id ascending
-  combined.sort((a, b) => a.id - b.id);
-  res.send(combined);
-};
+    const sqlNext = `
+      SELECT * FROM (
+        SELECT DISTINCT ON (jam) id, cntr_bandet, cntr_carton, jam
+        FROM automation.packing_l1
+        WHERE graph = 'Y'
+        AND tanggal = '${nextDate}'
+        AND jam IN (${NextHours.map(j => `'${j}'`).join(",")})
+        ORDER BY jam, id ASC
+      ) x ORDER BY id ASC
+    `;
+  
+    const dNext = await raw(sqlNext);
+  
+    res.send(cart.concat(dNext));
+}
 // ==== SHIFT 3 BY DATE ====
 export const GetShift3L5HourlyByDate = async (req, res) => {
   const thisDayTime = req.params.date;
@@ -385,6 +390,92 @@ export const GetTiltingHourlyL5 = async (req, res) => {
   res.send(rows);
 };
 
+export const GetShift2L5TiltingHourly = async (req, res) => {
+  const today = new Date();
+  const isSaturday = today.getDay() === 6;
+  const date = format(today);
+  const hours = isSaturday ? JamListShortShift2.saturday : JamListShortShift2.normal;
+  const sql = `
+    SELECT DISTINCT ON (jam)
+      id, cntr_bandet, cntr_tilting, jam
+    FROM automation.tilting_l5
+    WHERE graph='Y' AND tanggal='${date}'
+    AND jam IN (${hours.map((h) => `'${h}'`).join(",")})
+    ORDER BY jam, id ASC
+  `;
+  const rows = await raw(sql);
+  rows.sort((a, b) => a.id - b.id);
+  res.send(rows);
+};
+
+export const GetShift1L5TiltingHourly = async (req, res) => {
+  const today = new Date();
+  const isSaturday = today.getDay() === 6;
+  const date = format(today);
+  const hours = isSaturday ? JamListShortShift1.saturday : JamListShortShift1.normal;
+  const sql = `
+    SELECT DISTINCT ON (jam)
+      id, cntr_bandet, cntr_tilting, jam
+    FROM automation.tilting_l5
+    WHERE graph='Y' AND tanggal='${date}'
+    AND jam IN (${hours.map((h) => `'${h}'`).join(",")})
+    ORDER BY jam, id ASC
+  `;
+  const rows = await raw(sql);
+  rows.sort((a, b) => a.id - b.id);
+  res.send(rows);
+};
+
+export const GetShift3L5TiltingHourly = async (req, res) => {
+  const today = moment();
+  const isSaturday = today.day() === 6;
+  const date = format(today.toDate());
+  const nextDate = format(today.clone().add(1, "day").toDate());
+
+  if (isSaturday) {
+    const sql = `
+      SELECT DISTINCT ON (jam)
+        id, cntr_bandet, cntr_tilting, jam
+      FROM automation.tilting_l5
+      WHERE graph='Y' AND tanggal='${date}'
+      AND jam IN (${JamListShortShift3.saturday.map((h) => `'${h}'`).join(",")})
+      ORDER BY jam, id ASC
+    `;
+    const rows = await raw(sql);
+    rows.sort((a, b) => a.id - b.id);
+    res.send(rows);
+    return;
+  }
+
+  const d23 = await raw(`
+    SELECT DISTINCT ON (jam)
+      id, cntr_bandet, cntr_tilting, jam
+    FROM automation.tilting_l5
+    WHERE graph='Y' AND tanggal='${date}'
+    AND jam='23.45'
+    ORDER BY jam, id ASC
+  `);
+  const mapped = d23.map((r) => ({
+    id: r.id,
+    jam: "0.23",
+    cntr_bandet: r.cntr_bandet,
+    cntr_tilting: r.cntr_tilting,
+  }));
+
+  const nextRows = await raw(`
+    SELECT DISTINCT ON (jam)
+      id, cntr_bandet, cntr_tilting, jam
+    FROM automation.tilting_l5
+    WHERE graph='Y' AND tanggal='${nextDate}'
+    AND jam IN (${NextHours.map((h) => `'${h}'`).join(",")})
+    ORDER BY jam, id ASC
+  `);
+
+  const combined = mapped.concat(nextRows);
+  combined.sort((a, b) => a.id - b.id);
+  res.send(combined);
+};
+
 export const GetTiltingShift_L5 = async (req, res) => {
   const today = new Date();
 
@@ -463,4 +554,3 @@ export const GetTiltingL5Variance = async (req, res) => {
       .json({ message: "Terjadi kesalahan pada server", error: error.message });
   }
 };
-

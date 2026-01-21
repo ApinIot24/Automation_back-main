@@ -1,9 +1,10 @@
 import { Router } from "express";
-import { testPmWeeklyCron } from "../controllers/pmWeeklyTestController.js";
+import { testReplacementPatterns, triggerPmWeeklyCron } from "../controllers/pmWeeklyTestController.js";
 
 const router = Router();
 
-router.get("/test/pm_weekly", testPmWeeklyCron);
+router.get("/test/replacement_patterns", testReplacementPatterns);
+router.post("/test/trigger_cron", triggerPmWeeklyCron);
 
 export default router;
 
